@@ -1,0 +1,6 @@
+{
+  "name": "Fluidnatek LE-500 Smart Memory",
+  "description": "Piattaforma intelligente per l'ingestione dati storici Excel, telemetria in tempo reale e suggerimento predittivo assistito da AI per il processo di elettrofilatura Fluidnatek LE-500.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

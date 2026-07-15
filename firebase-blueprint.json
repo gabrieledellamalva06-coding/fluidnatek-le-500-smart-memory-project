@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "A research project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Experiment": {
+      "title": "Experiment",
+      "description": "An experimental run",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "projectId": { "type": "string" },
+        "operationIdentifier": { "type": "string" },
+        "ingestedAt": { "type": "string", "format": "date-time" },
+        "operatorComments": { "type": "string" }
+      },
+      "required": ["id", "projectId", "operationIdentifier"]
+    },
+    "Telemetry": {
+      "title": "Telemetry",
+      "description": "Telemetry data points",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "experimentId": { "type": "string" },
+        "timestampSec": { "type": "number" },
+        "voltageKv": { "type": "number" },
+        "flowRateMlH": { "type": "number" },
+        "distanceMm": { "type": "number" }
+      },
+      "required": ["id", "experimentId", "timestampSec", "voltageKv", "flowRateMlH"]
+    }
+  },
+  "firestore": {
+    "projects": { "schema": "Project", "description": "Projects" },
+    "projects/{projectId}/experiments": { "schema": "Experiment", "description": "Experiments for a project" },
+    "projects/{projectId}/experiments/{experimentId}/telemetry": { "schema": "Telemetry", "description": "Telemetry data for an experiment" }
+  }
+}
