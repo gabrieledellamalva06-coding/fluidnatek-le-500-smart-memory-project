@@ -113,9 +113,15 @@ export default function App() {
 
   // Import parsed Excel run
   const handleImportExperiments = (parsedList: ParsedExcelResult[], targetProjectId: string) => {
-    parsedList.forEach(parsed => {
-      // 1. Detect or create a Formulation
-      let matchedForm = formulations.find(
+    // Lista di lavoro locale: consente la deduplica delle formulazioni anche
+    // per più run nello stesso batch (lo state React non si aggiorna in-loop).
+    const workingForms = [...formulations];
+    const createdForms: Formulation[] = [];
+    const createdExps: Experiment[] = [];
+
+    parsedList.forEach((parsed, idx) => {
+      // 1. Rileva o crea una Formulazione
+      let matchedForm = workingForms.find(
         (f) =>
           f.projectId === targetProjectId &&
           f.polymerName.toLowerCase() === (parsed.polymerName || "Nylon-6").toLowerCase()
@@ -123,7 +129,7 @@ export default function App() {
 
       if (!matchedForm) {
         matchedForm = {
-          id: `FORM-${Date.now()}-${Math.random()}`,
+          id: `FORM-${Date.now()}-${idx}`,
           projectId: targetProjectId,
           polymerName: parsed.polymerName || "Nylon-6",
           solvent: parsed.solventName || "Acetic Acid",
@@ -132,28 +138,35 @@ export default function App() {
           conductivityUsCm: 5.0,
           densityGcm3: 1.05
         };
-        setFormulations((prev) => [...prev, matchedForm!]);
+        workingForms.push(matchedForm);
+        createdForms.push(matchedForm);
       }
 
-      // 2. Create the Experiment run
-      const newExp: Experiment = {
-        id: `EXP-${Date.now()}-${Math.random()}`,
+      // 2. Crea la run (Experiment)
+      createdExps.push({
+        id: `EXP-${Date.now()}-${idx}`,
         formulationId: matchedForm.id,
         operationIdentifier: parsed.operationIdentifier,
         machineModel: "Fluidnatek LE-500",
-        injectorType: parsed.telemetryData.length > 50 ? "Multi-emitter (x4)" : "Single Emitter",
-        collectorType: "Rotating Drum",
-        distanceMm: parsed.telemetryData[0]?.distanceMm || 150,
-        jetStabilityGrade: 4, // Default stable
+        injectorType: parsed.injectorType ?? (parsed.telemetryData.length > 50 ? "Multi-emitter (x4)" : "Single Emitter"),
+        collectorType: parsed.collectorType ?? "Rotating Drum",
+        distanceMm: parsed.distanceMm ?? parsed.telemetryData[0]?.distanceMm ?? 150,
+        jetStabilityGrade: parsed.jetStabilityGrade ?? 4,
         operatorComments: parsed.operatorComments,
         sourceFile: parsed.sourceFile,
         ingestedAt: new Date().toISOString(),
-        telemetryData: parsed.telemetryData
-      };
-
-      setExperiments((prev) => [newExp, ...prev]);
+        telemetryData: parsed.telemetryData,
+        metadata: parsed.metadata
+      });
     });
-    
+
+    if (createdForms.length) setFormulations((prev) => [...prev, ...createdForms]);
+    if (createdExps.length) {
+      setExperiments((prev) => [...createdExps, ...prev]);
+      // Seleziona la prima run importata così la dashboard la mostra subito.
+      setSelectedExpId(createdExps[0].id);
+    }
+
     // Auto-focus dashboard so they see the charts!
     setCurrentView("DASHBOARD");
   };

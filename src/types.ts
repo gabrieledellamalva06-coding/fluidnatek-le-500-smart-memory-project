@@ -1,3 +1,7 @@
+// Tipi allineati alle forme realmente usate da App.tsx / seedData.ts / componenti.
+// (Precedentemente questo file era disallineato: mancava `Formulation` e le
+//  interfacce Experiment/TelemetryRecord non corrispondevano al runtime.)
+
 export interface Project {
   id: string;
   name: string;
@@ -5,9 +9,22 @@ export interface Project {
   createdAt: string;
 }
 
-export interface TelemetryRecord {
+export interface Formulation {
   id: string;
-  experimentId: string;
+  projectId: string;
+  polymerName: string;
+  solvent: string;
+  solidsContentPct: number;
+  viscosityMpas: number;
+  conductivityUsCm: number;
+  densityGcm3: number;
+}
+
+export interface TelemetryRecord {
+  // id / experimentId sono opzionali: la telemetria sintetizzata
+  // (seedData.ts, App.tsx) non li popola.
+  id?: string;
+  experimentId?: string;
   timestampSec: number;
   voltageKv: number;
   flowRateMlH: number;
@@ -18,18 +35,22 @@ export interface TelemetryRecord {
 
 export interface Experiment {
   id: string;
-  projectId: string;
-  operationIdentifier: string; // From 'Formula'
-  setup: string;
-  ingestedAt: string;
+  formulationId: string;
+  operationIdentifier: string;
+  machineModel: string;
+  injectorType: string;
+  collectorType: string;
+  distanceMm: number;
+  jetStabilityGrade: number;
   operatorComments: string;
-  processingGrade: number; // From 'Grado de Procesabilidad'
-  hvPosKv: number;
-  hvNegKv: number;
-  flowRateMlH: number; // From 'Q1'
   sourceFile: string;
+  ingestedAt: string;
+  telemetryData: TelemetryRecord[];
+  // Metadati grezzi estratti dall'ingestione Excel (assenti per le run manuali/seed).
+  metadata?: Record<string, string>;
 }
 
+// Risposta di /api/suggest
 export interface AISuggestion {
   polymerName: string;
   solvent: string;
@@ -40,4 +61,11 @@ export interface AISuggestion {
   humidityPct: number;
   tips: string[];
   reasoning: string;
+}
+
+// Risposta di /api/ai/analyze-telemetry
+export interface TelemetryAnalysis {
+  suggestion: string;
+  reasoning: string;
+  code?: string;
 }

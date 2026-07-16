@@ -31,6 +31,7 @@ import { Experiment, Formulation, Project } from "../types";
 import { TRANSLATIONS, Language } from "../lib/translations";
 import ExperimentEditor from "./ExperimentEditor";
 import { AIOptimizationWidget } from "./AIOptimizationWidget";
+import { AIInsights } from "./AIInsights";
 import Fuse from "fuse.js";
 
 interface DashboardProps {
@@ -79,6 +80,14 @@ export default function Dashboard({
   const getFormProject = (form: Formulation): Project | undefined => {
     return projects.find((p) => p.id === form.projectId);
   };
+
+  // Formulazione della run attiva, memoizzata: reference stabile finché non
+  // cambia l'esperimento selezionato → evita che il widget AI rilanci
+  // chiamate a Gemini (429) ad ogni render.
+  const activeFormulation = useMemo(
+    () => (selectedExp ? formulations.find((f) => f.id === selectedExp.formulationId) ?? null : null),
+    [selectedExp, formulations]
+  );
 
   // Extract all unique polymer names for filter dropdown
   const uniquePolymers = useMemo(() => {
@@ -457,11 +466,13 @@ export default function Dashboard({
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <span className="text-xs font-medium">{envStatus.message}</span>
                 </div>
-                <div className="mt-6">
-                    <AIOptimizationWidget 
-                      currentFormulation={getExpFormulation(selectedExp) || null}
-                      projectId={getExpFormulation(selectedExp)?.projectId || ""}
+                <div className="mt-6 space-y-6">
+                    <AIOptimizationWidget
+                      currentFormulation={activeFormulation}
+                      projectId={activeFormulation?.projectId || ""}
+                      lang={lang}
                     />
+                    <AIInsights telemetryData={selectedExp.telemetryData} lang={lang} />
                   </div>
               </div>
 

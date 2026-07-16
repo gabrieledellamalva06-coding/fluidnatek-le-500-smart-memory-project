@@ -8,7 +8,10 @@ import {
   Loader,
   HelpCircle,
   PlayCircle,
-  Search
+  Search,
+  Info,
+  X,
+  Lightbulb
 } from "lucide-react";
 import { parseElectrospinningExcel, ParsedExcelResult } from "../utils/excelParser";
 import { Formulation, Project } from "../types";
@@ -40,6 +43,9 @@ export default function ExcelImport({
   const [progress, setProgress] = useState<{current: number; total: number; fileName: string} | null>(null);
   const [parsedResults, setParsedResults] = useState<ParsedExcelResult[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  // Onboarding + popup di aiuto contestuale (utente alle prime armi).
+  const [showGuide, setShowGuide] = useState(true);
+  const [helpTip, setHelpTip] = useState<null | "noProject" | "empty">(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,9 +61,10 @@ export default function ExcelImport({
 
   const processFiles = async (files: FileList) => {
     if (!selectedProjectId) {
-      alert(t.chooseProjectFirst);
+      setHelpTip("noProject");
       return;
     }
+    setHelpTip(null);
 
     setIsLoading(true);
     setProgress({current: 0, total: files.length, fileName: ""});
@@ -71,42 +78,39 @@ export default function ExcelImport({
       try {
         const parsedList = await parseElectrospinningExcel(files[i]);
         console.log("Parsed list from Excel:", parsedList);
-        
-        // Save to Firebase
-        if (!auth.currentUser) {
-            alert("Devi effettuare l'accesso per caricare i file.");
-            setIsLoading(false);
-            return;
-        }
 
-        console.log("Current user:", auth.currentUser.uid);
-        console.log("Selected project ID:", selectedProjectId);
+        // Import LOCALE = fonte di verità dell'app. Sempre eseguito e NON
+        // richiede il login. (Prima un utente Firebase mancante bloccava tutto
+        // con "Devi effettuare l'accesso": rimosso.)
+        allNewResults = [...allNewResults, ...parsedList];
 
-        for (const experiment of parsedList) {
-            console.log("Saving experiment:", experiment.id);
-            const expRef = doc(db, "projects", selectedProjectId, "experiments", experiment.id);
-            await setDoc(expRef, {
+        // Backup opzionale su Firestore: solo se c'è un utente autenticato e
+        // senza mai bloccare/interrompere l'import locale se fallisce.
+        if (auth.currentUser) {
+          try {
+            for (const experiment of parsedList) {
+              const expRef = doc(db, "projects", selectedProjectId, "experiments", experiment.id);
+              await setDoc(expRef, {
                 id: experiment.id,
                 projectId: selectedProjectId,
                 operationIdentifier: experiment.operationIdentifier,
                 ingestedAt: new Date().toISOString(),
                 operatorComments: experiment.operatorComments
-            });
-            console.log("Experiment saved:", experiment.id);
-            
-            for (const telemetry of experiment.telemetryData) {
+              });
+              for (const telemetry of experiment.telemetryData) {
                 const telRecord = { ...telemetry, experimentId: experiment.id };
                 const telId = telRecord.id || crypto.randomUUID();
                 const telRef = doc(db, "projects", selectedProjectId, "experiments", experiment.id, "telemetry", telId);
                 await setDoc(telRef, telRecord);
+              }
             }
-            console.log("Telemetry saved for experiment:", experiment.id);
+          } catch (fireErr) {
+            console.warn("Backup Firestore non riuscito: l'import locale viene mantenuto.", fireErr);
+          }
         }
-        
-        allNewResults = [...allNewResults, ...parsedList];
-      } catch (err: any) {
-        console.error(`Error parsing ${files[i].name}:`, err);
-        alert(`${t.parsingError}: ${files[i].name}`);
+      } catch (err) {
+        // DEBUG: logga l'oggetto errore completo, nessun messaggio generico.
+        console.error(err);
       }
     }
     
@@ -114,6 +118,12 @@ export default function ExcelImport({
     setParsedResults(prev => [...prev, ...allNewResults]);
     setIsLoading(false);
     setProgress(null);
+
+    // Difficoltà rilevata: il file è stato letto ma senza telemetria reale
+    // (curva sintetizzata) → spiega all'utente cosa controllare.
+    if (allNewResults.some(r => r.telemetrySynthesized)) {
+      setHelpTip("empty");
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -143,15 +153,17 @@ export default function ExcelImport({
   // Pre-load simulator
   const handleLoadTestExcel = () => {
     if (!selectedProjectId) {
-      alert(t.chooseProjectFirst);
+      setHelpTip("noProject");
       return;
     }
+    setHelpTip(null);
 
     setIsLoading(true);
 
     // Simulate file parsing delay
     setTimeout(() => {
       const fakeResult: ParsedExcelResult = {
+        id: crypto.randomUUID(),
         operationIdentifier: "RUN_TEST_EXCEL_IMPORTED",
         sourceFile: "Fluidnatek_LE500_PVDF_AutoRun_99.xlsx",
         operatorComments: lang === "it" 
@@ -174,10 +186,11 @@ export default function ExcelImport({
         })),
         polymerName: "PVDF (Polyvinylidene fluoride)",
         solventName: "DMF (Dimethylformamide)",
-        discoveredParameters: []
+        discoveredParameters: [],
+        telemetrySynthesized: false
       };
 
-      onImportExperiment(fakeResult, selectedProjectId);
+      onImportExperiment([fakeResult], selectedProjectId);
       setParsedResults(prev => [...prev, fakeResult]);
       setIsLoading(false);
     }, 1200);
@@ -201,6 +214,56 @@ export default function ExcelImport({
         {/* Left Column: File uploader and results */}
         <div className="lg:col-span-7 bg-[#18181b] border border-[#27272a] rounded-2xl p-6 shadow-xl flex flex-col space-y-6">
           
+          {/* Guida rapida onboarding (utente alle prime armi) */}
+          {showGuide && (
+            <div className="relative rounded-xl border border-teal-500/20 bg-teal-500/5 p-4">
+              <button
+                onClick={() => setShowGuide(false)}
+                aria-label={t.importGuideDismiss}
+                className="absolute right-3 top-3 text-zinc-500 transition-colors hover:text-zinc-300"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="mb-2 flex items-center gap-2 text-teal-300">
+                <Info className="h-4 w-4" />
+                <h4 className="text-xs font-bold uppercase tracking-widest">{t.importGuideTitle}</h4>
+              </div>
+              <ul className="space-y-1 text-[11px] leading-relaxed text-zinc-300">
+                <li>{t.importGuideStep1}</li>
+                <li>{t.importGuideStep2}</li>
+                <li>{t.importGuideStep3}</li>
+              </ul>
+            </div>
+          )}
+
+          {/* Popup di aiuto contestuale (difficoltà rilevata) */}
+          {helpTip && (
+            <div
+              className={`relative flex items-start gap-2.5 rounded-xl border p-4 ${
+                helpTip === "noProject"
+                  ? "border-amber-500/25 bg-amber-500/5 text-amber-200"
+                  : "border-indigo-500/25 bg-indigo-500/5 text-indigo-200"
+              }`}
+            >
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="pr-6">
+                <h4 className="mb-0.5 text-xs font-bold">
+                  {helpTip === "noProject" ? t.helpNoProjectTitle : t.helpEmptyTitle}
+                </h4>
+                <p className="text-[11px] leading-relaxed opacity-90">
+                  {helpTip === "noProject" ? t.helpNoProjectBody : t.helpEmptyBody}
+                </p>
+              </div>
+              <button
+                onClick={() => setHelpTip(null)}
+                aria-label={t.helpDismiss}
+                className="absolute right-3 top-3 opacity-70 transition-opacity hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           {/* Step 1: Association project dropdown */}
           <div className="space-y-3 p-4 bg-[#0a0a0b]/80 border border-[#27272a] rounded-xl">
             <label className="block text-xs font-bold text-teal-400 uppercase tracking-widest">

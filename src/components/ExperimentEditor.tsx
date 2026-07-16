@@ -1,16 +1,6 @@
 import React, { useState } from "react";
 import { Experiment } from "../types";
 import { Save, X } from "lucide-react";
-
-interface Props {
-  experiment: Experiment;
-  onSave: (exp: Experiment) => void;
-  onClose: () => void;
-}
-
-import React, { useState } from "react";
-import { Experiment } from "../types";
-import { Save, X } from "lucide-react";
 import { TRANSLATIONS, Language } from "../lib/translations";
 
 interface Props {

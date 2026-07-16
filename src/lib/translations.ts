@@ -128,7 +128,42 @@ export const TRANSLATIONS = {
     // Experiment Editor
     inspectionData: "Ispezione Dati:",
     extractedMetadata: "Metadati Estratti",
-    close: "Chiudi"
+    close: "Chiudi",
+
+    // AI Widgets
+    aiOptTitle: "Ottimizzazione AI",
+    aiOptSelectFormulation: "Seleziona una formulazione per generare parametri ottimali.",
+    aiOptAnalyzing: "Elaborazione della formulazione...",
+    aiOptVoltage: "Voltaggio",
+    aiOptFlow: "Portata",
+    aiOptDistance: "Distanza",
+    aiOptError: "Impossibile generare i parametri ottimali.",
+    aiRetry: "Riprova",
+    aiChatTitle: "Assistente AI",
+    aiChatPlaceholder: "Chiedi all'AI...",
+    aiChatEmpty: "Fai una domanda sul processo di elettrofilatura.",
+    aiChatError: "Errore di comunicazione con l'assistente.",
+    aiInsightsTitle: "AI Insights",
+    aiAnalyzeTelemetry: "Analizza Telemetria",
+    aiAnalyzing: "Analisi in corso...",
+    aiSuggestionLabel: "Suggerimento AI",
+    aiReasoningLabel: "Ragionamento Scientifico",
+    aiQuotaError: "Limite di richieste AI raggiunto. Riprova più tardi.",
+    aiTimeoutError: "La richiesta ha superato il tempo massimo.",
+    aiNoTelemetry: "Nessun dato di telemetria disponibile da analizzare.",
+    aiCopy: "Copia risposta",
+
+    // Guida import & popup di aiuto
+    importGuideTitle: "Come importare (in 3 passi)",
+    importGuideStep1: "1. Seleziona il progetto a cui associare le run.",
+    importGuideStep2: "2. Trascina il file Excel (.xlsx) o clicca per sceglierlo.",
+    importGuideStep3: "3. Vai in Dashboard: i grafici della run compaiono in automatico.",
+    importGuideDismiss: "Ho capito",
+    helpNoProjectTitle: "Manca un passaggio",
+    helpNoProjectBody: "Prima di caricare, scegli un progetto dal menu qui sopra. Le run vanno sempre associate a un progetto.",
+    helpEmptyTitle: "File caricato, ma senza dati di telemetria",
+    helpEmptyBody: "Non ho trovato colonne numeriche riconoscibili (tensione, portata, tempo...). Ho generato una curva di esempio. Controlla che il foglio abbia intestazioni come \"Voltage/kV\", \"Flow/mL/h\", \"Time/sec\".",
+    helpDismiss: "Chiudi"
   },
   en: {
     // Sidebar
@@ -257,7 +292,42 @@ export const TRANSLATIONS = {
     // Experiment Editor
     inspectionData: "Data Inspection:",
     extractedMetadata: "Extracted Metadata",
-    close: "Close"
+    close: "Close",
+
+    // AI Widgets
+    aiOptTitle: "AI Optimization",
+    aiOptSelectFormulation: "Select a formulation to generate optimal parameters.",
+    aiOptAnalyzing: "Processing formulation...",
+    aiOptVoltage: "Voltage",
+    aiOptFlow: "Flow rate",
+    aiOptDistance: "Distance",
+    aiOptError: "Unable to generate optimal parameters.",
+    aiRetry: "Retry",
+    aiChatTitle: "AI Assistant",
+    aiChatPlaceholder: "Ask the AI...",
+    aiChatEmpty: "Ask a question about the electrospinning process.",
+    aiChatError: "Communication error with the assistant.",
+    aiInsightsTitle: "AI Insights",
+    aiAnalyzeTelemetry: "Analyze Telemetry",
+    aiAnalyzing: "Analyzing...",
+    aiSuggestionLabel: "AI Suggestion",
+    aiReasoningLabel: "Scientific Reasoning",
+    aiQuotaError: "AI request limit reached. Please try again later.",
+    aiTimeoutError: "The request exceeded the maximum time.",
+    aiNoTelemetry: "No telemetry data available to analyze.",
+    aiCopy: "Copy response",
+
+    // Import guide & help popup
+    importGuideTitle: "How to import (in 3 steps)",
+    importGuideStep1: "1. Select the project to associate the runs with.",
+    importGuideStep2: "2. Drag your Excel file (.xlsx) or click to choose it.",
+    importGuideStep3: "3. Go to the Dashboard: the run charts appear automatically.",
+    importGuideDismiss: "Got it",
+    helpNoProjectTitle: "One step missing",
+    helpNoProjectBody: "Before uploading, choose a project from the menu above. Runs must always be associated with a project.",
+    helpEmptyTitle: "File loaded, but without telemetry data",
+    helpEmptyBody: "I couldn't find recognizable numeric columns (voltage, flow, time...). I generated a sample curve. Make sure the sheet has headers like \"Voltage/kV\", \"Flow/mL/h\", \"Time/sec\".",
+    helpDismiss: "Close"
   },
   es: {
     // Sidebar
@@ -386,6 +456,41 @@ export const TRANSLATIONS = {
     // Experiment Editor
     inspectionData: "Inspección de Datos:",
     extractedMetadata: "Metadatos Extraídos",
-    close: "Cerrar"
+    close: "Cerrar",
+
+    // AI Widgets
+    aiOptTitle: "Optimización IA",
+    aiOptSelectFormulation: "Selecciona una formulación para generar parámetros óptimos.",
+    aiOptAnalyzing: "Procesando la formulación...",
+    aiOptVoltage: "Voltaje",
+    aiOptFlow: "Caudal",
+    aiOptDistance: "Distancia",
+    aiOptError: "No se pudieron generar los parámetros óptimos.",
+    aiRetry: "Reintentar",
+    aiChatTitle: "Asistente IA",
+    aiChatPlaceholder: "Pregunta a la IA...",
+    aiChatEmpty: "Haz una pregunta sobre el proceso de electrohilado.",
+    aiChatError: "Error de comunicación con el asistente.",
+    aiInsightsTitle: "AI Insights",
+    aiAnalyzeTelemetry: "Analizar Telemetría",
+    aiAnalyzing: "Analizando...",
+    aiSuggestionLabel: "Sugerencia IA",
+    aiReasoningLabel: "Razonamiento Científico",
+    aiQuotaError: "Límite de solicitudes de IA alcanzado. Inténtalo más tarde.",
+    aiTimeoutError: "La solicitud superó el tiempo máximo.",
+    aiNoTelemetry: "No hay datos de telemetría disponibles para analizar.",
+    aiCopy: "Copiar respuesta",
+
+    // Guía de importación y popup de ayuda
+    importGuideTitle: "Cómo importar (en 3 pasos)",
+    importGuideStep1: "1. Selecciona el proyecto al que asociar las corridas.",
+    importGuideStep2: "2. Arrastra el archivo Excel (.xlsx) o haz clic para elegirlo.",
+    importGuideStep3: "3. Ve al Tablero: los gráficos de la corrida aparecen automáticamente.",
+    importGuideDismiss: "Entendido",
+    helpNoProjectTitle: "Falta un paso",
+    helpNoProjectBody: "Antes de cargar, elige un proyecto en el menú de arriba. Las corridas siempre deben asociarse a un proyecto.",
+    helpEmptyTitle: "Archivo cargado, pero sin datos de telemetría",
+    helpEmptyBody: "No encontré columnas numéricas reconocibles (voltaje, flujo, tiempo...). Generé una curva de ejemplo. Asegúrate de que la hoja tenga encabezados como \"Voltage/kV\", \"Flow/mL/h\", \"Time/sec\".",
+    helpDismiss: "Cerrar"
   }
 };
