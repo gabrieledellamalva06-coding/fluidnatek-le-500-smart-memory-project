@@ -33,6 +33,11 @@ import ExperimentEditor from "./ExperimentEditor";
 import { AIOptimizationWidget } from "./AIOptimizationWidget";
 import { AIInsights } from "./AIInsights";
 import Fuse from "fuse.js";
+import {
+  getExperimentsForFormulation,
+  getAverageVoltage,
+  getAverageFlowRate
+} from "../utils/knowledgeEngine";
 
 interface DashboardProps {
   projects: Project[];
@@ -88,6 +93,25 @@ export default function Dashboard({
     () => (selectedExp ? formulations.find((f) => f.id === selectedExp.formulationId) ?? null : null),
     [selectedExp, formulations]
   );
+
+  const formulationExperiments = useMemo(() => {
+  if (!activeFormulation) return [];
+
+  return getExperimentsForFormulation(
+    activeFormulation.id,
+    experiments
+  );
+}, [activeFormulation, experiments]);
+
+const averageVoltage = useMemo(
+  () => getAverageVoltage(formulationExperiments),
+  [formulationExperiments]
+);
+
+const averageFlowRate = useMemo(
+  () => getAverageFlowRate(formulationExperiments),
+  [formulationExperiments]
+);
 
   // Extract all unique polymer names for filter dropdown
   const uniquePolymers = useMemo(() => {
@@ -275,6 +299,59 @@ export default function Dashboard({
 
       {/* Main Grid View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {activeFormulation && (
+  <div className="lg:col-span-3 bg-[#18181b] border border-teal-500/20 rounded-2xl p-5 mb-2">
+
+    <div className="flex items-center gap-2 mb-4">
+      <Zap className="w-5 h-5 text-teal-400" />
+      <h3 className="text-sm font-bold uppercase tracking-wider text-teal-400">
+        Smart Knowledge
+      </h3>
+    </div>
+
+    <div className="grid grid-cols-4 gap-4">
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Polymer
+        </div>
+        <div className="text-white font-semibold">
+          {activeFormulation.polymerName}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Experiments
+        </div>
+        <div className="text-white font-semibold">
+          {formulationExperiments.length}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Avg Voltage
+        </div>
+        <div className="text-teal-400 font-bold">
+          {averageVoltage?.toFixed(2) ?? "--"} kV
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Avg Flow
+        </div>
+        <div className="text-teal-400 font-bold">
+          {averageFlowRate?.toFixed(2) ?? "--"} mL/h
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+)}
         
         {/* Left Column: Experiments list */}
         <div className="lg:col-span-1 bg-[#18181b] border border-[#27272a] rounded-2xl p-5 flex flex-col space-y-4 max-h-[800px] overflow-hidden">

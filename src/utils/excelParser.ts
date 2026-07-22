@@ -1,18 +1,24 @@
-import * as XLSX from "xlsx";
-import { TelemetryRecord } from "../types";
+  import {
+  registerMaterial,
+  findMaterial
+} from "./materialRegistry";
+  import * as XLSX from "xlsx";
+  import { TelemetryRecord } from "../types";
+  import { detectParameter } from "./parameterMatcher";
+  import { registerParameter } from "./parameterRegistry";
 
-export interface ParsedExcelResult {
-  id: string;
-  operationIdentifier: string;
-  sourceFile: string;
-  operatorComments: string;
-  metadata: Record<string, string>;
-  telemetryData: TelemetryRecord[];
-  polymerName?: string;
-  solventName?: string;
-  discoveredParameters: string[];
-  // Parametri reali della run (quando presenti nel foglio), usati da App per
-  // popolare l'esperimento invece dei default.
+  export interface ParsedExcelResult {
+    id: string;
+    operationIdentifier: string;
+    sourceFile: string;
+    operatorComments: string;
+    metadata: Record<string, string>;
+    telemetryData: TelemetryRecord[];
+    polymerName?: string;
+    solventName?: string;
+    discoveredParameters: string[];
+    // Parametri reali della run (quando presenti nel foglio), usati da App per
+    // popolare l'esperimento invece dei default.
   distanceMm?: number;
   jetStabilityGrade?: number;
   injectorType?: string;
@@ -256,19 +262,45 @@ function buildProcessRuns(
   return results;
 }
 
+
 // ---------------------------------------------------------------------------
 // PATH 2 — Serie temporale: colonne di telemetria (voltaggio/portata nel tempo).
 // ---------------------------------------------------------------------------
 function classifyHeader(raw: string): keyof TelemetryRecord | null {
-  const s = raw.trim().toLowerCase();
-  if (!s) return null;
-  if (s === "t" || /(^|[^a-z])(time|tempo|tiempo|sec|seg|timestamp)([^a-z]|$)/.test(s)) return "timestampSec";
-  if (s === "v" || s.includes("voltag") || s.includes("tension") || s.includes("tensión") || s.includes("kv") || s.includes("hv")) return "voltageKv";
-  if (s === "q" || s.includes("flow") || s.includes("caudal") || s.includes("portata") || s.includes("ml/h") || s.includes("rate")) return "flowRateMlH";
-  if (s.includes("temperatur") || s.includes("temp")) return "temperatureC";
-  if (s.includes("humid") || s.includes("umidit") || s.includes("humedad") || s.includes("rh")) return "humidityPct";
-  if (s.includes("distan") || s.includes("gap")) return "distanceMm";
-  return null;
+
+ const detected = detectParameter(raw);
+
+if (detected.parameter) {
+  registerParameter(
+    detected.parameter,
+    raw,
+    detected.confidence
+  );
+}
+
+switch (detected.parameter) {
+  case "time":
+    return "timestampSec";
+
+  case "voltage":
+    return "voltageKv";
+
+  case "flow":
+    return "flowRateMlH";
+
+  case "temperature":
+    return "temperatureC";
+
+  case "humidity":
+    return "humidityPct";
+
+  case "distance":
+    return "distanceMm";
+
+  default:
+    return null;
+}
+
 }
 
 function extractTimeSeries(rows: any[]): TelemetryRecord[] {
@@ -363,27 +395,73 @@ export function parseWorkbook(wb: XLSX.WorkBook, fileName: string): ParsedExcelR
     extractMetadata(rows, metadata, comments);
   }
 
-  const polymerName = pick(metadata, ["polim", "polím", "polym"]);
-  const solventName = pick(metadata, ["solv", "disolv"]);
-  const operationIdentifier =
-    pick(metadata, ["run", "corrida", "operazione", "operation", "fórmula", "formula"]) ||
-    fileName.replace(/\.(xlsx|xls|xlsm)$/i, "");
+let polymerName = pick(metadata, ["polim", "polím", "polym"]);
+let solventName = pick(metadata, ["solv", "disolv"]);
 
-  const telemetrySynthesized = telemetry.length === 0;
-  if (telemetrySynthesized) telemetry = generateSampleTelemetry();
+// Se il materiale è già noto usa il nome canonico.
+if (polymerName) {
+  const found = findMaterial("polymer", polymerName);
 
-  return [{
-    id: crypto.randomUUID(),
-    operationIdentifier,
-    sourceFile: fileName,
-    operatorComments: comments.join(" | "),
-    metadata,
-    telemetryData: telemetry,
-    polymerName,
-    solventName,
-    discoveredParameters: Object.keys(metadata),
-    telemetrySynthesized,
-  }];
+  if (found) {
+    polymerName = found.canonical;
+  } else {
+    registerMaterial(
+      "polymer",
+      polymerName,
+      polymerName,
+      1
+    );
+  }
+}
+
+if (solventName) {
+  const found = findMaterial("solvent", solventName);
+
+  if (found) {
+    solventName = found.canonical;
+  } else {
+    registerMaterial(
+      "solvent",
+      solventName,
+      solventName,
+      1
+    );
+  }
+}
+
+const operationIdentifier =
+  pick(metadata, [
+    "run",
+    "corrida",
+    "operazione",
+    "operation",
+    "fórmula",
+    "formula"
+  ]) ||
+  fileName.replace(/\.(xlsx|xls|xlsm)$/i, "");
+
+const telemetrySynthesized = telemetry.length === 0;
+
+if (telemetrySynthesized) {
+  telemetry = generateSampleTelemetry();
+}
+
+for (const key of Object.keys(metadata)) {
+  detectParameter(key);
+}
+
+return [{
+  id: crypto.randomUUID(),
+  operationIdentifier,
+  sourceFile: fileName,
+  operatorComments: comments.join(" | "),
+  metadata,
+  telemetryData: telemetry,
+  polymerName,
+  solventName,
+  discoveredParameters: Object.keys(metadata),
+  telemetrySynthesized,
+}];
 }
 
 export async function parseElectrospinningExcel(file: File): Promise<ParsedExcelResult[]> {

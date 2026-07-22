@@ -7,7 +7,11 @@ import ExcelImport from "./components/ExcelImport";
 import { Project, Formulation, Experiment } from "./types";
 import { SEED_PROJECTS, SEED_FORMULATIONS, SEED_EXPERIMENTS } from "./seedData";
 import { ParsedExcelResult } from "./utils/excelParser";
+import { registerMaterial } from "./utils/materialRegistry";
+import {removeMaterial} from "./utils/materialRegistry";
+import { registerParameter } from "./utils/parameterRegistry";
 import { Language } from "./lib/translations";
+import ParameterLearningPanel from "./components/ParameterLearningPanel";
 
 export default function App() {
   const [currentView, setCurrentView] = useState("DASHBOARD");
@@ -76,13 +80,33 @@ export default function App() {
     setProjects((prev) => [newProj, ...prev]);
   };
 
-  const handleAddFormulation = (f: Omit<Formulation, "id">) => {
-    const newForm: Formulation = {
-      ...f,
-      id: `FORM-${Date.now()}`
-    };
-    setFormulations((prev) => [newForm, ...prev]);
+const handleAddFormulation = (f: Omit<Formulation, "id">) => {
+
+  if (f.polymerName) {
+    registerMaterial(
+      "polymer",
+      f.polymerName,
+      f.polymerName,
+      1
+    );
+  }
+
+  if (f.solvent) {
+    registerMaterial(
+      "solvent",
+      f.solvent,
+      f.solvent,
+      1
+    );
+  }
+
+  const newForm: Formulation = {
+    ...f,
+    id: `FORM-${Date.now()}`
   };
+
+  setFormulations((prev) => [newForm, ...prev]);
+};
 
   const handleAddExperiment = (exp: Omit<Experiment, "id" | "ingestedAt" | "telemetryData">) => {
     // Generate a beautiful, natural fluctuations telemetry curve
@@ -98,6 +122,34 @@ export default function App() {
         distanceMm: exp.distanceMm
       };
     });
+
+    // Learning: store any new metadata parameter names
+if (exp.metadata) {
+  Object.keys(exp.metadata).forEach((key) => {
+    registerParameter(key, key, 1);
+  });
+}
+
+// Learning: reinforce materials used by this experiment
+const formulation = formulations.find(
+  (f) => f.id === exp.formulationId
+);
+
+if (formulation) {
+  registerMaterial(
+    "polymer",
+    formulation.polymerName,
+    formulation.polymerName,
+    1
+  );
+
+  registerMaterial(
+    "solvent",
+    formulation.solvent,
+    formulation.solvent,
+    1
+  );
+}
 
     const newExp: Experiment = {
       ...exp,
@@ -129,15 +181,16 @@ export default function App() {
 
       if (!matchedForm) {
         matchedForm = {
-          id: `FORM-${Date.now()}-${idx}`,
-          projectId: targetProjectId,
-          polymerName: parsed.polymerName || "Nylon-6",
-          solvent: parsed.solventName || "Acetic Acid",
-          solidsContentPct: 15.0,
-          viscosityMpas: 400,
-          conductivityUsCm: 5.0,
-          densityGcm3: 1.05
-        };
+  id: `FORM-${Date.now()}-${idx}`,
+  projectId: targetProjectId,
+  polymerName: parsed.polymerName || "Nylon-6",
+  solvent: parsed.solventName || "Acetic Acid",
+  solidsContentPct: 15.0,
+  viscosityMpas: 400,
+  conductivityUsCm: 5.0,
+  densityGcm3: 1.05,
+  materialBatchIds: []
+};
         workingForms.push(matchedForm);
         createdForms.push(matchedForm);
       }
@@ -194,23 +247,29 @@ export default function App() {
     setFormulations((prev) => prev.filter((f) => f.id !== id));
     setExperiments((prev) => prev.filter((e) => e.formulationId !== id));
   };
+   
+  removeMaterial("solvent", "mag");
 
   // View router switcher
   const renderMainView = () => {
     switch (currentView) {
       case "DASHBOARD":
-        return (
-          <Dashboard
-            projects={projects}
-            formulations={formulations}
-            experiments={experiments}
-            selectedExp={selectedExp}
-            onSelectExp={(exp) => setSelectedExpId(exp.id)}
-            onDeleteExp={handleDeleteExperiment}
-            onUpdateExp={handleUpdateExperiment}
-            lang={lang}
-          />
-        );
+  return (
+    <div className="flex flex-col gap-6 p-6 overflow-auto">
+      <Dashboard
+        projects={projects}
+        formulations={formulations}
+        experiments={experiments}
+        selectedExp={selectedExp}
+        onSelectExp={(exp) => setSelectedExpId(exp.id)}
+        onDeleteExp={handleDeleteExperiment}
+        onUpdateExp={handleUpdateExperiment}
+        lang={lang}
+      />
+
+      <ParameterLearningPanel />
+    </div>
+  );
       case "FORMULATIONS":
         return (
           <Formulations

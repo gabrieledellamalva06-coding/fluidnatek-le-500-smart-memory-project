@@ -18,6 +18,8 @@ import { Formulation, Project } from "../types";
 import { TRANSLATIONS, Language } from "../lib/translations";
 import { db, auth } from "../lib/firebase";
 import { collection, doc, setDoc } from "firebase/firestore";
+import { renderDetectedParameters } from "../utils/renderDetectedParameters";
+
 
 interface ExcelImportProps {
   projects: Project[];

@@ -96,31 +96,34 @@ export const SEED_FORMULATIONS: Formulation[] = [
   {
     id: "FORM-NYLON-1",
     projectId: "PRJ-NYLON",
+    materialBatchIds: [],
     polymerName: "Nylon-6",
-    solvent: "Acetic Acid",
-    solidsContentPct: 15.0,
-    viscosityMpas: 450,
-    conductivityUsCm: 12.4,
+    solvent: "Formic Acid",
+    solidsContentPct: 18,
+    viscosityMpas: 720,
+    conductivityUsCm: 4.8,
     densityGcm3: 1.08
   },
   {
     id: "FORM-PVDF-1",
     projectId: "PRJ-PVDF",
+    materialBatchIds: [],
     polymerName: "PVDF (Polyvinylidene fluoride)",
-    solvent: "DMF (Dimethylformamide)",
-    solidsContentPct: 18.0,
-    viscosityMpas: 680,
-    conductivityUsCm: 8.2,
+    solvent: "DMF / Acetone",
+    solidsContentPct: 16,
+    viscosityMpas: 610,
+    conductivityUsCm: 7.2,
     densityGcm3: 1.15
   },
   {
     id: "FORM-PCL-1",
     projectId: "PRJ-PCL",
+    materialBatchIds: [],
     polymerName: "PCL (Polycaprolactone)",
-    solvent: "Chloroform",
-    solidsContentPct: 10.0,
-    viscosityMpas: 320,
-    conductivityUsCm: 1.1,
+    solvent: "DCM / DMF",
+    solidsContentPct: 12,
+    viscosityMpas: 380,
+    conductivityUsCm: 3.9,
     densityGcm3: 1.22
   }
 ];

@@ -3,6 +3,7 @@ import { FolderPlus, Beaker, Layers, Plus, AlertCircle, Trash2, Tag } from "luci
 import { Project, Formulation } from "../types";
 import { AVAILABLE_POLYMERS, AVAILABLE_SOLVENTS } from "../seedData";
 import { TRANSLATIONS, Language } from "../lib/translations";
+import MaterialAutocomplete from "./MaterialAutocomplete";
 
 interface FormulationsProps {
   projects: Project[];
@@ -34,7 +35,7 @@ export default function Formulations({
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedPolymer, setSelectedPolymer] = useState(AVAILABLE_POLYMERS[0]);
   const [selectedSolvent, setSelectedSolvent] = useState(AVAILABLE_SOLVENTS[0]);
-  
+
   // Custom manual insertion overrides
   const [customPolymer, setCustomPolymer] = useState("");
   const [customSolvent, setCustomSolvent] = useState("");
@@ -73,11 +74,11 @@ export default function Formulations({
     setFormulationError("");
 
     if (!selectedProjectId) {
-      setFormulationError(lang === "it" 
-        ? "Seleziona un progetto valido prima dell'invio." 
-        : lang === "es" 
-        ? "Seleccione un proyecto válido antes del envío." 
-        : "Select a valid project before submitting.");
+      setFormulationError(lang === "it"
+        ? "Seleziona un progetto valido prima dell'invio."
+        : lang === "es"
+          ? "Seleccione un proyecto válido antes del envío."
+          : "Select a valid project before submitting.");
       return;
     }
 
@@ -86,20 +87,20 @@ export default function Formulations({
     const finalSolvent = selectedSolvent === "CUSTOM" ? customSolvent.trim() : selectedSolvent;
 
     if (!finalPolymer) {
-      setFormulationError(lang === "it" 
-        ? "Inserisci il nome del polimero personalizzato." 
-        : lang === "es" 
-        ? "Introduzca el nombre del polímero personalizado." 
-        : "Please enter the custom polymer name.");
+      setFormulationError(lang === "it"
+        ? "Inserisci il nome del polimero personalizzato."
+        : lang === "es"
+          ? "Introduzca el nombre del polímero personalizado."
+          : "Please enter the custom polymer name.");
       return;
     }
 
     if (!finalSolvent) {
-      setFormulationError(lang === "it" 
-        ? "Inserisci il nome del solvente personalizzato." 
-        : lang === "es" 
-        ? "Introduzca el nombre del solvente personalizado." 
-        : "Please enter the custom solvent name.");
+      setFormulationError(lang === "it"
+        ? "Inserisci il nome del solvente personalizzato."
+        : lang === "es"
+          ? "Introduzca el nombre del solvente personalizado."
+          : "Please enter the custom solvent name.");
       return;
     }
 
@@ -110,7 +111,9 @@ export default function Formulations({
       solidsContentPct: solidsContent,
       viscosityMpas: viscosity,
       conductivityUsCm: conductivity,
-      densityGcm3: density
+      densityGcm3: density,
+
+      materialBatchIds: []
     });
 
     // Reset formulation params
@@ -126,7 +129,7 @@ export default function Formulations({
 
   return (
     <div id="formulations-view" className="flex-1 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5] flex flex-col space-y-8 select-none">
-      
+
       {/* Title Header */}
       <div className="flex items-center gap-3">
         <Beaker className="w-8 h-8 text-teal-400" />
@@ -137,10 +140,10 @@ export default function Formulations({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Creation Forms Column */}
         <div className="lg:col-span-5 flex flex-col space-y-6">
-          
+
           {/* Create Project Card */}
           <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5 shadow-lg">
             <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center gap-2">
@@ -232,74 +235,29 @@ export default function Formulations({
                   <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
                     {t.polymerLabel}
                   </label>
-                  <select
-                    id="poly-select-box"
+                  <MaterialAutocomplete
+                    type="polymer"
                     value={selectedPolymer}
-                    onChange={(e) => setSelectedPolymer(e.target.value)}
-                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 cursor-pointer"
-                  >
-                    {AVAILABLE_POLYMERS.map((p) => (
-                      <option key={p} value={p} className="bg-[#18181b]">{p}</option>
-                    ))}
-                    <option value="CUSTOM" className="bg-[#18181b] text-teal-400 font-bold">
-                      + {lang === "it" ? "Altro polimero..." : lang === "es" ? "Otro polímero..." : "Other polymer..."}
-                    </option>
-                  </select>
+                    onChange={setSelectedPolymer}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
                     {t.solventLabel}
                   </label>
-                  <select
-                    id="solvent-select-box"
+                  <MaterialAutocomplete
+                    type="solvent"
                     value={selectedSolvent}
-                    onChange={(e) => setSelectedSolvent(e.target.value)}
-                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 cursor-pointer"
-                  >
-                    {AVAILABLE_SOLVENTS.map((s) => (
-                      <option key={s} value={s} className="bg-[#18181b]">{s}</option>
-                    ))}
-                    <option value="CUSTOM" className="bg-[#18181b] text-teal-400 font-bold">
-                      + {lang === "it" ? "Altro solvente..." : lang === "es" ? "Otro solvente..." : "Other solvent..."}
-                    </option>
-                  </select>
+                    onChange={setSelectedSolvent}
+                  />
                 </div>
               </div>
 
-              {/* Collapsible custom manual input overrides */}
-              {selectedPolymer === "CUSTOM" && (
-                <div className="p-3.5 bg-[#0a0a0b] rounded-xl border border-teal-500/20 space-y-1.5 animate-fadeIn">
-                  <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-wider">
-                    {lang === "it" ? "Specifica Polimero Personalizzato" : lang === "es" ? "Especificar Polímero Personalizado" : "Specify Custom Polymer"}
-                  </label>
-                  <input
-                    id="custom-polymer-input"
-                    type="text"
-                    placeholder={t.customPolymerPlaceholder}
-                    value={customPolymer}
-                    onChange={(e) => setCustomPolymer(e.target.value)}
-                    className="w-full bg-[#18181b] text-white text-xs px-3 py-2 rounded-lg border border-[#27272a] focus:outline-none focus:border-teal-400 font-medium"
-                  />
-                </div>
-              )}
+              
 
-              {selectedSolvent === "CUSTOM" && (
-                <div className="p-3.5 bg-[#0a0a0b] rounded-xl border border-teal-500/20 space-y-1.5 animate-fadeIn">
-                  <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-wider">
-                    {lang === "it" ? "Specifica Solvente Personalizzato" : lang === "es" ? "Especificar Solvente Personalizado" : "Specify Custom Solvent"}
-                  </label>
-                  <input
-                    id="custom-solvent-input"
-                    type="text"
-                    placeholder={t.customSolventPlaceholder}
-                    value={customSolvent}
-                    onChange={(e) => setCustomSolvent(e.target.value)}
-                    className="w-full bg-[#18181b] text-white text-xs px-3 py-2 rounded-lg border border-[#27272a] focus:outline-none focus:border-teal-400 font-medium"
-                  />
-                </div>
-              )}
-
+              
+                
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
