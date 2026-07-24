@@ -3,6 +3,8 @@
   findMaterial
 } from "./materialRegistry";
   import * as XLSX from "xlsx";
+  import type { WorkbookLike } from "../core/extractor/workbookExtractor";
+import { runIngestionPipeline } from "../core/pipeline/ingestionPipeline";
   import { TelemetryRecord } from "../types";
   import { detectParameter } from "./parameterMatcher";
   import { registerParameter } from "./parameterRegistry";
@@ -464,19 +466,153 @@ return [{
 }];
 }
 
-export async function parseElectrospinningExcel(file: File): Promise<ParsedExcelResult[]> {
+/**
+ * Converts the XLSX workbook into the structural contract expected by
+ * the Core Engine without coupling the Core to the XLSX library.
+ */
+function createCoreWorkbook(
+  workbook: XLSX.WorkBook
+): WorkbookLike {
+  const sheets: WorkbookLike["Sheets"] = {};
+
+  for (const sheetName of workbook.SheetNames) {
+    const sourceSheet = workbook.Sheets[sheetName];
+
+    if (!sourceSheet) {
+      continue;
+    }
+
+    const compatibleSheet: WorkbookLike["Sheets"][string] = {};
+
+    for (const [key, value] of Object.entries(sourceSheet)) {
+      compatibleSheet[key] = value;
+    }
+
+    sheets[sheetName] = compatibleSheet;
+  }
+
+  return {
+    SheetNames: [...workbook.SheetNames],
+    Sheets: sheets
+  };
+}
+
+export async function parseElectrospinningExcel(
+  file: File
+): Promise<ParsedExcelResult[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+
+    reader.onload = async (event) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        resolve(parseWorkbook(workbook, file.name));
-      } catch (err) {
-        reject(err);
+        const result = event.target?.result;
+
+        if (!(result instanceof ArrayBuffer)) {
+          reject(
+            new Error(
+              `Formato di lettura non valido per il file "${file.name}".`
+            )
+          );
+          return;
+        }
+
+        const data = new Uint8Array(result);
+        const workbook = XLSX.read(data, {
+          type: "array"
+        });
+
+        /*
+         * Legacy parser.
+         *
+         * Remains the current producer of ParsedExcelResult so the existing
+         * UI, Dashboard and Firestore import flow remain compatible.
+         */
+        const parsedResults = parseWorkbook(
+          workbook,
+          file.name
+        );
+
+        /*
+         * New Core Engine.
+         *
+         * Runs in parallel for diagnostics and architectural validation.
+         * A Core failure must not interrupt the existing user import flow
+         * during this transitional integration phase.
+         */
+        try {
+          const ingestionResult =
+            await runIngestionPipeline(
+             createCoreWorkbook(workbook)
+          );
+
+          console.groupCollapsed(
+            `[Fluidnatek Core Engine] ${file.name}`
+          );
+
+          console.info(
+            "Pipeline success:",
+            ingestionResult.success
+          );
+
+          console.info(
+            "Resolved headers:",
+            ingestionResult.resolvedHeaders
+          );
+
+          console.info(
+            "Unknown headers:",
+            ingestionResult.unknownHeaders
+          );
+
+          console.info(
+            "Resolved materials:",
+            ingestionResult.resolvedMaterials
+          );
+
+          console.info(
+            "Warnings:",
+            ingestionResult.warnings
+          );
+
+          console.info(
+            "Errors:",
+            ingestionResult.errors
+          );
+
+          console.info(
+            "Complete ingestion result:",
+            ingestionResult
+          );
+
+          console.groupEnd();
+        } catch (coreError: unknown) {
+          console.warn(
+            "Core Engine diagnostics failed. " +
+              "The compatible import result was preserved.",
+            coreError
+          );
+        }
+
+        resolve(parsedResults);
+      } catch (error: unknown) {
+        reject(
+          error instanceof Error
+            ? error
+            : new Error(
+                `Errore sconosciuto durante la lettura di "${file.name}".`
+              )
+        );
       }
     };
-    reader.onerror = () => reject(new Error("Impossibile leggere il file"));
+
+    reader.onerror = () => {
+      reject(
+        new Error(
+          `Impossibile leggere il file "${file.name}".`
+        )
+      );
+    };
+
     reader.readAsArrayBuffer(file);
   });
 }
