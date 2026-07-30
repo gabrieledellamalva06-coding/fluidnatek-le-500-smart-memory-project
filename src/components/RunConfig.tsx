@@ -11,14 +11,45 @@ import {
   CloudLightning,
   Play
 } from "lucide-react";
-import { Project, Formulation, Experiment, AISuggestion } from "../types";
-import { TRANSLATIONS, Language } from "../lib/translations";
+import type {
+  Project,
+  Formulation,
+  Experiment,
+  AISuggestion,
+} from "../types";
+
+import type {
+  CreateExperimentInput,
+} from "../application/experiments/experiment.mapper";
+
+import type {
+  ProcessabilityGrade,
+} from "../core/types/processRecord";
+import { TRANSLATIONS, type Language } from "../lib/translations";
+
+type InjectorType =
+  | "Single Emitter"
+  | "Coaxial"
+  | "Multi-emitter (x4)"
+  | "Multi-needle (x8)";
+
+type CollectorType =
+  | "Flat Plate"
+  | "Rotating Drum"
+  | "Mandrel"
+  | "Y-axis Stage";
 
 interface RunConfigProps {
   projects: Project[];
+
   formulations: Formulation[];
+
   experiments: Experiment[];
-  onAddExperiment: (exp: Omit<Experiment, "id" | "ingestedAt" | "telemetryData">) => void;
+
+  onAddExperiment: (
+    input: CreateExperimentInput
+  ) => Promise<void>;
+
   lang: Language;
 }
 
@@ -34,12 +65,21 @@ export default function RunConfig({
   // Config state
   const [selectedFormulationId, setSelectedFormulationId] = useState("");
   const [runName, setRunName] = useState("");
-  const [injectorType, setInjectorType] = useState<any>("Single Emitter");
-  const [collectorType, setCollectorType] = useState<any>("Flat Plate");
+  const [injectorType, setInjectorType] =
+  useState<InjectorType>(
+    "Single Emitter"
+  );
+  const [collectorType, setCollectorType] =
+  useState<CollectorType>(
+    "Flat Plate"
+  );
   const [distanceMm, setDistanceMm] = useState<number>(150);
   const [voltageKv, setVoltageKv] = useState<number>(15.0);
   const [flowRateMlH, setFlowRateMlH] = useState<number>(1.0);
-  const [jetStability, setJetStability] = useState<any>(4);
+  const [jetStability, setJetStability] =
+    useState<ProcessabilityGrade>(4);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [operatorComments, setOperatorComments] = useState("");
 
   // AI Suggestion State
@@ -112,8 +152,12 @@ export default function RunConfig({
 
       const data = await response.json();
       setAiSuggestion(data);
-    } catch (err: any) {
-      setAiError(err.message || "Error contacting AI service.");
+    } catch (error: unknown) {
+      setAiError(
+        error instanceof Error
+          ? error.message
+          : "Error contacting AI service."
+      );
     } finally {
       setIsAiLoading(false);
     }
@@ -127,25 +171,54 @@ export default function RunConfig({
     }
   };
 
-  const handleSaveConfig = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFormulationId || !runName.trim()) return;
+  const handleSaveConfig = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
 
-    onAddExperiment({
-      formulationId: selectedFormulationId,
-      operationIdentifier: runName.trim(),
-      machineModel: "Fluidnatek LE-500",
-      injectorType,
-      collectorType,
-      distanceMm,
-      jetStabilityGrade: jetStability,
-      operatorComments: operatorComments.trim() || `${lang === "it" ? "Prova registrata con successo" : "Run recorded successfully"}`,
-      sourceFile: "Manual Input"
-    });
+    if (
+      !selectedFormulationId ||
+      !runName.trim() ||
+      isSaving
+    ) {
+      return;
+    }
 
-    // Reset Form
-    setRunName("");
-    setOperatorComments("");
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      await onAddExperiment({
+        formulationId: selectedFormulationId,
+        operationIdentifier: runName.trim(),
+        machineModel: "Fluidnatek LE-500",
+        injectorType,
+        collectorType,
+        voltageKv,
+        flowRateMlH,
+        distanceMm,
+        jetStabilityGrade: jetStability,
+        operatorComments:
+          operatorComments.trim() ||
+          (lang === "it"
+            ? "Prova registrata con successo"
+            : lang === "es"
+              ? "Prueba registrada correctamente"
+              : "Run recorded successfully"),
+        sourceFile: "Manual Input",
+      });
+
+      setRunName("");
+      setOperatorComments("");
+    } catch (error: unknown) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "Impossibile registrare l'esperimento."
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -217,7 +290,18 @@ export default function RunConfig({
                     <select
                       id="injector-select"
                       value={injectorType}
-                      onChange={(e) => setInjectorType(e.target.value)}
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        if (
+                          value === "Single Emitter" ||
+                          value === "Coaxial" ||
+                          value === "Multi-emitter (x4)" ||
+                          value === "Multi-needle (x8)"
+                        ) {
+                          setInjectorType(value);
+                        }
+                      }}
                       className="w-full bg-[#0a0a0b] text-[#f4f4f5] text-sm px-3 py-2 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
                     >
                       <option value="Single Emitter" className="bg-[#18181b]">Single Emitter ({lang === "it" ? "Singolo ago" : lang === "es" ? "Aguja única" : "Single needle"})</option>
@@ -236,7 +320,18 @@ export default function RunConfig({
                     <select
                       id="collector-select"
                       value={collectorType}
-                      onChange={(e) => setCollectorType(e.target.value)}
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        if (
+                          value === "Flat Plate" ||
+                          value === "Rotating Drum" ||
+                          value === "Mandrel" ||
+                          value === "Y-axis Stage"
+                        ) {
+                          setCollectorType(value);
+                        }
+                      }}
                       className="w-full bg-[#0a0a0b] text-[#f4f4f5] text-sm px-3 py-2 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
                     >
                       <option value="Flat Plate" className="bg-[#18181b]">Flat Plate ({lang === "it" ? "Piastra fissa" : lang === "es" ? "Placa plana fija" : "Fixed flat plate"})</option>
@@ -305,7 +400,7 @@ export default function RunConfig({
                     {t.processabilityRating}
                   </label>
                   <div className="grid grid-cols-5 gap-2">
-                    {[1, 2, 3, 4, 5].map((g) => {
+                    {([1, 2, 3, 4, 5] as const).map((g) => {
                       const labelsIt = ["Gocciolamento", "Instabile", "Accettabile", "Stabile", "Taylor Cone Eccellente"];
                       const labelsEs = ["Goteo", "Inestable", "Aceptable", "Estable", "Cono Taylor Excelente"];
                       const labelsEn = ["Dripping", "Unstable", "Acceptable", "Stable", "Excellent Taylor Cone"];
@@ -347,13 +442,36 @@ export default function RunConfig({
                   />
                 </div>
 
+                {saveError && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400"
+                  >
+                    {saveError}
+                  </div>
+                )}
+
                 <button
                   id="submit-run-btn"
                   type="submit"
-                  className="w-full bg-teal-500 hover:bg-teal-400 text-black font-extrabold py-3 px-4 rounded-xl shadow-lg hover:brightness-110 active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={isSaving}
+                  className="w-full bg-teal-500 hover:bg-teal-400 text-black font-extrabold py-3 px-4 rounded-xl shadow-lg hover:brightness-110 active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  {t.saveAndStartButton}
+                  {isSaving ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+                      {lang === "it"
+                        ? "Registrazione in corso..."
+                        : lang === "es"
+                          ? "Registrando..."
+                          : "Saving..."}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 fill-current" />
+                      {t.saveAndStartButton}
+                    </>
+                  )}
                 </button>
 
               </div>

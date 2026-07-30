@@ -1,15 +1,19 @@
-import React from "react";
 import {
-  LayoutDashboard,
-  Beaker,
   Activity,
+  Beaker,
   FileSpreadsheet,
+  Globe,
   Layers,
+  LayoutDashboard,
   Settings,
-  Globe
 } from "lucide-react";
+import { motion } from "motion/react";
+
 import FluidnatekLogo from "./FluidnatekLogo";
-import { TRANSLATIONS, Language } from "../lib/translations";
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
 
 interface SidebarProps {
   currentView: string;
@@ -26,156 +30,108 @@ export default function Sidebar({
   projectsCount,
   experimentsCount,
   lang,
-  onLanguageChange
+  onLanguageChange,
 }: SidebarProps) {
   const t = TRANSLATIONS[lang];
 
-  // LE500_CONSOLE removed as requested
   const menuItems = [
-    {
-      id: "DASHBOARD",
-      label: t.dashboard,
-      icon: LayoutDashboard,
-      badge: experimentsCount > 0 ? String(experimentsCount) : undefined
-    },
-    {
-      id: "FORMULATIONS",
-      label: t.formulations,
-      icon: Beaker,
-      badge: projectsCount > 0 ? String(projectsCount) : undefined
-    },
-    {
-      id: "RUN_CONFIG",
-      label: t.runConfig,
-      icon: Activity,
-      badge: "AI"
-    },
-    {
-      id: "EXCEL_IMPORT",
-      label: t.excelImport,
-      icon: FileSpreadsheet
-    }
+    { id: "DASHBOARD", label: t.dashboard, icon: LayoutDashboard, badge: experimentsCount > 0 ? String(experimentsCount) : undefined },
+    { id: "FORMULATIONS", label: t.formulations, icon: Beaker, badge: projectsCount > 0 ? String(projectsCount) : undefined },
+    { id: "RUN_CONFIG", label: t.runConfig, icon: Activity, badge: "AI" },
+    { id: "EXCEL_IMPORT", label: t.excelImport, icon: FileSpreadsheet },
   ];
 
   return (
-    <div id="app-sidebar" className="w-80 bg-[#0d0d0f] border-r border-[#27272a] flex flex-col h-screen text-[#f4f4f5] shrink-0 select-none">
-      {/* Brand Header */}
-      <div className="p-6 border-b border-[#27272a]">
-        <FluidnatekLogo variant="horizontal" className="h-10" />
-        <div className="mt-3 flex items-center justify-between bg-[#18181b] rounded-lg px-2.5 py-1.5 border border-[#27272a]">
-          <span className="text-[9px] text-zinc-500 font-mono font-bold uppercase tracking-widest">{t.enclosureModel}</span>
-          <span className="text-[10px] text-teal-400 font-bold font-mono animate-pulse">{t.activeChamber}</span>
+    <aside id="app-sidebar" className="flex h-screen w-[228px] shrink-0 select-none flex-col border-r border-white/[0.07] bg-[#0b0d11] text-zinc-100">
+      <div className="border-b border-white/[0.06] px-4 py-4">
+        <FluidnatekLogo variant="horizontal" className="h-8" />
+        <div className="mt-3 flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-1.5">
+          <span className="font-mono text-[8px] font-semibold uppercase tracking-[0.18em] text-zinc-600">{t.enclosureModel}</span>
+          <span className="font-mono text-[9px] font-semibold text-cyan-300">{t.activeChamber}</span>
         </div>
       </div>
 
-      {/* Main Navigation */}
-      <div className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-        <div className="text-[10px] font-semibold text-zinc-500 tracking-wider uppercase px-3 mb-2">
-          SISTEMA DI CONTROLLO
-        </div>
-        {menuItems.map((item) => {
-          const IconComponent = item.icon;
-          const isActive = currentView === item.id;
-          return (
-            <button
-              key={item.id}
-              id={`sidebar-nav-${item.id.toLowerCase()}`}
-              onClick={() => onViewChange(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all duration-200 group text-left ${
-                isActive
-                  ? "bg-teal-500/10 text-teal-400 font-medium border border-teal-500/20 pl-3"
-                  : "text-zinc-400 hover:bg-[#18181b] hover:text-white"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <IconComponent
-                  className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-teal-400" : "text-zinc-400 group-hover:text-white"
-                  }`}
-                />
-                <span className="text-sm tracking-wide">{item.label}</span>
-              </div>
-              {item.badge && (
-                <span
-                  className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
-                    isActive
-                      ? "bg-teal-500/20 text-teal-300"
-                      : "bg-[#18181b] text-zinc-400 group-hover:bg-[#27272a]"
-                  }`}
-                >
-                  {item.badge}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-zinc-600">Control system</p>
+        <div className="space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+
+            return (
+              <motion.button
+                key={item.id}
+                id={`sidebar-nav-${item.id.toLowerCase()}`}
+                onClick={() => onViewChange(item.id)}
+                whileTap={{ scale: 0.985 }}
+                className={`relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-colors ${isActive ? "bg-cyan-400/[0.09] text-cyan-200" : "text-zinc-500 hover:bg-white/[0.035] hover:text-zinc-200"}`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="active-sidebar-item"
+                    className="absolute inset-0 rounded-xl border border-cyan-400/20"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+
+                <span className="relative flex min-w-0 items-center gap-2.5">
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-cyan-300" : "text-zinc-600"}`} />
+                  <span className="truncate text-[12px] font-medium">{item.label}</span>
                 </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
 
-      {/* Language Selector Selector Component */}
-      <div className="px-6 py-3 border-t border-[#27272a] bg-[#0d0d0f]">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-semibold">
-            <Globe className="w-3.5 h-3.5 text-teal-400" />
+                {item.badge && (
+                  <span className={`relative rounded-md px-1.5 py-0.5 font-mono text-[9px] font-semibold ${isActive ? "bg-cyan-300/10 text-cyan-200" : "bg-white/[0.04] text-zinc-600"}`}>{item.badge}</span>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div className="border-t border-white/[0.06] px-4 py-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+            <Globe className="h-3.5 w-3.5 text-cyan-400" />
             <span>{t.chooseLanguage}</span>
           </div>
-          <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest">
-            {lang}
-          </span>
+          <span className="font-mono text-[8px] uppercase tracking-widest text-zinc-600">{lang}</span>
         </div>
-        <div className="grid grid-cols-3 gap-1.5 bg-[#18181b] p-1 rounded-lg border border-[#27272a]">
-          {(["it", "en", "es"] as Language[]).map((l) => {
-            const isActive = lang === l;
-            const labels = { it: "IT", en: "EN", es: "ES" };
+
+        <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.025] p-1">
+          {(["it", "en", "es"] as Language[]).map((language) => {
+            const isActive = lang === language;
             return (
               <button
-                key={l}
-                id={`lang-btn-${l}`}
-                onClick={() => onLanguageChange(l)}
-                className={`py-1 rounded text-xs font-bold transition-all ${
-                  isActive
-                    ? "bg-teal-500 text-black shadow-md shadow-black/30"
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-[#27272a]/50"
-                }`}
+                key={language}
+                id={`lang-btn-${language}`}
+                onClick={() => onLanguageChange(language)}
+                className={`rounded-md py-1 text-[10px] font-semibold transition-colors ${isActive ? "bg-cyan-400 text-[#071012]" : "text-zinc-600 hover:bg-white/[0.04] hover:text-zinc-300"}`}
               >
-                {labels[l]}
+                {language.toUpperCase()}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Platform Status Card */}
-      <div className="p-4 m-4 bg-[#18181b]/60 rounded-xl border border-[#27272a]">
-        <div className="flex items-start gap-2.5">
-          <Layers className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" />
-          <div className="space-y-1">
-            <h4 className="text-xs font-semibold text-zinc-300">Stato Piattaforma</h4>
-            <div className="space-y-1 text-[10px] font-mono text-zinc-500">
-              <div className="flex justify-between gap-2">
-                <span>In-Situ Node:</span>
-                <span className="text-teal-400 font-bold">ONLINE</span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span>Elettrodo AT:</span>
-                <span>Fluidnatek-HV</span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span>Versione SW:</span>
-                <span>v3.0.0</span>
-              </div>
+      <div className="mx-3 mb-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+        <div className="flex items-start gap-2">
+          <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-300" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold text-zinc-300">Platform status</p>
+            <div className="mt-2 space-y-1 font-mono text-[8px] text-zinc-600">
+              <div className="flex justify-between gap-2"><span>In-Situ Node</span><span className="text-emerald-400">ONLINE</span></div>
+              <div className="flex justify-between gap-2"><span>HV electrode</span><span>Fluidnatek-HV</span></div>
+              <div className="flex justify-between gap-2"><span>Software</span><span>v3.0.0</span></div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sidebar Footer */}
-      <div className="p-4 border-t border-[#27272a] flex items-center justify-between text-xs text-zinc-600">
-        <div className="flex items-center gap-1">
-          <Settings className="w-3.5 h-3.5" />
-          <span>Configurazione</span>
-        </div>
-        <span>Bioinicia SL © 2026</span>
-      </div>
-    </div>
+      <footer className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2.5 text-[9px] text-zinc-700">
+        <span className="flex items-center gap-1"><Settings className="h-3 w-3" />Config</span>
+        <span>Bioinicia · 2026</span>
+      </footer>
+    </aside>
   );
 }

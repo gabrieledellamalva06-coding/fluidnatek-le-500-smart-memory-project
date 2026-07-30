@@ -71,13 +71,11 @@ src/core/
 
 ## Latest Change
 
-### Sheet Extractor Header Integration
 
-**Date:** 2026-07-23
+### Header Detector V2
 
 Updated:
 
 ```text
-src/core/types/extractedSheet.ts
-src/core/extractor/sheetExtractor.ts
+src/core/extractor/headerDetector.ts
 ```

@@ -1,0 +1,58 @@
+[
+    {
+        "project_id": "a69aba3c-c498-49d3-9c7f-718028e23dd8",
+        "project_code": "2.DENEY",
+        "beas_code": "BEAS_TEST",
+        "client": "Internal Test",
+        "rd_leader": "Santiago",
+        "year": 2026
+    },
+    {
+        "project_id": "FTK-Example",
+        "project_code": "FTK-Example",
+        "beas_code": "",
+        "client": "Anonimo",
+        "rd_leader": "Sin asignar",
+        "year": null
+    },
+    {
+        "project_id": "LEGACY_EXCEL",
+        "project_code": "LEGACY_EXCEL",
+        "beas_code": "",
+        "client": "Historical Excel Import",
+        "rd_leader": "",
+        "year": null
+    },
+    {
+        "project_id": "1_2021_CROXX_Nov",
+        "project_code": "1_2021_CROXX_Nov",
+        "beas_code": "",
+        "client": "",
+        "rd_leader": "",
+        "year": null
+    },
+    {
+        "project_id": "3_2023_PAN",
+        "project_code": "3_2023_PAN",
+        "beas_code": "",
+        "client": "",
+        "rd_leader": "",
+        "year": null
+    },
+    {
+        "project_id": "5_POCS_CAF",
+        "project_code": "5_POCS_CAF",
+        "beas_code": "",
+        "client": "",
+        "rd_leader": "",
+        "year": null
+    },
+    {
+        "project_id": "6_POCS_PEO",
+        "project_code": "6_POCS_PEO",
+        "beas_code": "",
+        "client": "",
+        "rd_leader": "",
+        "year": null
+    }
+]

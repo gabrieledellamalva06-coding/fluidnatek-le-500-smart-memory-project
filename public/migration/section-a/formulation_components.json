@@ -1,0 +1,346 @@
+[
+    {
+        "formulation_component_id": "fb135890-de88-44fc-9f0f-74593b9956e6",
+        "formulation_id": "2.FORMUL",
+        "material_id": "1afff68f-25c4-468d-b638-12c1b129e25a",
+        "component_role": "polymer",
+        "concentration": 10.0,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "a1317c1d-82bf-4eb0-b739-cdaeaaa607de",
+        "formulation_id": "2.FORMUL",
+        "material_id": "623efc6e-0bb6-4eca-9ad6-8dc3e50520bf",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 100.0
+    },
+    {
+        "formulation_component_id": "MIG_COMP_8410f04b-6528-5456-97de-cc4306d6eac2",
+        "formulation_id": "MIG_FORM_d716ae2d-fffe-5157-a4ca-a9ea5fb4f2d2",
+        "material_id": "MIG_MAT_f1326c23-63f8-5ed9-b7ef-d2addf99ca7a",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_9255f92f-443f-5b3d-ac43-1da080bc51f3",
+        "formulation_id": "MIG_FORM_e6610a7b-ba7a-5650-99a5-a899f65aa59c",
+        "material_id": "MIG_MAT_fba939b3-0b8d-5410-8bd6-56079c55c7fa",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_0cd48068-411e-5f8c-824f-4cf3ace97d35",
+        "formulation_id": "MIG_FORM_dcb976fa-a657-50ae-8163-538eeaca818e",
+        "material_id": "MIG_MAT_d9866b89-0b4d-5743-b5f5-0fd8b7fa483c",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_01c1720e-36bd-5a5d-b60e-b3dcfb1be3c3",
+        "formulation_id": "MIG_FORM_c9b7c7e8-4d25-54b8-acef-ef43d2c3d979",
+        "material_id": "MIG_MAT_596ee147-f363-5ebc-bbee-7b856a75a3ce",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_5fa9824b-1bd3-54ac-849c-19daa78a9f27",
+        "formulation_id": "MIG_FORM_c7baf359-c325-59a4-b648-3220aef34da5",
+        "material_id": "MIG_MAT_00d66213-8066-52b2-b8e4-93514066290b",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_4041cf99-b111-5892-bd98-e822cadb4a21",
+        "formulation_id": "MIG_FORM_216630e9-eafd-5e42-904c-e1431a2a620f",
+        "material_id": "MIG_MAT_e3c8b84d-b059-516e-b564-159264d9476d",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_3d5d2a70-d2da-5f4c-82b1-bc4412ae050d",
+        "formulation_id": "MIG_FORM_8a13d60a-079e-5629-9c05-f7b76c4bb108",
+        "material_id": "MIG_MAT_4d4555dc-4b72-54c7-b44c-856db331de30",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_754a069a-3677-5356-963e-4457257b69fe",
+        "formulation_id": "MIG_FORM_675f2ef3-964c-5b87-a33c-86c50341182d",
+        "material_id": "MIG_MAT_e1d67653-127c-57da-a95c-7258fa27293c",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_28eb62be-5cfd-53e2-845c-f56a5dce57f2",
+        "formulation_id": "MIG_FORM_648be595-2f9b-5788-aeaf-23a3e31b8529",
+        "material_id": "MIG_MAT_84db61e7-adab-5d3c-a5bb-b6ecabc810f3",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_864df86b-83a1-556a-8f9e-3aa10b8407ed",
+        "formulation_id": "MIG_FORM_08b1e474-ea59-5311-940c-f7c7d9d3a3cd",
+        "material_id": "MIG_MAT_f6aa76c7-c9d3-5a82-906a-23fe77a8584d",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_a37542c9-32f9-5a01-82f3-27f69bc9a3b5",
+        "formulation_id": "MIG_FORM_ff5cb0c7-2d7d-5bcf-b69f-93023e3fa9a0",
+        "material_id": "MIG_MAT_35396272-68e9-5e43-b76f-7fc918dc3fcd",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_a2016a77-af9a-55d4-8fab-a51e54dc0a7a",
+        "formulation_id": "MIG_FORM_3974a5b2-aa18-5ae4-85cc-8fcd3ff09c91",
+        "material_id": "MIG_MAT_51894870-9cf5-5d5f-b84d-30271c701915",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_4a296cfc-138f-5151-8756-c8002f9fe13c",
+        "formulation_id": "MIG_FORM_06389fce-a387-55cf-84e2-b1b2d399a037",
+        "material_id": "MIG_MAT_40204107-466c-55d5-8a13-f70e4ce58a0f",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_afc958c2-4acc-5182-87c5-5295b0271009",
+        "formulation_id": "MIG_FORM_ceca2b33-6e2c-5fce-aa7f-3acf84fcbba2",
+        "material_id": "MIG_MAT_b3f41eba-f873-55ad-b094-7d290690b705",
+        "component_role": "polymer",
+        "concentration": null,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_db8f2977-a769-5d4c-a472-9abbb727c287",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_ccf8dfed-55a4-5a2d-afed-9e62741cfa30",
+        "component_role": "polymer",
+        "concentration": 10.0,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_83205dad-0b91-5d07-b0fe-209dcce30f8e",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_53c577e3-c1cb-53d6-a457-0fc96a7d101f",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 90.0
+    },
+    {
+        "formulation_component_id": "MIG_COMP_64a96b7f-c5c0-5646-84ef-9d5d61305397",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_5170aad2-8327-580a-82ac-66f227d72e1b",
+        "component_role": "polymer",
+        "concentration": 10.0,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_d1afaa42-e2a7-514a-ab1d-5c74f26174fb",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_a522e1de-d306-5266-b7a8-8c729eeac37c",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 90.4
+    },
+    {
+        "formulation_component_id": "MIG_COMP_3e6647ec-e8d3-5a58-aaf3-444bb0f9d111",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 90.0
+    },
+    {
+        "formulation_component_id": "MIG_COMP_7c389c93-e0cd-5d15-a17d-867371ecd6e0",
+        "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.0319,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_e5fca214-e5a7-5fcf-aa76-3545e8fce2a7",
+        "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.925738
+    },
+    {
+        "formulation_component_id": "MIG_COMP_0f58721b-6639-561c-a2fa-49e9688ba29b",
+        "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.0319,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_7684b5be-9d43-52a4-8192-1d6321235ea0",
+        "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.9681
+    },
+    {
+        "formulation_component_id": "MIG_COMP_f9d50a8c-e830-5c8f-88c9-c574266e4287",
+        "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.0319,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_fa0df5c5-f5a9-5a9e-bd6b-2f21cc404a76",
+        "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.9681
+    },
+    {
+        "formulation_component_id": "MIG_COMP_878af6c1-fc0c-59d7-b184-346ee6e6d029",
+        "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.03187,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_9ddcca6e-db8c-5ec1-aa7d-5f414f0f6386",
+        "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.871317
+    },
+    {
+        "formulation_component_id": "MIG_COMP_9657d3a4-3720-5f88-b05a-965939f11eef",
+        "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.03187,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_a434ede6-242a-5db7-9ba9-08f3a8b059b7",
+        "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.871317
+    },
+    {
+        "formulation_component_id": "MIG_COMP_3e36b827-7894-501d-bd71-492dee6e57e0",
+        "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.03187,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_9bdd6f4c-96f4-5bba-a2a3-2bbbdba14f7b",
+        "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.8331569999999999
+    },
+    {
+        "formulation_component_id": "MIG_COMP_3835e7b1-c7fb-5b52-a505-08d9c747f33e",
+        "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.03187,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_6054ea80-f966-5272-ab0d-8e4f90eb6a86",
+        "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.8331569999999999
+    },
+    {
+        "formulation_component_id": "MIG_COMP_abe2105d-4477-57ec-866a-4fe9350a7e65",
+        "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.03187,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_a5f97c18-ccdb-5577-af4c-4405d4a8e443",
+        "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.8331912
+    },
+    {
+        "formulation_component_id": "MIG_COMP_22073444-c043-51e4-872c-9af8378b5e50",
+        "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
+        "material_id": "MIG_MAT_b9a4e044-8722-5910-9424-14f4289fcb3c",
+        "component_role": "polymer",
+        "concentration": 0.02,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_7806e749-59c4-5acb-bcb0-7c4cc24e809b",
+        "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.98
+    },
+    {
+        "formulation_component_id": "MIG_COMP_ae5f61a6-9b7a-5cc0-9261-fd0b2995a4db",
+        "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "component_role": "polymer",
+        "concentration": 0.0319,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_e55ecc70-c60e-5420-871a-ee90ac72970a",
+        "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 0.83313
+    },
+    {
+        "formulation_component_id": "MIG_COMP_54d457f1-27d8-5f85-a7c1-6bce6f52271d",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_7f1a93e8-8ebe-5745-8631-2b168d0c1c36",
+        "component_role": "polymer",
+        "concentration": 10.0,
+        "ratio": null
+    },
+    {
+        "formulation_component_id": "MIG_COMP_d44351f8-cef4-5a53-bea3-8991883b7e85",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "material_id": "MIG_MAT_a7cc30dc-28ec-507d-a44e-b190ca96a680",
+        "component_role": "solvent",
+        "concentration": null,
+        "ratio": 90.0
+    }
+]

@@ -1,112 +1,261 @@
-import React, { useState } from 'react';
-import { Brain, Zap, Loader2, AlertTriangle, Lightbulb, FlaskConical } from 'lucide-react';
-import { TelemetryRecord, TelemetryAnalysis } from '../types';
-import { TRANSLATIONS, Language } from '../lib/translations';
+import { useState } from "react";
+import {
+  AlertTriangle,
+  Brain,
+  FlaskConical,
+  Lightbulb,
+  Loader2,
+  Zap,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+
+import type {
+  TelemetryAnalysis,
+  TelemetryRecord,
+} from "../types";
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
 
 interface AIInsightsProps {
   telemetryData: TelemetryRecord[];
   lang: Language;
 }
 
-export const AIInsights: React.FC<AIInsightsProps> = ({ telemetryData, lang }) => {
+interface ApiErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+export function AIInsights({
+  telemetryData,
+  lang,
+}: AIInsightsProps) {
   const t = TRANSLATIONS[lang];
-  const [analysis, setAnalysis] = useState<TelemetryAnalysis | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const hasData = telemetryData && telemetryData.length > 0;
+  const [analysis, setAnalysis] =
+    useState<TelemetryAnalysis | null>(null);
 
-  const handleAnalyze = async () => {
-    if (!hasData) return;
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const hasData =
+    telemetryData.length > 0;
+
+  async function handleAnalyze(): Promise<void> {
+    if (!hasData || loading) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    setAnalysis(null);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const controller =
+      new AbortController();
+
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      60_000
+    );
 
     try {
-      const response = await fetch('/api/ai/analyze-telemetry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telemetryData, lang }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        if (response.status === 429 || data?.code === 'QUOTA_EXCEEDED') {
-          throw new Error(t.aiQuotaError);
+      const response = await fetch(
+        "/api/ai/analyze-telemetry",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            telemetryData,
+            lang,
+          }),
+          signal: controller.signal,
         }
-        throw new Error(data?.error || t.aiOptError);
+      );
+
+      const payload =
+        (await response
+          .json()
+          .catch(
+            (): ApiErrorPayload | null =>
+              null
+          )) as
+          | TelemetryAnalysis
+          | ApiErrorPayload
+          | null;
+
+      if (
+        !response.ok ||
+        !payload ||
+        "error" in payload
+      ) {
+        const errorPayload =
+          payload &&
+          "error" in payload
+            ? payload
+            : null;
+
+        if (
+          response.status === 429 ||
+          errorPayload?.code ===
+            "QUOTA_EXCEEDED"
+        ) {
+          throw new Error(
+            t.aiQuotaError
+          );
+        }
+
+        throw new Error(
+          errorPayload?.error ??
+            t.aiOptError
+        );
       }
-      setAnalysis(data);
-    } catch (e: any) {
-      setError(e.name === 'AbortError' ? t.aiTimeoutError : (e.message || t.aiOptError));
+
+      if (
+        "suggestion" in payload &&
+        "reasoning" in payload
+      ) {
+        setAnalysis(payload);
+        return;
+      }
+
+      throw new Error(t.aiOptError);
+    } catch (caughtError: unknown) {
+      const message =
+        caughtError instanceof DOMException &&
+        caughtError.name ===
+          "AbortError"
+          ? t.aiTimeoutError
+          : caughtError instanceof Error
+            ? caughtError.message
+            : t.aiOptError;
+
+      setError(message);
     } finally {
-      clearTimeout(timeoutId);
+      window.clearTimeout(timeoutId);
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="bg-[#0a0a0b] border border-zinc-800/50 p-4 rounded-lg">
-      <style>{`
-        @keyframes fnk-rise2 { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
-        @keyframes fnk-sweep { 0% { transform: translateX(-120%);} 100% { transform: translateX(120%);} }
-        .fnk-rise2 { animation: fnk-rise2 .45s cubic-bezier(.22,1,.36,1) both; }
-      `}</style>
+    <section className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1015]">
+      <header className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-indigo-400/20 bg-indigo-400/[0.08]">
+            <Brain className="h-4 w-4 text-indigo-300" />
+          </span>
 
-      <div className="relative mb-5 flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/10 ring-1 ring-indigo-400/30">
-          <Brain className="text-indigo-300" size={18} />
-        </span>
-        <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-100">{t.aiInsightsTitle}</h2>
-      </div>
+          <div className="min-w-0">
+            <h2 className="truncate text-[12px] font-semibold text-zinc-100">
+              {t.aiInsightsTitle}
+            </h2>
 
-      {/* Pulsante Analizza — micro-interazione premium */}
-      <button
-        onClick={handleAnalyze}
-        disabled={loading || !hasData}
-        className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-500 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_24px_-8px_rgba(99,102,241,0.7)] transition-all hover:shadow-[0_0_28px_-6px_rgba(99,102,241,0.9)] active:scale-[0.98] disabled:cursor-not-allowed disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 disabled:shadow-none"
-      >
-        {/* riflesso animato che attraversa il pulsante */}
-        {!loading && hasData && (
-          <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-20deg] bg-white/20 opacity-0 group-hover:opacity-100" style={{ animation: 'fnk-sweep 1.1s ease-in-out infinite' }} />
+            <p className="mt-0.5 text-[10px] text-zinc-600">
+              Telemetry-driven process review
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAnalyze}
+          disabled={loading || !hasData}
+          className="group flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.08] px-3 text-[11px] font-semibold text-cyan-200 transition-all hover:border-cyan-300/30 hover:bg-cyan-400/[0.12] active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/[0.06] disabled:bg-white/[0.025] disabled:text-zinc-600"
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Zap className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+          )}
+
+          {loading
+            ? t.aiAnalyzing
+            : t.aiAnalyzeTelemetry}
+        </button>
+      </header>
+
+      <AnimatePresence mode="wait">
+        {!hasData ? (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="px-4 py-4 text-[11px] text-zinc-600"
+          >
+            {t.aiNoTelemetry}
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            key="error"
+            initial={{
+              opacity: 0,
+              y: 6,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{ opacity: 0 }}
+            className="m-3 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/[0.05] p-3 text-[11px] text-red-300"
+          >
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        ) : analysis ? (
+          <motion.div
+            key="analysis"
+            initial={{
+              opacity: 0,
+              y: 8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{ opacity: 0 }}
+            className="grid gap-3 p-3 xl:grid-cols-[1.15fr_0.85fr]"
+          >
+            <article className="rounded-xl border border-cyan-400/15 bg-cyan-400/[0.04] p-3">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-300">
+                <Lightbulb className="h-3 w-3" />
+                {t.aiSuggestionLabel}
+              </p>
+
+              <p className="text-[12px] leading-relaxed text-zinc-200">
+                {analysis.suggestion}
+              </p>
+            </article>
+
+            <article className="rounded-xl border border-white/[0.06] bg-black/20 p-3">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                <FlaskConical className="h-3 w-3" />
+                {t.aiReasoningLabel}
+              </p>
+
+              <p className="line-clamp-5 text-[11px] leading-relaxed text-zinc-500">
+                {analysis.reasoning}
+              </p>
+            </article>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="ready"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="px-4 py-4 text-[11px] text-zinc-600"
+          >
+            Run an analysis to extract actionable telemetry insights.
+          </motion.div>
         )}
-        {loading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} className="transition-transform group-hover:scale-110" />}
-        {loading ? t.aiAnalyzing : t.aiAnalyzeTelemetry}
-      </button>
-
-      {!hasData && (
-        <p className="mt-3 text-center text-[11px] text-zinc-600">{t.aiNoTelemetry}</p>
-      )}
-
-      {error && (
-        <div className="fnk-rise2 mt-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-300">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {analysis && !error && (
-        <div className="fnk-rise2 mt-4 space-y-3">
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-4">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-teal-300">
-              <Lightbulb size={13} /> {t.aiSuggestionLabel}
-            </p>
-            <p className="text-sm leading-relaxed text-zinc-200">{analysis.suggestion}</p>
-          </div>
-          <div className="rounded-xl border border-[#27272a] bg-[#0a0a0b]/60 p-4">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-              <FlaskConical size={13} /> {t.aiReasoningLabel}
-            </p>
-            <p className="text-xs italic leading-relaxed text-zinc-500">{analysis.reasoning}</p>
-          </div>
-        </div>
-      )}
-    </div>
+      </AnimatePresence>
+    </section>
   );
-};
+}

@@ -1,0 +1,292 @@
+[
+    {
+        "material_id": "1afff68f-25c4-468d-b638-12c1b129e25a",
+        "material_name": "",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": ""
+    },
+    {
+        "material_id": "e8c4f7a7-c186-4d8a-9473-83c5cf045a80",
+        "material_name": "2. MATERIAL",
+        "material_type": "polymer",
+        "molecular_weight": "100",
+        "supplier": "NAPIYON",
+        "article_number": "1",
+        "batch_number": "2",
+        "notes": "2. MATERIA POLY"
+    },
+    {
+        "material_id": "623efc6e-0bb6-4eca-9ad6-8dc3e50520bf",
+        "material_name": "2.SOLVENT",
+        "material_type": "solvent",
+        "molecular_weight": "100",
+        "supplier": "NASILSIN",
+        "article_number": "1",
+        "batch_number": "2",
+        "notes": "2 SOLVENT"
+    },
+    {
+        "material_id": "MIG_MAT_ff9fc058-9b45-5a85-91db-33246b274d5e",
+        "material_name": "Agua destilada",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "0.0",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_5f243fb7-35d4-5b77-9ddf-1b4bff9aa062",
+        "material_name": "PEO - 600kDa - Polyox",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "1200012.0",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_6368eda6-221b-5d28-8ad0-04c1ec225990",
+        "material_name": "Etanol",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "0.0",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_f1326c23-63f8-5ed9-b7ef-d2addf99ca7a",
+        "material_name": "FTK-CelAc-003\n(15% in 70% Acetone + 15% Water)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_fba939b3-0b8d-5410-8bd6-56079c55c7fa",
+        "material_name": "FTK-CelAc-004\n(15% in 42.5% DMSO + 42.5% Eth.Ac.)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_d9866b89-0b4d-5743-b5f5-0fd8b7fa483c",
+        "material_name": "FTK-CelAc-005\n(10% in 45% DMSO + 45% Eth.Ac.)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_596ee147-f363-5ebc-bbee-7b856a75a3ce",
+        "material_name": "FTK-CelAc-006\n(13% in 37% DMSO + 50% Eth.Ac.)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_00d66213-8066-52b2-b8e4-93514066290b",
+        "material_name": "FTK-CelAc-007\n(15% in 35% DMSO + 50% Eth.Ac.)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_e3c8b84d-b059-516e-b564-159264d9476d",
+        "material_name": "FTK-CelAc-007",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_4d4555dc-4b72-54c7-b44c-856db331de30",
+        "material_name": "FTK-CelAc-009\n(17% in 40% DMSO + 43% Eth.Ac.)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_e1d67653-127c-57da-a95c-7258fa27293c",
+        "material_name": "FTK-CelAc-009",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_84db61e7-adab-5d3c-a5bb-b6ecabc810f3",
+        "material_name": "FTK-CelAc-008\n(15% in 40% DMSO + 45% Eth.Ac.)",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_f6aa76c7-c9d3-5a82-906a-23fe77a8584d",
+        "material_name": "FTK-CelAc-008",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_35396272-68e9-5e43-b76f-7fc918dc3fcd",
+        "material_name": "FTK-CelAc-010",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_51894870-9cf5-5d5f-b84d-30271c701915",
+        "material_name": "FTK-CelAc-010a",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_40204107-466c-55d5-8a13-f70e4ce58a0f",
+        "material_name": "FTK-CelAc-010b",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_b3f41eba-f873-55ad-b094-7d290690b705",
+        "material_name": "FTK-CelAc-010c",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_ccf8dfed-55a4-5a2d-afed-9e62741cfa30",
+        "material_name": "PEO - Xel01",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_53c577e3-c1cb-53d6-a457-0fc96a7d101f",
+        "material_name": "DCM - Diclorometano - Merck",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_5170aad2-8327-580a-82ac-66f227d72e1b",
+        "material_name": "PES - Polietersulfona - ULTRASON E 6020 P",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_a522e1de-d306-5266-b7a8-8c729eeac37c",
+        "material_name": "Octane",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
+        "material_name": "Agua destilada",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
+        "material_name": "Polyox wsr 1105",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_b9a4e044-8722-5910-9424-14f4289fcb3c",
+        "material_name": "PEO - 4000 kDa",
+        "material_type": "polymer",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical composition."
+    },
+    {
+        "material_id": "MIG_MAT_7f1a93e8-8ebe-5745-8631-2b168d0c1c36",
+        "material_name": "PEO - 300kDa",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    },
+    {
+        "material_id": "MIG_MAT_a7cc30dc-28ec-507d-a44e-b190ca96a680",
+        "material_name": "Etanol",
+        "material_type": "unknown",
+        "molecular_weight": "",
+        "supplier": "",
+        "article_number": "",
+        "batch_number": "",
+        "notes": "Migrated from historical unified database."
+    }
+]

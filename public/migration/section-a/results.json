@@ -1,0 +1,765 @@
+[
+    {
+        "result_id": "6b51c9b4-081f-42f6-b92c-8e6b1ea636b4",
+        "run_id": "504256c8-996e-4083-b738-6549bccfd7d1",
+        "sem_morphology": "Uniform fibers, no visible beads",
+        "filtration_performance": "Initial filtration test successful",
+        "notes": "Final Section A workflow validation test"
+    },
+    {
+        "result_id": "MIG_RESULT_8a2a8af8-fdd1-59d9-aadc-81c58710ae7d",
+        "run_id": "legacy_experiment_1",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_5b3ecdeb-e539-5311-943f-38b8b504cda6",
+        "run_id": "legacy_experiment_2",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_98afbd75-140a-58eb-87ab-ebbc863f4314",
+        "run_id": "legacy_experiment_3",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_65018fd7-5893-528a-97f7-da717c1191aa",
+        "run_id": "legacy_experiment_4",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_358c8e6f-e641-52b7-941e-a1c95d015fbe",
+        "run_id": "legacy_experiment_5",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_d8431374-56b2-556d-9d68-3ad47d36b269",
+        "run_id": "legacy_experiment_6",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_8612df20-a2b1-546d-8424-b1ec3e59c666",
+        "run_id": "legacy_experiment_7",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_18ee3b5b-3dd7-595c-a2cd-768079f81de4",
+        "run_id": "legacy_experiment_8",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_f9f39459-8a61-5ac5-a015-24cc70778987",
+        "run_id": "legacy_experiment_9",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_cc4f9297-5ef2-51b1-a079-f659db7bd60d",
+        "run_id": "legacy_experiment_10",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_e2097610-291e-584b-8dc6-a3a1f3334529",
+        "run_id": "legacy_experiment_11",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_7cef1f4c-e61d-5743-a641-9cb62832e175",
+        "run_id": "legacy_experiment_12",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_ed66485b-d8a6-5838-928e-1b9bd5258cbf",
+        "run_id": "legacy_experiment_13",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_3b99c2ad-3910-59c3-bc9f-b2904a709790",
+        "run_id": "legacy_experiment_14",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_ea51fd4b-d577-51a1-b459-288ce2cdf0f3",
+        "run_id": "legacy_experiment_15",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_7d8e6e05-e138-53bc-9a9f-c468c09835bf",
+        "run_id": "legacy_experiment_16",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_93b1273c-cdd1-59ca-b0a8-d34cd7a4c656",
+        "run_id": "legacy_experiment_17",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_2479eb33-d45c-56c5-9c53-fcac99e69e9c",
+        "run_id": "legacy_experiment_18",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_a3ccc9ab-d7da-5fd3-bb54-218a76f6764f",
+        "run_id": "legacy_experiment_19",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_bdac7f0e-50aa-5800-820d-50930bd8a3d8",
+        "run_id": "legacy_experiment_20",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_9823650d-20c4-5f54-b44a-b9b4d1dafbc1",
+        "run_id": "legacy_experiment_21",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_599a9230-d2d7-5293-a567-bdf0732f99e4",
+        "run_id": "legacy_experiment_22",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_fcaec093-819d-53b5-b5a0-ea1a384a4808",
+        "run_id": "legacy_experiment_23",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_d74f97d6-5ffb-52cf-859d-1dffdcda8919",
+        "run_id": "legacy_experiment_24",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_c3e3bf86-98d9-5843-baa5-6aec3a6fcd70",
+        "run_id": "legacy_experiment_25",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_79a4c3ee-b83f-520f-9f61-4cfe05193847",
+        "run_id": "legacy_experiment_26",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_e39a92b4-0082-54cf-bcdb-8daefdc41ddc",
+        "run_id": "legacy_experiment_27",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_b90b7075-8ceb-50c5-8bae-1681a185b81c",
+        "run_id": "legacy_experiment_28",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_12f1ba8b-7a3a-594a-8954-ee6602518cb1",
+        "run_id": "legacy_experiment_29",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_cc6b7875-ce07-5557-a06c-2d120ef6b392",
+        "run_id": "legacy_experiment_30",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_95b75c7d-84a0-5c35-b7b5-524e4aa31311",
+        "run_id": "legacy_experiment_31",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_2c778b58-04b9-5b9e-8c68-e38f18d24636",
+        "run_id": "legacy_experiment_32",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_15f45345-be90-5179-badf-e36e4dbed2cc",
+        "run_id": "legacy_experiment_33",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_b363ea3c-b4aa-5b5b-b690-e7497d755744",
+        "run_id": "legacy_experiment_34",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_c8f836ad-6766-55ff-ba63-db8ab892b553",
+        "run_id": "legacy_experiment_35",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_bbd041f3-72e0-5592-bcb5-6ee330766de4",
+        "run_id": "legacy_experiment_36",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_33900665-4168-5cfa-88fc-25fe284cdf6a",
+        "run_id": "legacy_experiment_37",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_dda5d8f0-1c86-51e7-8862-aae4b7b8d542",
+        "run_id": "legacy_experiment_38",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_aa71172b-0ab7-5cc3-95eb-80fe84f57ec5",
+        "run_id": "legacy_experiment_39",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_2b12372c-b8c6-5949-b0d7-a1909843b522",
+        "run_id": "legacy_experiment_40",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_fc301a2c-b689-5e94-8316-49d0685d981d",
+        "run_id": "legacy_experiment_41",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_479e6f1e-6486-5022-a8f0-d6e2411b1a6b",
+        "run_id": "FTK-Example_experiment_20260708_122918",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_75d95811-4e09-59a7-a6ac-c2b8ffdd1c84",
+        "run_id": "FTK-Example_experiment_20260709_135533",
+        "sem_morphology": "hatika",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_0ea2eeaf-e99a-511e-8d47-8b2f64f22c2f",
+        "run_id": "FTK-Example_experiment_20260709_135632",
+        "sem_morphology": "aaaaaaaaaaaaaaaaaaaaaa",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: ACETONE"
+    },
+    {
+        "result_id": "MIG_RESULT_35fdf728-07c1-5903-987e-16faac0dd797",
+        "run_id": "historical_1_2021_CROXX_Nov_1",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_d999558b-3097-558c-8d61-150a75759d2e",
+        "run_id": "historical_1_2021_CROXX_Nov_2",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_e98e12ac-aa8c-596e-b8cd-6612710489bc",
+        "run_id": "historical_1_2021_CROXX_Nov_3",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_e5366b81-b1a0-5572-b9f9-ec1ed4dab6b5",
+        "run_id": "historical_1_2021_CROXX_Nov_4",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_11fa310e-ebfd-5e12-830e-74283fe9a20e",
+        "run_id": "historical_1_2021_CROXX_Nov_5",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_3a8945b0-061c-58da-b62c-3dfe4350f9be",
+        "run_id": "historical_1_2021_CROXX_Nov_6",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_107a438c-57e1-5823-9d59-c79e5c00fba7",
+        "run_id": "historical_1_2021_CROXX_Nov_7",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_b3036599-cb7b-52ff-bc07-c023185ded48",
+        "run_id": "historical_1_2021_CROXX_Nov_8",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_6566b031-47de-52c4-a9e9-5d5e0b250bb2",
+        "run_id": "historical_1_2021_CROXX_Nov_9",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_d687ccfc-3eac-5ad2-9fac-33c67c7be364",
+        "run_id": "historical_1_2021_CROXX_Nov_10",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_ee42f59a-632e-50eb-83e5-53d45f5cc840",
+        "run_id": "historical_1_2021_CROXX_Nov_11",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_6a8ab846-428d-5f44-b29a-6154b8f83a7d",
+        "run_id": "historical_1_2021_CROXX_Nov_12",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_ee0554a5-1df4-598d-8b46-4237f306b9b2",
+        "run_id": "historical_1_2021_CROXX_Nov_13",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_f12bad12-c041-5082-b7e3-8c482bd66032",
+        "run_id": "historical_1_2021_CROXX_Nov_14",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_c9dcb308-1a3e-5344-a90e-2721e7c9613d",
+        "run_id": "historical_1_2021_CROXX_Nov_15",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_37bfee8b-4ae0-52b6-8371-7df1ef8a6b23",
+        "run_id": "historical_1_2021_CROXX_Nov_16",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_ca6525e9-76f7-5a72-8f20-7c0b97c9dc57",
+        "run_id": "historical_1_2021_CROXX_Nov_17",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_45c07ce6-ca4c-59f2-9d37-75df20889b5e",
+        "run_id": "historical_1_2021_CROXX_Nov_18",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_ca65d715-2f76-5f7e-aafa-02fe64fe876d",
+        "run_id": "historical_3_2023_PAN_1",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_7a9ff117-025e-54e1-a15b-57cdf3a3bcb8",
+        "run_id": "historical_3_2023_PAN_2",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_affe697a-63e2-5fb8-ad02-43f0d2462326",
+        "run_id": "historical_3_2023_PAN_3",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_27870f39-ec19-5743-a638-68deb20c0836",
+        "run_id": "historical_3_2023_PAN_4",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_3aebdea0-132d-5f93-b0cd-cd8038927584",
+        "run_id": "historical_3_2023_PAN_5",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_31c19d88-f8e1-5779-92d3-f63611a238e8",
+        "run_id": "historical_5_POCS_CAF_1",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_20f9260e-28c3-5ad0-b1bc-3543b0b613eb",
+        "run_id": "historical_5_POCS_CAF_2",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_f05d54b4-df08-545e-840b-c6ed35a5a818",
+        "run_id": "historical_5_POCS_CAF_3",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_92b0fa43-759a-5a58-83c5-b6d33028f56c",
+        "run_id": "historical_5_POCS_CAF_4",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_795f0b5f-6bd2-5ecc-9d79-23adf77ac500",
+        "run_id": "historical_5_POCS_CAF_5",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_484b1392-3592-57fc-8b53-f609adee4aa2",
+        "run_id": "historical_5_POCS_CAF_6",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_9c1e6d9f-8846-5c3e-b6de-421cd68959b2",
+        "run_id": "historical_5_POCS_CAF_7",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_b921f58c-c300-54f5-a3d2-61411d4cf860",
+        "run_id": "historical_5_POCS_CAF_8",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_55305df3-c489-5197-b425-48e8e4fa5b83",
+        "run_id": "historical_5_POCS_CAF_9",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_9532d541-6386-53c4-ac9b-33bceadff362",
+        "run_id": "historical_5_POCS_CAF_10",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_6e3fda58-47eb-53c8-88d2-b740f1bf56a5",
+        "run_id": "historical_5_POCS_CAF_11",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_2e2bfa54-bd4a-56f9-94b9-7bd869be36db",
+        "run_id": "historical_5_POCS_CAF_12",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_bd1fcfbd-a4b0-5244-9900-746d1f5c3160",
+        "run_id": "historical_5_POCS_CAF_13",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_6094eca9-4320-527d-a23c-b4715dca0b0b",
+        "run_id": "historical_5_POCS_CAF_14",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_74e70cd2-7e16-5f0b-9f7e-e511ea8d150c",
+        "run_id": "historical_5_POCS_CAF_15",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_38b9dc7d-4b16-58fd-978b-30a11b9db976",
+        "run_id": "historical_5_POCS_CAF_16",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_8f9abea1-918d-5898-b78f-3088592fd8fe",
+        "run_id": "historical_5_POCS_CAF_17",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_e767a68f-64b4-5940-bd1a-f8e5feadf95a",
+        "run_id": "historical_5_POCS_CAF_18",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_802de495-2f6a-54b0-b7ca-5dc08a68349e",
+        "run_id": "historical_5_POCS_CAF_19",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_b9132e6a-2ea1-54a2-9eb6-b5c3fa0173ef",
+        "run_id": "historical_5_POCS_CAF_20",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_170c5ba9-abee-5a86-84cb-8a11ed03d86e",
+        "run_id": "historical_5_POCS_CAF_21",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_640c76c2-abbf-5c67-aab2-6897e20bc8b9",
+        "run_id": "historical_5_POCS_CAF_22",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_a8ad10da-46ad-5c5c-acc6-b69f177886dc",
+        "run_id": "historical_6_POCS_PEO_1",
+        "sem_morphology": "Se observan microgotas en la deposición. Tamaño fibra: d = 479,36 ± 110,89 nm.",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_5a37311f-53df-5c6c-aaf7-d951bdd93815",
+        "run_id": "historical_6_POCS_PEO_2",
+        "sem_morphology": "Distribución de tamaño más estrecha que con agua pura como disolvente. d = 534,60 ± 124,46 nm.",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_7ad7020b-7fcd-5470-8465-a26b9dc43980",
+        "run_id": "historical_6_POCS_PEO_3",
+        "sem_morphology": "Distribución de tamaño más estrecha que con agua pura como disolvente. d = 776,00 ± 126,26 nm.",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_4e85497d-e32f-506c-8ada-873284f5ef53",
+        "run_id": "historical_6_POCS_PEO_4",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_9da3dc5f-8c82-5ef5-aa39-0d556efdd427",
+        "run_id": "historical_6_POCS_PEO_5",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_65432097-1d38-54b0-8e09-dfba293d99a6",
+        "run_id": "historical_6_POCS_PEO_6",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_42e87ef8-0685-5037-9f59-03321fd9f509",
+        "run_id": "historical_6_POCS_PEO_7",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_213ae747-e81c-5384-b122-02051d15e777",
+        "run_id": "historical_6_POCS_PEO_8",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_a8407c2a-d715-59a5-a7ef-c12370848f1c",
+        "run_id": "historical_6_POCS_PEO_9",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_af2ef91a-5692-5de7-93b8-9e455983f1cc",
+        "run_id": "historical_6_POCS_PEO_10",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_4931edef-66ac-51af-9f64-57857fa4188c",
+        "run_id": "historical_6_POCS_PEO_11",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_b996e417-ec55-5acd-8647-ce3a0a4f87e3",
+        "run_id": "historical_6_POCS_PEO_12",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_99763e48-783a-5e0c-9caa-5b645699100c",
+        "run_id": "historical_6_POCS_PEO_13",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_aefc721a-345c-5d50-aa75-7704a43d7da4",
+        "run_id": "historical_6_POCS_PEO_14",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_c9425e08-e7aa-50f1-bf95-b1c6eaf3099c",
+        "run_id": "historical_6_POCS_PEO_15",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_c496f593-7ffe-5bf8-85a9-6b239b698ec0",
+        "run_id": "historical_6_POCS_PEO_16",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_392d9e00-df4d-58c6-99a7-ebb810a1f2f5",
+        "run_id": "historical_6_POCS_PEO_17",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_1d5c88bb-1318-52f2-b06c-34cbcc6097df",
+        "run_id": "historical_6_POCS_PEO_18",
+        "sem_morphology": "",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: "
+    },
+    {
+        "result_id": "MIG_RESULT_5d30c0ef-9043-5d6f-bd68-ef3c61f83588",
+        "run_id": "FTK-Example_experiment_20260716_133814",
+        "sem_morphology": "dilara",
+        "filtration_performance": "",
+        "notes": "Historical result migrated. Original avg fiber diameter: 45"
+    }
+]

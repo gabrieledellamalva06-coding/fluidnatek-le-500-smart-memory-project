@@ -1,269 +1,721 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Loader2, Sparkles, Zap, Droplet, Ruler, AlertTriangle, RotateCw, Copy, Check } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { Formulation, AISuggestion } from '../types';
-import { TRANSLATIONS, Language } from '../lib/translations';
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  AlertTriangle,
+  Bot,
+  Check,
+  ChevronDown,
+  Copy,
+  Droplet,
+  Loader2,
+  RotateCw,
+  Ruler,
+  Send,
+  Sparkles,
+  Zap,
+} from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+} from "motion/react";
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../lib/firebase";
+import type {
+  AISuggestion,
+  Formulation,
+} from "../types";
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
 
 interface AIOptimizationWidgetProps {
-  currentFormulation: Formulation | null;
+  currentFormulation:
+    | Formulation
+    | null;
   projectId: string;
   lang: Language;
 }
 
-type ChatMessage = { sender: 'user' | 'ai'; text: string };
+interface ChatMessage {
+  sender: "user" | "ai";
+  text: string;
+}
 
-export const AIOptimizationWidget: React.FC<AIOptimizationWidgetProps> = ({ currentFormulation, projectId, lang }) => {
+interface ApiErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+interface ChatPayload {
+  response?: string;
+  error?: string;
+  code?: string;
+}
+
+type HistoricalRun =
+  Record<string, unknown>;
+
+const QUICK_ACTIONS = [
+  "Explain the main process risk",
+  "Compare voltage and flow balance",
+  "Suggest the next controlled test",
+] as const;
+
+export function AIOptimizationWidget({
+  currentFormulation,
+  projectId,
+  lang,
+}: AIOptimizationWidgetProps) {
   const t = TRANSLATIONS[lang];
-  const [optimization, setOptimization] = useState<AISuggestion | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const handleCopy = async (text: string, idx: number) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(prev => (prev === idx ? null : prev)), 1500);
-    } catch {
-      // Clipboard non disponibile (es. contesto non sicuro): ignora silenziosamente.
-    }
-  };
+  const [
+    optimization,
+    setOptimization,
+  ] = useState<AISuggestion | null>(
+    null
+  );
 
-  // FIX 429: la dipendenza è l'ID (identità stabile), non l'oggetto inline
-  // che cambiava reference ad ogni render scatenando chiamate a raffica.
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [messages, setMessages] =
+    useState<ChatMessage[]>([]);
+
+  const [input, setInput] =
+    useState("");
+
+  const [chatLoading, setChatLoading] =
+    useState(false);
+
+  const [chatOpen, setChatOpen] =
+    useState(false);
+
+  const [copiedIndex, setCopiedIndex] =
+    useState<number | null>(null);
+
+  const chatEndRef =
+    useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (currentFormulation?.id) {
-      handleOptimize();
+    if (!currentFormulation?.id) {
+      setOptimization(null);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    void handleOptimize();
   }, [currentFormulation?.id]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, chatLoading]);
+    if (chatOpen) {
+      chatEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [
+    messages,
+    chatLoading,
+    chatOpen,
+  ]);
 
-  const handleOptimize = async () => {
-    if (!currentFormulation) return;
+  async function handleCopy(
+    text: string,
+    index: number
+  ): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(
+        text
+      );
+
+      setCopiedIndex(index);
+
+      window.setTimeout(() => {
+        setCopiedIndex((current) =>
+          current === index
+            ? null
+            : current
+        );
+      }, 1_500);
+    } catch {
+      // Clipboard access can fail in an insecure context.
+    }
+  }
+
+  async function loadHistoricalRuns(): Promise<
+    HistoricalRun[]
+  > {
+    if (!projectId) {
+      return [];
+    }
+
+    try {
+      const experimentReference =
+        collection(
+          db,
+          "projects",
+          projectId,
+          "experiments"
+        );
+
+      const snapshot =
+        await getDocs(
+          experimentReference
+        );
+
+      return snapshot.docs.map(
+        (documentSnapshot) =>
+          documentSnapshot.data()
+      );
+    } catch (caughtError: unknown) {
+      console.warn(
+        "Historical run lookup unavailable; AI recommendation will continue without legacy context.",
+        caughtError
+      );
+
+      return [];
+    }
+  }
+
+  async function handleOptimize(): Promise<void> {
+    if (!currentFormulation) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      // Lo storico da Firestore è un "nice to have": un suo fallimento NON
-      // deve bloccare il suggerimento AI.
-      let historicalRuns: any[] = [];
-      if (projectId) {
-        try {
-          const expRef = collection(db, 'projects', projectId, 'experiments');
-          const snapshot = await getDocs(expRef);
-          historicalRuns = snapshot.docs.map(doc => doc.data());
-        } catch (fireErr) {
-          console.warn('Firestore non raggiungibile, procedo senza storico:', fireErr);
+      const historicalRuns =
+        await loadHistoricalRuns();
+
+      const response = await fetch(
+        "/api/suggest",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            ...currentFormulation,
+            historicalRuns,
+            lang,
+          }),
         }
+      );
+
+      const payload =
+        (await response
+          .json()
+          .catch(
+            (): ApiErrorPayload | null =>
+              null
+          )) as
+          | AISuggestion
+          | ApiErrorPayload
+          | null;
+
+      if (
+        !response.ok ||
+        !payload ||
+        "error" in payload
+      ) {
+        const errorPayload =
+          payload &&
+          "error" in payload
+            ? payload
+            : null;
+
+        if (
+          response.status === 429 ||
+          errorPayload?.code ===
+            "QUOTA_EXCEEDED"
+        ) {
+          throw new Error(
+            t.aiQuotaError
+          );
+        }
+
+        throw new Error(
+          errorPayload?.error ??
+            t.aiOptError
+        );
       }
 
-      const response = await fetch('/api/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...currentFormulation, historicalRuns, lang })
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        if (response.status === 429 || data?.code === 'QUOTA_EXCEEDED') {
-          throw new Error(t.aiQuotaError);
-        }
-        throw new Error(data?.error || t.aiOptError);
+      if (
+        "polymerName" in payload &&
+        "solvent" in payload &&
+        "voltageKv" in payload &&
+        "flowRateMlH" in payload &&
+        "distanceMm" in payload &&
+        "temperatureC" in payload &&
+        "humidityPct" in payload &&
+        "tips" in payload &&
+        "reasoning" in payload
+      ) {
+        setOptimization(payload);
+        return;
       }
-      setOptimization(data);
-    } catch (e: any) {
-      setError(e.message || t.aiOptError);
+
+      throw new Error(t.aiOptError);
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : t.aiOptError
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleChat = async () => {
-    if (!input.trim() || chatLoading) return;
-    const userMsg = input.trim();
-    const nextHistory: ChatMessage[] = [...messages, { sender: 'user', text: userMsg }];
+  async function handleChat(
+    explicitMessage?: string
+  ): Promise<void> {
+    const message =
+      (
+        explicitMessage ??
+        input
+      ).trim();
+
+    if (!message || chatLoading) {
+      return;
+    }
+
+    const nextHistory: ChatMessage[] = [
+      ...messages,
+      {
+        sender: "user",
+        text: message,
+      },
+    ];
+
     setMessages(nextHistory);
-    setInput('');
+    setInput("");
     setChatLoading(true);
+    setChatOpen(true);
 
     try {
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, history: messages, lang })
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data || data.error) {
-        throw new Error(
-          response.status === 429 || data?.code === 'QUOTA_EXCEEDED' ? t.aiQuotaError : (data?.error || t.aiChatError)
-        );
+      const response = await fetch(
+        "/api/ai/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            message,
+            history: messages,
+            lang,
+          }),
+        }
+      );
+
+      const payload =
+        (await response
+          .json()
+          .catch(
+            (): ChatPayload | null =>
+              null
+          )) as ChatPayload | null;
+
+      if (
+        !response.ok ||
+        !payload ||
+        payload.error ||
+        !payload.response
+      ) {
+        const messageText =
+          response.status === 429 ||
+          payload?.code ===
+            "QUOTA_EXCEEDED"
+            ? t.aiQuotaError
+            : payload?.error ??
+              t.aiChatError;
+
+        throw new Error(messageText);
       }
-      setMessages(prev => [...prev, { sender: 'ai', text: data.response }]);
-    } catch (e: any) {
-      setMessages(prev => [...prev, { sender: 'ai', text: `⚠️ ${e.message || t.aiChatError}` }]);
+
+      setMessages((current) => [
+        ...current,
+        {
+          sender: "ai",
+          text: payload.response ?? "",
+        },
+      ]);
+    } catch (caughtError: unknown) {
+      const messageText =
+        caughtError instanceof Error
+          ? caughtError.message
+          : t.aiChatError;
+
+      setMessages((current) => [
+        ...current,
+        {
+          sender: "ai",
+          text: `⚠ ${messageText}`,
+        },
+      ]);
     } finally {
       setChatLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="bg-[#0a0a0b] border border-zinc-800/50 p-4 rounded-lg">
-      <style>{`
-        @keyframes fnk-shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
-        @keyframes fnk-glow { 0%,100% { opacity: .35; transform: scale(1); } 50% { opacity: .9; transform: scale(1.12); } }
-        @keyframes fnk-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .fnk-shimmer { background: linear-gradient(90deg, #18181b 0%, #232327 40%, #18181b 80%); background-size: 800px 100%; animation: fnk-shimmer 1.6s infinite linear; }
-        .fnk-rise { animation: fnk-rise .45s cubic-bezier(.22,1,.36,1) both; }
-      `}</style>
+    <section className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1015]">
+      <header className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/[0.08]">
+            <Sparkles className="h-4 w-4 text-cyan-300" />
+          </span>
 
-      {/* Header */}
-      <div className="relative flex items-center gap-3 mb-5">
-        <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-teal-400/10 ring-1 ring-teal-400/30">
-          <span className="absolute inset-0 rounded-xl bg-teal-400/20" style={{ animation: 'fnk-glow 2.4s ease-in-out infinite' }} />
-          <Sparkles className="relative h-4.5 w-4.5 text-teal-300" size={18} />
+          <div className="min-w-0">
+            <h2 className="truncate text-[12px] font-semibold text-zinc-100">
+              {t.aiOptTitle}
+            </h2>
+
+            <p className="mt-0.5 text-[10px] text-zinc-600">
+              Gemini-powered process guidance
+            </p>
+          </div>
+        </div>
+
+        <span className="rounded-md border border-cyan-400/15 bg-cyan-400/[0.06] px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-300">
+          Co-pilot
         </span>
-        <h2 className="text-sm font-bold tracking-wide uppercase text-zinc-100">{t.aiOptTitle}</h2>
-      </div>
+      </header>
 
-      {/* Corpo: loading / error / result / empty */}
-      <div className="relative min-h-[92px]">
-        {loading ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-teal-300/80">
-              <Loader2 className="animate-spin" size={14} />
-              {t.aiOptAnalyzing}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="fnk-shimmer h-14 rounded-lg" />
-              ))}
-            </div>
-            <div className="fnk-shimmer h-10 rounded-lg" />
-          </div>
-        ) : error ? (
-          <div className="fnk-rise flex flex-col gap-3 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-            <div className="flex items-start gap-2 text-sm text-red-300">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-              <span>{error}</span>
-            </div>
-            <button
-              onClick={handleOptimize}
-              className="group flex w-fit items-center gap-2 self-start rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition-all hover:bg-red-400/20 active:scale-95"
+      <div className="p-3">
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-3 gap-2"
             >
-              <RotateCw size={13} className="transition-transform group-hover:rotate-180 duration-500" />
-              {t.aiRetry}
-            </button>
-          </div>
-        ) : optimization ? (
-          <div className="fnk-rise space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-              <ParamCard icon={<Zap size={14} />} label={t.aiOptVoltage} value={`${optimization.voltageKv} kV`} />
-              <ParamCard icon={<Droplet size={14} />} label={t.aiOptFlow} value={`${optimization.flowRateMlH} mL/h`} />
-              <ParamCard icon={<Ruler size={14} />} label={t.aiOptDistance} value={`${optimization.distanceMm} mm`} />
-            </div>
-            {optimization.reasoning && (
-              <p className="rounded-xl border border-[#27272a] bg-[#0a0a0b]/60 p-3 text-xs leading-relaxed text-zinc-400">
-                {optimization.reasoning}
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="flex h-[92px] items-center justify-center rounded-xl border border-dashed border-[#27272a] text-xs text-zinc-500">
-            {t.aiOptSelectFormulation}
-          </div>
-        )}
-      </div>
-
-      {/* Divisore luminoso */}
-      <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-[#27272a] to-transparent" />
-
-      {/* Chatbot */}
-      <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-300">
-        <Bot size={15} className="text-teal-300" /> {t.aiChatTitle}
-      </h3>
-
-      <div className="mb-3 h-40 space-y-2 overflow-y-auto rounded-xl border border-[#27272a] bg-[#0a0a0b]/60 p-3">
-        {messages.length === 0 && !chatLoading ? (
-          <div className="flex h-full items-center justify-center px-4 text-center text-[11px] text-zinc-600">
-            {t.aiChatEmpty}
-          </div>
-        ) : (
-          messages.map((m, i) => (
-            <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`group/msg fnk-rise relative max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
-                  m.sender === 'user'
-                    ? 'bg-teal-500/15 text-teal-100 ring-1 ring-teal-400/20'
-                    : 'bg-[#18181b] text-zinc-300 ring-1 ring-[#27272a]'
-                }`}
-              >
-                {m.text}
-                {m.sender === 'ai' && (
-                  <button
-                    onClick={() => handleCopy(m.text, i)}
-                    title={t.aiCopy}
-                    aria-label={t.aiCopy}
-                    className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full border border-[#27272a] bg-[#0a0a0b] text-zinc-400 opacity-0 transition-all hover:text-teal-300 group-hover/msg:opacity-100 active:scale-90"
-                  >
-                    {copiedIdx === i ? <Check size={12} className="text-teal-400" /> : <Copy size={12} />}
-                  </button>
-                )}
+              {[0, 1, 2].map(
+                (index) => (
+                  <div
+                    key={index}
+                    className="h-14 animate-pulse rounded-xl border border-white/[0.05] bg-white/[0.025]"
+                  />
+                )
+              )}
+            </motion.div>
+          ) : error ? (
+            <motion.div
+              key="error"
+              initial={{
+                opacity: 0,
+                y: 6,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.05] p-3"
+            >
+              <div className="flex items-start gap-2 text-[11px] text-red-300">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>{error}</span>
               </div>
-            </div>
-          ))
-        )}
-        {chatLoading && (
-          <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-2xl bg-[#18181b] px-3 py-2.5 ring-1 ring-[#27272a]">
-              {[0, 1, 2].map(i => (
-                <span
-                  key={i}
-                  className="h-1.5 w-1.5 rounded-full bg-teal-300"
-                  style={{ animation: 'fnk-glow 1s ease-in-out infinite', animationDelay: `${i * 0.15}s` }}
+
+              <button
+                type="button"
+                onClick={() =>
+                  void handleOptimize()
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-red-400/20 bg-red-400/[0.08] px-2.5 py-1.5 text-[10px] font-semibold text-red-200 transition-colors hover:bg-red-400/[0.13]"
+              >
+                <RotateCw className="h-3 w-3" />
+                {t.aiRetry}
+              </button>
+            </motion.div>
+          ) : optimization ? (
+            <motion.div
+              key="result"
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-3 gap-2">
+                <ParameterCard
+                  icon={<Zap className="h-3.5 w-3.5" />}
+                  label={t.aiOptVoltage}
+                  value={`${optimization.voltageKv} kV`}
                 />
-              ))}
-            </div>
-          </div>
-        )}
-        <div ref={chatEndRef} />
+
+                <ParameterCard
+                  icon={<Droplet className="h-3.5 w-3.5" />}
+                  label={t.aiOptFlow}
+                  value={`${optimization.flowRateMlH} mL/h`}
+                />
+
+                <ParameterCard
+                  icon={<Ruler className="h-3.5 w-3.5" />}
+                  label={t.aiOptDistance}
+                  value={`${optimization.distanceMm} mm`}
+                />
+              </div>
+
+              {optimization.reasoning && (
+                <p className="line-clamp-3 rounded-xl border border-white/[0.06] bg-black/20 p-3 text-[11px] leading-relaxed text-zinc-500">
+                  {optimization.reasoning}
+                </p>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex h-16 items-center justify-center rounded-xl border border-dashed border-white/[0.08] text-[11px] text-zinc-600"
+            >
+              {t.aiOptSelectFormulation}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {QUICK_ACTIONS.map(
+            (action) => (
+              <button
+                key={action}
+                type="button"
+                onClick={() =>
+                  void handleChat(action)
+                }
+                disabled={chatLoading}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-left text-[10px] leading-snug text-zinc-500 transition-all hover:border-cyan-400/15 hover:bg-cyan-400/[0.035] hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action}
+              </button>
+            )
+          )}
+        </div>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleChat()}
-          disabled={chatLoading}
-          className="flex-1 rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 outline-none transition-all focus:border-teal-400/40 focus:ring-2 focus:ring-teal-400/20 disabled:opacity-50"
-          placeholder={t.aiChatPlaceholder}
-        />
+      <div className="border-t border-white/[0.06]">
         <button
-          onClick={handleChat}
-          disabled={chatLoading || !input.trim()}
-          className="group flex items-center justify-center rounded-xl bg-teal-500/90 px-3.5 text-black shadow-[0_0_20px_-6px_rgba(45,212,191,0.6)] transition-all hover:bg-teal-400 active:scale-90 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-500 disabled:shadow-none"
+          type="button"
+          onClick={() =>
+            setChatOpen(
+              (current) => !current
+            )
+          }
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-white/[0.02]"
         >
-          {chatLoading ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} className="transition-transform group-hover:translate-x-0.5" />}
-        </button>
-      </div>
-    </div>
-  );
-};
+          <span className="flex items-center gap-2 text-[11px] font-semibold text-zinc-300">
+            <Bot className="h-3.5 w-3.5 text-cyan-300" />
+            {t.aiChatTitle}
+          </span>
 
-const ParamCard: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-  <div className="group rounded-xl border border-[#27272a] bg-[#0a0a0b]/60 p-3 transition-all hover:border-teal-400/30 hover:bg-teal-400/5">
-    <div className="mb-1 flex items-center gap-1.5 text-teal-300/70 transition-colors group-hover:text-teal-300">
-      {icon}
-      <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500 group-hover:text-zinc-400">{label}</span>
-    </div>
-    <p className="font-mono text-sm font-bold text-white">{value}</p>
-  </div>
-);
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-zinc-600 transition-transform ${
+              chatOpen
+                ? "rotate-180"
+                : ""
+            }`}
+          />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {chatOpen && (
+            <motion.div
+              initial={{
+                height: 0,
+                opacity: 0,
+              }}
+              animate={{
+                height: "auto",
+                opacity: 1,
+              }}
+              exit={{
+                height: 0,
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.24,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-white/[0.06] p-3">
+                <div className="mb-2 max-h-44 min-h-24 space-y-2 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/20 p-3">
+                  {messages.length === 0 &&
+                  !chatLoading ? (
+                    <div className="flex min-h-20 items-center justify-center px-4 text-center text-[10px] text-zinc-600">
+                      {t.aiChatEmpty}
+                    </div>
+                  ) : (
+                    messages.map(
+                      (message, index) => (
+                        <div
+                          key={`${message.sender}-${index}`}
+                          className={`flex ${
+                            message.sender ===
+                            "user"
+                              ? "justify-end"
+                              : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`group/message relative max-w-[88%] rounded-xl px-3 py-2 text-[11px] leading-relaxed ${
+                              message.sender ===
+                              "user"
+                                ? "border border-cyan-400/15 bg-cyan-400/[0.07] text-cyan-100"
+                                : "border border-white/[0.06] bg-white/[0.025] text-zinc-300"
+                            }`}
+                          >
+                            {message.text}
+
+                            {message.sender ===
+                              "ai" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleCopy(
+                                    message.text,
+                                    index
+                                  )
+                                }
+                                title={t.aiCopy}
+                                aria-label={
+                                  t.aiCopy
+                                }
+                                className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.07] bg-[#0b0d11] text-zinc-500 opacity-0 transition-all hover:text-cyan-300 group-hover/message:opacity-100"
+                              >
+                                {copiedIndex ===
+                                index ? (
+                                  <Check className="h-3 w-3 text-cyan-300" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    )
+                  )}
+
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="flex items-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
+                        {[0, 1, 2].map(
+                          (index) => (
+                            <span
+                              key={index}
+                              className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-300"
+                              style={{
+                                animationDelay: `${index * 140}ms`,
+                              }}
+                            />
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={chatEndRef} />
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    value={input}
+                    onChange={(event) =>
+                      setInput(
+                        event.target.value
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key ===
+                        "Enter"
+                      ) {
+                        void handleChat();
+                      }
+                    }}
+                    disabled={chatLoading}
+                    className="fnk-input min-w-0 flex-1 px-3 py-2 text-[11px]"
+                    placeholder={
+                      t.aiChatPlaceholder
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleChat()
+                    }
+                    disabled={
+                      chatLoading ||
+                      !input.trim()
+                    }
+                    className="flex h-8 w-9 items-center justify-center rounded-lg bg-cyan-400 text-[#071012] transition-all hover:bg-cyan-300 active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-600"
+                  >
+                    {chatLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+interface ParameterCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}
+
+function ParameterCard({
+  icon,
+  label,
+  value,
+}: ParameterCardProps) {
+  return (
+    <article className="rounded-xl border border-white/[0.06] bg-black/20 p-3 transition-colors hover:border-cyan-400/15 hover:bg-cyan-400/[0.025]">
+      <div className="mb-1 flex items-center gap-1.5 text-cyan-300/80">
+        {icon}
+
+        <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-zinc-600">
+          {label}
+        </span>
+      </div>
+
+      <p className="font-mono text-[13px] font-semibold text-zinc-100">
+        {value}
+      </p>
+    </article>
+  );
+}

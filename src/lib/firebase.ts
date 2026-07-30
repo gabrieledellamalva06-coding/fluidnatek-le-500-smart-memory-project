@@ -1,32 +1,49 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import {
   getAuth,
-  signInAnonymously
+  signInAnonymously,
 } from "firebase/auth";
-
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  authDomain:
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:
+    import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId:
+    import.meta.env
+      .VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
-
 export const auth = getAuth(app);
 
-signInAnonymously(auth)
-  .then(() => {
-    console.log("✅ Firebase anonymous login OK");
-  })
-  .catch((err) => {
-    console.error("❌ Firebase anonymous login failed", err);
-  });
+let authenticationPromise: Promise<void> | null =
+  null;
+
+export function ensureFirebaseAuth(): Promise<void> {
+  if (auth.currentUser) {
+    return Promise.resolve();
+  }
+
+  if (!authenticationPromise) {
+    authenticationPromise = signInAnonymously(
+      auth
+    )
+      .then(() => undefined)
+      .catch((error: unknown) => {
+        authenticationPromise = null;
+        throw error;
+      });
+  }
+
+  return authenticationPromise;
+}
 
 export default app;

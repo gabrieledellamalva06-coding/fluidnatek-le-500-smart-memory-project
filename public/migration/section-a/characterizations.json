@@ -1,0 +1,42 @@
+[
+    {
+        "characterization_id": "MIG_CHAR_fe67ee2d-21b3-569d-9b53-24b0eca91b47",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "measurement_date": "",
+        "viscosity": null,
+        "conductivity": null,
+        "surface_tension": null,
+        "solid_content": null,
+        "notes": "Migrated historical characterization."
+    },
+    {
+        "characterization_id": "MIG_CHAR_4d97d348-d53a-5d83-b0fd-1f1077a73f5d",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "measurement_date": "",
+        "viscosity": null,
+        "conductivity": null,
+        "surface_tension": null,
+        "solid_content": null,
+        "notes": "Migrated historical characterization."
+    },
+    {
+        "characterization_id": "MIG_CHAR_80c9cc3c-a4cd-5502-805d-681808e10913",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "measurement_date": "",
+        "viscosity": 11.0,
+        "conductivity": null,
+        "surface_tension": null,
+        "solid_content": null,
+        "notes": "Migrated historical characterization."
+    },
+    {
+        "characterization_id": "MIG_CHAR_c331aa50-6c2b-5507-aeab-1b7cf305696b",
+        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+        "measurement_date": "",
+        "viscosity": null,
+        "conductivity": null,
+        "surface_tension": null,
+        "solid_content": null,
+        "notes": "Migrated historical characterization."
+    }
+]

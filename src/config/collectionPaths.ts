@@ -1,15 +1,34 @@
 export const DEFAULT_COMPANY_ID = "default";
 
 export const CollectionPaths = {
-  projects: (companyId = DEFAULT_COMPANY_ID) =>
+  projects: (companyId = DEFAULT_COMPANY_ID): string =>
     `companies/${companyId}/projects`,
 
-  formulations: (companyId = DEFAULT_COMPANY_ID) =>
+  materials: (companyId = DEFAULT_COMPANY_ID): string =>
+    `companies/${companyId}/materials`,
+
+  formulations: (companyId = DEFAULT_COMPANY_ID): string =>
     `companies/${companyId}/formulations`,
 
-  experiments: (companyId = DEFAULT_COMPANY_ID) =>
+  setups: (companyId = DEFAULT_COMPANY_ID): string =>
+    `companies/${companyId}/setups`,
+
+  experiments: (companyId = DEFAULT_COMPANY_ID): string =>
     `companies/${companyId}/experiments`,
 
-  telemetry: (companyId = DEFAULT_COMPANY_ID) =>
+  processRecords: (companyId = DEFAULT_COMPANY_ID): string =>
+    `companies/${companyId}/processRecords`,
+
+  solutionCharacterizations: (
+    companyId = DEFAULT_COMPANY_ID
+  ): string =>
+    `companies/${companyId}/solutionCharacterizations`,
+
+  materialCharacterizations: (
+    companyId = DEFAULT_COMPANY_ID
+  ): string =>
+    `companies/${companyId}/materialCharacterizations`,
+
+  telemetry: (companyId = DEFAULT_COMPANY_ID): string =>
     `companies/${companyId}/telemetry`,
-};
+} as const;
