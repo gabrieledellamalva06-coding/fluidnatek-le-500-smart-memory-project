@@ -1,8 +1,7 @@
 
-Qui registriamo solo le decisioni architetturali importanti.
 
 ```md
-# Fluidnatek LE-500 Smart Memory — Architecture Decisions
+Qui registriamo solo le decisioni architetturali importanti.# Fluidnatek LE-500 Smart Memory — Architecture Decisions
 
 Questo file registra le decisioni architetturali che non devono essere perse tra chat, sviluppatori o sessioni di lavoro.
 

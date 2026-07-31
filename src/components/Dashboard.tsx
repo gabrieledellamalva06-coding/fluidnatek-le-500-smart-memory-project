@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { motion } from "motion/react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -48,6 +49,33 @@ interface DashboardProps {
   onDeleteExp?: (id: string) => void;
   onUpdateExp: (exp: Experiment) => void;
   lang: Language;
+}
+
+
+function formatRunLabel(
+  experiment: Experiment,
+  formulation?: Formulation,
+  project?: Project
+): string {
+  const rawIdentifier = experiment.operationIdentifier.trim();
+
+  if (!/^\d+$/.test(rawIdentifier)) {
+    return rawIdentifier;
+  }
+
+  const runNumber = rawIdentifier.padStart(2, "0");
+  const projectLabel = project?.name?.trim();
+  const formulationLabel = formulation?.polymerName?.trim();
+
+  if (projectLabel) {
+    return `${projectLabel} · Run ${runNumber}`;
+  }
+
+  if (formulationLabel) {
+    return `${formulationLabel} · Run ${runNumber}`;
+  }
+
+  return `Historical Run ${runNumber}`;
 }
 
 export default function Dashboard({
@@ -234,10 +262,10 @@ const averageFlowRate = useMemo(
   }, [selectedExp, activeStats, formulations, lang, t]);
 
   return (
-    <div id="dashboard-view" className="flex-1 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5] flex flex-col space-y-6 select-none">
+    <div id="dashboard-view" className="fnk-app-surface flex-1 overflow-y-auto px-5 py-4 text-[#f4f4f5] flex flex-col gap-4 select-none">
       
       {/* Search and Filters Header bar */}
-      <div className="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+      <div className="fnk-panel px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 shrink-0">
           <Gauge className="w-6 h-6 text-teal-400" />
           <div>
@@ -298,10 +326,10 @@ const averageFlowRate = useMemo(
       </div>
 
       {/* Main Grid View */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,2.2fr)] gap-4">
 
         {activeFormulation && (
-  <div className="lg:col-span-3 bg-[#18181b] border border-teal-500/20 rounded-2xl p-5 mb-2">
+  <div className="lg:col-span-2 fnk-panel px-4 py-3">
 
     <div className="flex items-center gap-2 mb-4">
       <Zap className="w-5 h-5 text-teal-400" />
@@ -354,7 +382,7 @@ const averageFlowRate = useMemo(
 )}
         
         {/* Left Column: Experiments list */}
-        <div className="lg:col-span-1 bg-[#18181b] border border-[#27272a] rounded-2xl p-5 flex flex-col space-y-4 max-h-[800px] overflow-hidden">
+        <div className="fnk-panel min-h-[520px] max-h-[calc(100vh-150px)] p-3 flex flex-col gap-3 overflow-hidden">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-teal-400" />
@@ -407,7 +435,7 @@ const averageFlowRate = useMemo(
                     <div className="space-y-1.5 flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono font-bold text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded">
-                          {exp.operationIdentifier}
+                          {formatRunLabel(exp, form, form ? getFormProject(form) : undefined)}
                         </span>
                         {exp.sourceFile !== "Manual Input" && (
                           <span className="text-[10px] text-teal-400 flex items-center gap-1 font-mono">
@@ -463,15 +491,15 @@ const averageFlowRate = useMemo(
         </div>
 
         {/* Right Columns: Telemetry and Details */}
-        <div className="lg:col-span-2 flex flex-col space-y-6">
+        <div className="flex min-w-0 flex-col gap-4">
           {selectedExp && activeStats ? (
             <>
               {/* Telemetry KPIs Card */}
-              <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-6">
+              <div className="fnk-panel p-4">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <div>
                     <span className="text-xs font-mono text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded font-bold">
-                      {t.activeRun}: {selectedExp.operationIdentifier}
+                      {t.activeRun}: {formatRunLabel(selectedExp, activeFormulation ?? undefined, activeFormulation ? getFormProject(activeFormulation) : undefined)}
                     </span>
                     <h3 className="text-lg font-bold text-white mt-1.5 font-sans">
                       {getExpFormulation(selectedExp)?.polymerName} ({getExpFormulation(selectedExp)?.solidsContentPct}% solids)
@@ -496,8 +524,8 @@ const averageFlowRate = useMemo(
                 </div>
 
                 {/* 4 Metrics grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-[#0a0a0b] p-4 rounded-xl border border-[#27272a] flex items-center gap-3">
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
                     <Zap className="w-8 h-8 text-amber-500 bg-amber-500/10 p-1.5 rounded-lg shrink-0" />
                     <div>
                       <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.avgVoltage}</p>
@@ -506,7 +534,7 @@ const averageFlowRate = useMemo(
                     </div>
                   </div>
 
-                  <div className="bg-[#0a0a0b] p-4 rounded-xl border border-[#27272a] flex items-center gap-3">
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
                     <Droplet className="w-8 h-8 text-blue-400 bg-blue-500/10 p-1.5 rounded-lg shrink-0" />
                     <div>
                       <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.avgFlow}</p>
@@ -515,7 +543,7 @@ const averageFlowRate = useMemo(
                     </div>
                   </div>
 
-                  <div className="bg-[#0a0a0b] p-4 rounded-xl border border-[#27272a] flex items-center gap-3">
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
                     <Thermometer className="w-8 h-8 text-red-400 bg-red-400/10 p-1.5 rounded-lg shrink-0" />
                     <div>
                       <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.tempLabel}</p>
@@ -524,7 +552,7 @@ const averageFlowRate = useMemo(
                     </div>
                   </div>
 
-                  <div className="bg-[#0a0a0b] p-4 rounded-xl border border-[#27272a] flex items-center gap-3">
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
                     <CloudLightning className="w-8 h-8 text-teal-400 bg-teal-400/10 p-1.5 rounded-lg shrink-0" />
                     <div>
                       <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.humidityLabel}</p>
@@ -554,14 +582,14 @@ const averageFlowRate = useMemo(
               </div>
 
               {/* Charts Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {/* Voltage Chart */}
                 <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5">
                   <h4 className="text-xs font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center justify-between">
                     <span>{t.voltageProfile}</span>
                     <span className="text-[10px] font-mono font-semibold text-teal-400">{t.monitored}</span>
                   </h4>
-                  <div className="h-64 w-full">
+                  <div className="h-52 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={selectedExp.telemetryData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                         <defs>
@@ -591,7 +619,7 @@ const averageFlowRate = useMemo(
                     <span>{t.flowStability}</span>
                     <span className="text-[10px] font-mono font-semibold text-teal-400">{t.feedSensor}</span>
                   </h4>
-                  <div className="h-64 w-full">
+                  <div className="h-52 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={selectedExp.telemetryData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />

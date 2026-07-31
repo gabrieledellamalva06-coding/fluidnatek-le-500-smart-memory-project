@@ -12,6 +12,8 @@
  * ============================================================================
  */
 
+import type { DataQualityInfo } from "./dataQuality";
+
 export type MaterialCategory =
     | "polymer"
     | "solvent"
@@ -69,6 +71,8 @@ export interface Material {
     aiTags: string[];
 
     metadata: MaterialMetadata;
+
+    dataQuality?: DataQualityInfo;
 
 }
 
