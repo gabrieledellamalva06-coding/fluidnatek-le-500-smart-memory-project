@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+﻿import React, { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   ResponsiveContainer,
@@ -31,8 +31,6 @@ import {
 import { Experiment, Formulation, Project } from "../types";
 import { TRANSLATIONS, Language } from "../lib/translations";
 import ExperimentEditor from "./ExperimentEditor";
-import { AIOptimizationWidget } from "./AIOptimizationWidget";
-import { AIInsights } from "./AIInsights";
 import Fuse from "fuse.js";
 import {
   getExperimentsForFormulation,
@@ -68,11 +66,11 @@ function formatRunLabel(
   const formulationLabel = formulation?.polymerName?.trim();
 
   if (projectLabel) {
-    return `${projectLabel} · Run ${runNumber}`;
+    return `${projectLabel} Â· Run ${runNumber}`;
   }
 
   if (formulationLabel) {
-    return `${formulationLabel} · Run ${runNumber}`;
+    return `${formulationLabel} Â· Run ${runNumber}`;
   }
 
   return `Historical Run ${runNumber}`;
@@ -114,8 +112,8 @@ export default function Dashboard({
     return projects.find((p) => p.id === form.projectId);
   };
 
-  // Formulazione della run attiva, memoizzata: reference stabile finché non
-  // cambia l'esperimento selezionato → evita che il widget AI rilanci
+  // Formulazione della run attiva, memoizzata: reference stabile finchÃ© non
+  // cambia l'esperimento selezionato â†’ evita che il widget AI rilanci
   // chiamate a Gemini (429) ad ogni render.
   const activeFormulation = useMemo(
     () => (selectedExp ? formulations.find((f) => f.id === selectedExp.formulationId) ?? null : null),
@@ -220,9 +218,9 @@ const averageFlowRate = useMemo(
         return {
           optimal: false,
           message: lang === "it"
-            ? "Umidità critica per Nylon-6 (>40% RH). Rischio di micro-gocce!"
+            ? "UmiditÃ  critica per Nylon-6 (>40% RH). Rischio di micro-gocce!"
             : lang === "es"
-            ? "¡Humedad crítica para Nylon-6 (>40% RH). Riesgo de microgotas!"
+            ? "Â¡Humedad crÃ­tica para Nylon-6 (>40% RH). Riesgo de microgotas!"
             : "Critical humidity for Nylon-6 (>40% RH). Risk of micro-droplets!"
         };
       }
@@ -231,9 +229,9 @@ const averageFlowRate = useMemo(
         return {
           optimal: false,
           message: lang === "it"
-            ? "Umidità elevata per PVDF. Può influire sulla polarizzazione piezoelettrica beta."
+            ? "UmiditÃ  elevata per PVDF. PuÃ² influire sulla polarizzazione piezoelettrica beta."
             : lang === "es"
-            ? "Humedad elevada para PVDF. Puede influir en la polarización piezoeléctrica beta."
+            ? "Humedad elevada para PVDF. Puede influir en la polarizaciÃ³n piezoelÃ©ctrica beta."
             : "High humidity for PVDF. May affect piezoelectric beta polarization."
         };
       }
@@ -242,10 +240,10 @@ const averageFlowRate = useMemo(
         return {
           optimal: false,
           message: lang === "it"
-            ? "Temperatura eccessiva per PCL (Fusione ~60°C). Rischio di incollaggio termico!"
+            ? "Temperatura eccessiva per PCL (Fusione ~60Â°C). Rischio di incollaggio termico!"
             : lang === "es"
-            ? "¡Temperatura excesiva para PCL (Fusión ~60°C). Riesgo de unión térmica!"
-            : "Excessive temperature for PCL (Melting ~60°C). Risk of thermal bonding!"
+            ? "Â¡Temperatura excesiva para PCL (FusiÃ³n ~60Â°C). Riesgo de uniÃ³n tÃ©rmica!"
+            : "Excessive temperature for PCL (Melting ~60Â°C). Risk of thermal bonding!"
         };
       }
     }
@@ -315,8 +313,7 @@ const averageFlowRate = useMemo(
               className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none"
             >
               <option value="ALL" className="bg-[#18181b] text-white">{t.allStabilities}</option>
-              <option value="5" className="bg-[#18181b] text-white">5 - {lang === "it" ? "Perfetto" : lang === "es" ? "Perfecto" : "Perfect"}</option>
-              <option value="4" className="bg-[#18181b] text-white">4 - {lang === "it" ? "Stabile" : lang === "es" ? "Estable" : "Stable"}</option>
+                            <option value="4" className="bg-[#18181b] text-white">4 - {lang === "it" ? "Stabile" : lang === "es" ? "Estable" : "Stable"}</option>
               <option value="3" className="bg-[#18181b] text-white">3 - {lang === "it" ? "Accettabile" : lang === "es" ? "Aceptable" : "Acceptable"}</option>
               <option value="2" className="bg-[#18181b] text-white">2 - {lang === "it" ? "Instabile" : lang === "es" ? "Inestable" : "Unstable"}</option>
               <option value="1" className="bg-[#18181b] text-white">1 - {lang === "it" ? "Molto instabile" : lang === "es" ? "Muy inestable" : "Highly unstable"}</option>
@@ -450,8 +447,8 @@ const averageFlowRate = useMemo(
                         <span className="bg-zinc-800/60 px-1.5 py-0.5 rounded truncate">
                           {form ? form.solvent : "Solvente non definito"}
                         </span>
-                        <span className="shrink-0 text-zinc-600">•</span>
-                        <span>{t.filterStability} {exp.jetStabilityGrade}/5</span>
+                        <span className="shrink-0 text-zinc-600">â€¢</span>
+                        <span>{t.filterStability} {exp.jetStabilityGrade}/4</span>
                       </div>
                       <p className="text-xs text-zinc-500 line-clamp-1 italic">
                         {exp.operatorComments}
@@ -507,18 +504,18 @@ const averageFlowRate = useMemo(
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-zinc-400 mr-2">{lang === "it" ? "Jet:" : lang === "es" ? "Chorro:" : "Jet:"}</span>
-                    {[1, 2, 3, 4, 5].map((s) => (
+                    {[1, 2, 3, 4].map((s) => (
                       <span
                         key={s}
                         className={`text-base ${
                           s <= selectedExp.jetStabilityGrade ? "text-teal-400" : "text-zinc-700"
                         }`}
                       >
-                        ★
+                        â˜…
                       </span>
                     ))}
                     <span className="text-xs font-mono font-bold bg-[#0a0a0b] text-zinc-300 px-2 py-0.5 rounded-md ml-1 border border-[#27272a]">
-                      {selectedExp.jetStabilityGrade}/5
+                      {selectedExp.jetStabilityGrade}/4
                     </span>
                   </div>
                 </div>
@@ -547,7 +544,7 @@ const averageFlowRate = useMemo(
                     <Thermometer className="w-8 h-8 text-red-400 bg-red-400/10 p-1.5 rounded-lg shrink-0" />
                     <div>
                       <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.tempLabel}</p>
-                      <p className="text-xl font-bold font-mono text-white">{activeStats.avgTemp} °C</p>
+                      <p className="text-xl font-bold font-mono text-white">{activeStats.avgTemp} Â°C</p>
                       <p className="text-[10px] text-zinc-500">{t.tempOptimal}</p>
                     </div>
                   </div>
@@ -571,14 +568,6 @@ const averageFlowRate = useMemo(
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <span className="text-xs font-medium">{envStatus.message}</span>
                 </div>
-                <div className="mt-6 space-y-6">
-                    <AIOptimizationWidget
-                      currentFormulation={activeFormulation}
-                      projectId={activeFormulation?.projectId || ""}
-                      lang={lang}
-                    />
-                    <AIInsights telemetryData={selectedExp.telemetryData} lang={lang} />
-                  </div>
               </div>
 
               {/* Charts Section */}
@@ -713,3 +702,4 @@ const averageFlowRate = useMemo(
     </div>
   );
 }
+

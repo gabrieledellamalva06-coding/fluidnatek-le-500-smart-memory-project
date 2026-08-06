@@ -1,15 +1,23 @@
-import React, {
+﻿import React, {
   useEffect,
   useMemo,
   useState,
 } from "react";
 
-import Sidebar from "./components/Sidebar";
-import Dashboard from "./components/Dashboard";
+import {
+  AlertTriangle,
+  FolderKanban,
+  Plus,
+} from "lucide-react";
+
+import Sidebar, {
+  type MainView,
+} from "./components/Sidebar";
+
 import Formulations from "./components/Formulations";
+import Setups from "./components/Setups";
 import RunConfig from "./components/RunConfig";
 import ExcelImport from "./components/ExcelImport";
-import ParameterLearningPanel from "./components/ParameterLearningPanel";
 
 import type {
   Experiment,
@@ -29,18 +37,28 @@ import type {
   CreateExperimentInput,
 } from "./application/experiments/experiment.mapper";
 
-type MainView =
-  | "DASHBOARD"
-  | "FORMULATIONS"
-  | "RUN_CONFIG"
-  | "EXCEL_IMPORT";
+import type {
+  SolutionCharacterization,
+} from "./core/types/characterization";
+
+import type {
+  ExperimentalSetup,
+} from "./core/types/setup";
+
+import {
+  setupService,
+  type CreateSetupInput,
+} from "./application/setups/setup.service";
+
+import {
+  solutionCharacterizationService,
+  type CreateSolutionCharacterizationInput,
+} from "./application/characterizations/characterization.service";
 
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Si è verificato un errore imprevisto.";
+  return error instanceof Error
+    ? error.message
+    : "Si Ã¨ verificato un errore imprevisto.";
 }
 
 function getStoredLanguage(): Language {
@@ -60,36 +78,25 @@ function getStoredLanguage(): Language {
 
 export default function App() {
   const [currentView, setCurrentView] =
-    useState<MainView>("DASHBOARD");
+    useState<MainView>("PROJECTS");
 
   const [lang, setLang] =
     useState<Language>(getStoredLanguage);
 
-  /*
-   * Firestore-backed entities.
-   */
   const [projects, setProjects] =
     useState<Project[]>([]);
 
   const [formulations, setFormulations] =
     useState<Formulation[]>([]);
 
+    const [characterizations, setCharacterizations] =
+    useState<SolutionCharacterization[]>([]);
+
+    const [setups, setSetups] =
+    useState<ExperimentalSetup[]>([]);
+
   const [experiments, setExperiments] =
     useState<Experiment[]>([]);
-
-  /*
-   * UI-only state.
-   *
-   * The selected experiment ID may remain in localStorage because it is
-   * only a presentation preference, not industrial domain data.
-   */
-  const [selectedExpId, setSelectedExpId] =
-    useState<string>(
-      () =>
-        localStorage.getItem(
-          "fluidnatek_selected_exp_id"
-        ) ?? ""
-    );
 
   const [isDataLoading, setIsDataLoading] =
     useState(true);
@@ -106,14 +113,18 @@ export default function App() {
 
       try {
         const [
-          loadedProjects,
-          loadedFormulations,
-          loadedExperiments,
-        ] = await Promise.all([
-          projectService.getProjects(),
-          formulationService.getFormulations(),
-          experimentService.getExperiments(),
-        ]);
+  loadedProjects,
+  loadedFormulations,
+  loadedCharacterizations,
+  loadedSetups,
+  loadedExperiments,
+] = await Promise.all([
+  projectService.getProjects(),
+  formulationService.getFormulations(),
+  solutionCharacterizationService.getCharacterizations(),
+  setupService.getSetups(),
+  experimentService.getExperiments(),
+]);
 
         if (isCancelled) {
           return;
@@ -121,24 +132,11 @@ export default function App() {
 
         setProjects(loadedProjects);
         setFormulations(loadedFormulations);
-        setExperiments(loadedExperiments);
-
-        setSelectedExpId(
-          (currentSelectedExperimentId) => {
-            const selectedExperimentExists =
-              loadedExperiments.some(
-                (experiment) =>
-                  experiment.id ===
-                  currentSelectedExperimentId
-              );
-
-            if (selectedExperimentExists) {
-              return currentSelectedExperimentId;
-            }
-
-            return loadedExperiments[0]?.id ?? "";
-          }
+        setCharacterizations(
+          loadedCharacterizations
         );
+        setSetups(loadedSetups);
+        setExperiments(loadedExperiments);
       } catch (error: unknown) {
         if (!isCancelled) {
           setDataError(
@@ -168,31 +166,10 @@ export default function App() {
     );
   }, [lang]);
 
-  useEffect(() => {
-    if (selectedExpId) {
-      localStorage.setItem(
-        "fluidnatek_selected_exp_id",
-        selectedExpId
-      );
-
-      return;
-    }
-
-    localStorage.removeItem(
-      "fluidnatek_selected_exp_id"
-    );
-  }, [selectedExpId]);
-
-  const selectedExp = useMemo(() => {
-    return (
-      experiments.find(
-        (experiment) =>
-          experiment.id === selectedExpId
-      ) ??
-      experiments[0] ??
-      null
-    );
-  }, [experiments, selectedExpId]);
+  const activeProject = useMemo(
+    () => projects[0] ?? null,
+    [projects]
+  );
 
   const handleAddProject = async (
     project: Omit<Project, "id" | "createdAt">
@@ -258,6 +235,51 @@ export default function App() {
     }
   };
 
+  const handleAddCharacterization = async (
+    input: CreateSolutionCharacterizationInput
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdCharacterization =
+        await solutionCharacterizationService.createCharacterization(
+          input
+        );
+
+      setCharacterizations(
+        (previousCharacterizations) => [
+          createdCharacterization,
+          ...previousCharacterizations,
+        ]
+      );
+    } catch (error: unknown) {
+      const message =
+        `Impossibile creare la caratterizzazione: ${getErrorMessage(
+          error
+        )}`;
+
+      setDataError(message);
+
+      throw new Error(message);
+    }
+  };
+
+  
+  const handleAddSetup = async (
+    input: CreateSetupInput
+  ): Promise<void> => {
+    setDataError(null);
+    try {
+      const createdSetup = await setupService.createSetup(input);
+      setSetups((previous) => [createdSetup, ...previous]);
+    } catch (error: unknown) {
+      const message = `Impossibile creare il setup: ${getErrorMessage(error)}`;
+      setDataError(message);
+      throw new Error(message);
+    }
+  };
+
+
   const handleAddExperiment = async (
     input: CreateExperimentInput
   ): Promise<void> => {
@@ -269,39 +291,12 @@ export default function App() {
           input
         );
 
-      const formulation = formulations.find(
-        (item) =>
-          item.id === input.formulationId
-      );
-
-      if (formulation) {
-        registerMaterial(
-          "polymer",
-          formulation.polymerName,
-          formulation.polymerName,
-          1
-        );
-
-        registerMaterial(
-          "solvent",
-          formulation.solvent,
-          formulation.solvent,
-          1
-        );
-      }
-
       setExperiments(
         (previousExperiments) => [
           createdExperiment,
           ...previousExperiments,
         ]
       );
-
-      setSelectedExpId(
-        createdExperiment.id
-      );
-
-      setCurrentView("DASHBOARD");
     } catch (error: unknown) {
       const message =
         `Impossibile registrare l'esperimento: ${getErrorMessage(
@@ -309,7 +304,6 @@ export default function App() {
         )}`;
 
       setDataError(message);
-
       throw new Error(message);
     }
   };
@@ -318,10 +312,6 @@ export default function App() {
     parsedList: ParsedExcelResult[],
     targetProjectId: string
   ): void => {
-    setDataError(
-      "L'importazione Excel è temporaneamente bloccata mentre colleghiamo la pipeline canonica a Firestore. Nessun dato è stato importato."
-    );
-
     console.info(
       "Pending canonical Excel import:",
       {
@@ -329,29 +319,9 @@ export default function App() {
         targetProjectId,
       }
     );
-  };
-
-  const handleDeleteExperiment = (
-    experimentId: string
-  ): void => {
-    const experiment =
-      experiments.find(
-        (item) => item.id === experimentId
-      );
 
     setDataError(
-      `L'esperimento "${
-        experiment?.operationIdentifier ??
-        experimentId
-      }" non è stato eliminato. La cancellazione sarà abilitata tramite un'operazione Firestore controllata.`
-    );
-  };
-
-  const handleUpdateExperiment = (
-    updatedExperiment: Experiment
-  ): void => {
-    setDataError(
-      `L'esperimento "${updatedExperiment.operationIdentifier}" non è stato modificato. L'aggiornamento sarà abilitato tramite il servizio applicativo canonico.`
+      "L'importazione Ã¨ temporaneamente in modalitÃ  revisione. Nessun dato Ã¨ stato scritto."
     );
   };
 
@@ -365,7 +335,7 @@ export default function App() {
     setDataError(
       `Il progetto "${
         project?.name ?? projectId
-      }" non è stato eliminato. La cancellazione sarà abilitata dopo la migrazione completa delle entità dipendenti.`
+      }" non Ã¨ stato eliminato: sono necessarie verifiche referenziali.`
     );
   };
 
@@ -382,72 +352,14 @@ export default function App() {
       `La formulazione "${
         formulation?.polymerName ??
         formulationId
-      }" non è stata eliminata. La cancellazione sarà abilitata dopo l'implementazione delle verifiche referenziali.`
+      }" non Ã¨ stata eliminata: sono necessarie verifiche referenziali.`
     );
   };
 
   const renderMainView =
     (): React.ReactNode => {
       switch (currentView) {
-        case "DASHBOARD":
-          return (
-            <div className="flex flex-col gap-6 overflow-auto p-6">
-              <Dashboard
-                projects={projects}
-                formulations={formulations}
-                experiments={experiments}
-                selectedExp={selectedExp}
-                onSelectExp={(experiment) =>
-                  setSelectedExpId(
-                    experiment.id
-                  )
-                }
-                onDeleteExp={
-                  handleDeleteExperiment
-                }
-                onUpdateExp={
-                  handleUpdateExperiment
-                }
-                lang={lang}
-              />
-
-              <ParameterLearningPanel />
-            </div>
-          );
-
-        case "FORMULATIONS":
-          return (
-            <Formulations
-              projects={projects}
-              formulations={formulations}
-              onAddProject={handleAddProject}
-              onAddFormulation={
-                handleAddFormulation
-              }
-              onDeleteProject={
-                handleDeleteProject
-              }
-              onDeleteFormulation={
-                handleDeleteFormulation
-              }
-              lang={lang}
-            />
-          );
-
-        case "RUN_CONFIG":
-          return (
-            <RunConfig
-              projects={projects}
-              formulations={formulations}
-              experiments={experiments}
-              onAddExperiment={
-                handleAddExperiment
-              }
-              lang={lang}
-            />
-          );
-
-        case "EXCEL_IMPORT":
+        case "DATABASE_MANAGEMENT":
           return (
             <ExcelImport
               projects={projects}
@@ -459,27 +371,64 @@ export default function App() {
             />
           );
 
-        default:
+        case "PROJECTS":
           return (
-            <div className="flex flex-1 items-center justify-center bg-[#0a0a0b] text-white">
-              Sezione non trovata.
-            </div>
+            <ProjectsWorkspace
+              projects={projects}
+              formulations={formulations}
+              experiments={experiments}
+              activeProject={activeProject}
+              onAddProject={handleAddProject}
+            />
+          );
+
+        case "FORMULATIONS_CHARACTERIZATION":
+          return (
+            <Formulations
+              projects={projects}
+              formulations={formulations}
+              characterizations={
+                characterizations
+              }
+              onAddFormulation={
+                handleAddFormulation
+              }
+              onAddCharacterization={
+                handleAddCharacterization
+              }
+              lang={lang}
+            />
+          );
+
+        case "SETUPS":
+          return (
+            <Setups
+              projects={projects}
+              setups={setups}
+              onAddSetup={handleAddSetup}
+            />
+          );
+
+        case "LIVE_TELEMETRY":
+          return (
+            <RunConfig
+  projects={projects}
+  formulations={formulations}
+  characterizations={characterizations}
+  setups={setups}
+  experiments={experiments}
+  onAddExperiment={handleAddExperiment}
+  lang={lang}
+/>
           );
       }
     };
 
   return (
-    <div
-      id="fluidnatek-app-container"
-      className="flex h-screen overflow-hidden bg-[#0a0a0b] font-sans antialiased"
-    >
+    <div className="flex h-screen overflow-hidden bg-slate-100 font-sans antialiased">
       <Sidebar
         currentView={currentView}
-        onViewChange={(view) =>
-          setCurrentView(
-            view as MainView
-          )
-        }
+        onViewChange={setCurrentView}
         projectsCount={projects.length}
         experimentsCount={
           experiments.length
@@ -488,27 +437,23 @@ export default function App() {
         onLanguageChange={setLang}
       />
 
-      <div
-        id="main-content-layout"
-        className="relative flex h-full min-w-0 flex-1 flex-col"
-      >
+      <div className="fnk-content-theme relative flex h-full min-w-0 flex-1 flex-col">
         {isDataLoading && (
-          <div className="border-b border-white/10 bg-white/5 px-6 py-3 text-sm text-white/70">
-            Caricamento dati da
-            Firestore…
+          <div className="border-b border-blue-100 bg-blue-50 px-6 py-3 text-sm text-blue-700">
+            Caricamento dati da Firestoreâ€¦
           </div>
         )}
 
         {dataError && (
           <div
             role="alert"
-            className="flex items-center justify-between gap-4 border-b border-red-500/30 bg-red-500/10 px-6 py-3 text-sm text-red-200"
+            className="flex items-center justify-between gap-4 border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700"
           >
             <span>{dataError}</span>
 
             <button
               type="button"
-              className="shrink-0 rounded-md border border-red-400/30 px-3 py-1 text-xs font-medium transition hover:bg-red-400/10"
+              className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1 text-xs font-semibold"
               onClick={() =>
                 setDataError(null)
               }
@@ -523,3 +468,272 @@ export default function App() {
     </div>
   );
 }
+
+interface ProjectsWorkspaceProps {
+  projects: Project[];
+  formulations: Formulation[];
+  experiments: Experiment[];
+  activeProject: Project | null;
+
+  onAddProject: (
+    project: Omit<Project, "id" | "createdAt">
+  ) => Promise<void>;
+}
+
+function ProjectsWorkspace({
+  projects,
+  formulations,
+  experiments,
+  activeProject,
+  onAddProject,
+}: ProjectsWorkspaceProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] =
+    useState("");
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    const normalizedName = name.trim();
+
+    if (!normalizedName) {
+      setError(
+        "Inserisci un codice o nome progetto."
+      );
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      await onAddProject({
+        name: normalizedName,
+        description: description.trim(),
+      });
+
+      setName("");
+      setDescription("");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <main className="flex-1 overflow-y-auto bg-slate-100 p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        <header>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+            Workflow step 1
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+            Projects
+          </h1>
+
+          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            Crea o seleziona il progetto che definisce
+            il contesto della sessione sperimentale.
+          </p>
+        </header>
+
+        {activeProject && (
+          <section className="mt-6 rounded-3xl border border-blue-200 bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white shadow-lg shadow-blue-200">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-100">
+              Active project
+            </p>
+
+            <h2 className="mt-2 text-2xl font-bold">
+              {activeProject.name}
+            </h2>
+
+            <p className="mt-1 text-sm text-blue-50">
+              {activeProject.description ||
+                "Nessuna descrizione disponibile."}
+            </p>
+          </section>
+        )}
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+                <Plus className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-slate-950">
+                  New project
+                </h2>
+
+                <p className="text-xs text-slate-500">
+                  Crea un nuovo contesto sperimentale.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="mt-6 space-y-4"
+            >
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Project code
+                </span>
+
+                <input
+                  value={name}
+                  onChange={(event) =>
+                    setName(event.target.value)
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Description
+                </span>
+
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(event) =>
+                    setDescription(
+                      event.target.value
+                    )
+                  }
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              {error && (
+                <div className="flex gap-2 rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSaving
+                  ? "Saving..."
+                  : "Create project"}
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-slate-100 p-3 text-slate-600">
+                <FolderKanban className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-slate-950">
+                  Project database
+                </h2>
+
+                <p className="text-xs text-slate-500">
+                  {projects.length} registered projects
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {projects.map((project) => {
+                const formulationCount =
+                  formulations.filter(
+                    (item) =>
+                      item.projectId === project.id
+                  ).length;
+
+                const experimentCount =
+                  experiments.filter(
+                    (experiment) =>
+                      formulations.some(
+                        (formulation) =>
+                          formulation.id ===
+                            experiment.formulationId &&
+                          formulation.projectId ===
+                            project.id
+                      )
+                  ).length;
+
+                return (
+                  <article
+                    key={project.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-slate-900">
+                          {project.name}
+                        </h3>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {project.description ||
+                            "No description"}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <ProjectMetric
+                          label="Formulations"
+                          value={formulationCount}
+                        />
+
+                        <ProjectMetric
+                          label="Runs"
+                          value={experimentCount}
+                        />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {projects.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400">
+                  No projects registered.
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+interface ProjectMetricProps {
+  label: string;
+  value: number;
+}
+
+function ProjectMetric({
+  label,
+  value,
+}: ProjectMetricProps) {
+  return (
+    <div className="min-w-20 rounded-xl bg-white px-3 py-2 text-center shadow-sm">
+      <p className="text-lg font-bold text-slate-900">
+        {value}
+      </p>
+
+      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+

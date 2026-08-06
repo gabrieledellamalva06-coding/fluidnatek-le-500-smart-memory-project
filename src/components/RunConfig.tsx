@@ -1,1072 +1,274 @@
-import React, { useState } from "react";
-import {
-  Activity,
-  Sliders,
-  Sparkles,
-  Loader,
-  Check,
-  AlertTriangle,
-  HelpCircle,
-  Thermometer,
-  CloudLightning,
-  Play,
-} from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, FlaskConical, FolderKanban, Play, SlidersHorizontal, TestTube2 } from "lucide-react";
 
-import type {
-  Project,
-  Formulation,
-  Experiment,
-  AISuggestion,
-} from "../types";
+import type { Experiment, Formulation, Project } from "../types";
+import type { SolutionCharacterization } from "../core/types/characterization";
+import type { ExperimentalSetup } from "../core/types/setup";
+import type { ProcessabilityGrade } from "../core/types/processRecord";
+import type { CreateExperimentInput } from "../application/experiments/experiment.mapper";
+import type { Language } from "../lib/translations";
 
-import type {
-  CreateExperimentInput,
-} from "../application/experiments/experiment.mapper";
-
-import type {
-  ProcessabilityGrade,
-} from "../core/types/processRecord";
-
-import {
-  TRANSLATIONS,
-  type Language,
-} from "../lib/translations";
-
-import MemorySearchPanel from "../features/memory/MemorySearchPanel";
-
-type InjectorType =
-  | "Single Emitter"
-  | "Coaxial"
-  | "Multi-emitter (x4)"
-  | "Multi-needle (x8)";
-
-type CollectorType =
-  | "Flat Plate"
-  | "Rotating Drum"
-  | "Mandrel"
-  | "Y-axis Stage";
+import NumericField from "./ui/NumericField";
 
 interface RunConfigProps {
   projects: Project[];
-
   formulations: Formulation[];
-
+  characterizations: SolutionCharacterization[];
+  setups: ExperimentalSetup[];
   experiments: Experiment[];
-
-  onAddExperiment: (
-    input: CreateExperimentInput
-  ) => Promise<void>;
-
+  onAddExperiment: (input: CreateExperimentInput) => Promise<void>;
   lang: Language;
 }
 
+interface Range { min: number; max: number; }
+const GRADES = [1, 2, 3, 4] as const;
+
 export default function RunConfig({
-  projects,
-  formulations,
-  experiments,
-  onAddExperiment,
-  lang,
+  projects, formulations, characterizations, setups, experiments, onAddExperiment, lang,
 }: RunConfigProps) {
-  const t = TRANSLATIONS[lang];
+  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  const [formulationId, setFormulationId] = useState("");
+  const [characterizationId, setCharacterizationId] = useState("");
+  const [setupId, setSetupId] = useState("");
+  const [runName, setRunName] = useState("");
+  const [voltageKv, setVoltageKv] = useState(15);
+  const [flowRateMlH, setFlowRateMlH] = useState(1);
+  const [distanceMm, setDistanceMm] = useState(150);
+  const [temperatureC, setTemperatureC] = useState<number | undefined>();
+  const [humidityPct, setHumidityPct] = useState<number | undefined>();
+  const [processability, setProcessability] = useState<ProcessabilityGrade>(3);
+  const [comments, setComments] = useState("");
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [selectedFormulationId, setSelectedFormulationId] =
-    useState("");
+  const availableFormulations = useMemo(
+    () => formulations.filter((item) => item.projectId === projectId),
+    [formulations, projectId]
+  );
+  const availableCharacterizations = useMemo(
+    () => characterizations.filter((item) => item.formulationId === formulationId),
+    [characterizations, formulationId]
+  );
+  const availableSetups = useMemo(
+    () => setups.filter((item) => !item.projectId || item.projectId === projectId),
+    [setups, projectId]
+  );
+  const selectedFormulation = formulations.find((item) => item.id === formulationId) ?? null;
+  const selectedSetup = setups.find((item) => item.id === setupId) ?? null;
+  const similarRuns = useMemo(
+    () => experiments.filter((item) => item.formulationId === formulationId),
+    [experiments, formulationId]
+  );
+  const evidence = useMemo(() => ({
+    voltage: range(similarRuns.flatMap((run) => run.telemetryData.map((row) => row.voltageKv))),
+    flow: range(similarRuns.flatMap((run) => run.telemetryData.map((row) => row.flowRateMlH))),
+    distance: range(similarRuns.flatMap((run) => run.telemetryData.map((row) => row.distanceMm))),
+  }), [similarRuns]);
 
-  const [runName, setRunName] =
-    useState("");
-
-  const [injectorType, setInjectorType] =
-    useState<InjectorType>("Single Emitter");
-
-  const [collectorType, setCollectorType] =
-    useState<CollectorType>("Flat Plate");
-
-  const [distanceMm, setDistanceMm] =
-    useState<number>(150);
-
-  const [voltageKv, setVoltageKv] =
-    useState<number>(15);
-
-  const [flowRateMlH, setFlowRateMlH] =
-    useState<number>(1);
-
-  const [jetStability, setJetStability] =
-    useState<ProcessabilityGrade>(4);
-
-  const [isSaving, setIsSaving] =
-    useState(false);
-
-  const [saveError, setSaveError] =
-    useState("");
-
-  const [operatorComments, setOperatorComments] =
-    useState("");
-
-  const [aiPolymer, setAiPolymer] =
-    useState("");
-
-  const [aiSolvent, setAiSolvent] =
-    useState("");
-
-  const [aiViscosity, setAiViscosity] =
-    useState<number>(350);
-
-  const [aiConductivity, setAiConductivity] =
-    useState<number>(5.5);
-
-  const [aiSolids, setAiSolids] =
-    useState<number>(12);
-
-  const [isAiLoading, setIsAiLoading] =
-    useState(false);
-
-  const [aiSuggestion, setAiSuggestion] =
-    useState<AISuggestion | null>(null);
-
-  const [aiError, setAiError] =
-    useState("");
-
-  const handleApplyFormulationParams = (
-    formulationId: string
-  ): void => {
-    setSelectedFormulationId(formulationId);
-    setAiSuggestion(null);
-    setAiError("");
-
-    const formulation = formulations.find(
-      (item) => item.id === formulationId
-    );
-
-    if (!formulation) {
-      setAiPolymer("");
-      setAiSolvent("");
-      return;
-    }
-
-    setAiPolymer(formulation.polymerName);
-    setAiSolvent(formulation.solvent);
-    setAiViscosity(formulation.viscosityMpas);
-    setAiConductivity(formulation.conductivityUsCm);
-    setAiSolids(formulation.solidsContentPct);
-
-    const polymerCode = formulation.polymerName
-      .split(" ")[0]
-      .toUpperCase();
-
-    const randomRunNumber =
-      Math.floor(Math.random() * 900) + 100;
-
-    setRunName(
-      `RUN-${polymerCode}-${randomRunNumber}`
-    );
-  };
-
-  const triggerAISuggestion =
-    async (): Promise<void> => {
-      if (!aiPolymer) {
-        setAiError(t.selectFormulationWarning);
-        return;
-      }
-
-      setIsAiLoading(true);
-      setAiError("");
-      setAiSuggestion(null);
-
-      const historicalRuns = experiments
-        .filter((experiment) => {
-          const formulation = formulations.find(
-            (item) =>
-              item.id === experiment.formulationId
-          );
-
-          return (
-            formulation !== undefined &&
-            formulation.polymerName
-              .toLowerCase()
-              .includes(aiPolymer.toLowerCase())
-          );
-        })
-        .slice(0, 3)
-        .map((experiment) => ({
-          operationIdentifier:
-            experiment.operationIdentifier,
-
-          injector:
-            experiment.injectorType,
-
-          collector:
-            experiment.collectorType,
-
-          distanceMm:
-            experiment.distanceMm,
-
-          stabilityGrade:
-            experiment.jetStabilityGrade,
-
-          comments:
-            experiment.operatorComments,
-        }));
-
-      try {
-        const response = await fetch(
-          "/api/suggest",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-            },
-
-            body: JSON.stringify({
-              polymerName: aiPolymer,
-              solvent: aiSolvent,
-              solidsContentPct: aiSolids,
-              viscosityMpas: aiViscosity,
-              conductivityUsCm: aiConductivity,
-              historicalRuns,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            lang === "it"
-              ? "Errore di risposta del server backend"
-              : lang === "es"
-                ? "Error de respuesta del servidor backend"
-                : "Backend server error response"
-          );
-        }
-
-        const data: AISuggestion =
-          await response.json();
-
-        setAiSuggestion(data);
-      } catch (error: unknown) {
-        setAiError(
-          error instanceof Error
-            ? error.message
-            : "Error contacting AI service."
-        );
-      } finally {
-        setIsAiLoading(false);
-      }
-    };
-
-  const applyAISuggestedParams = (): void => {
-    if (!aiSuggestion) {
-      return;
-    }
-
-    setVoltageKv(aiSuggestion.voltageKv);
-    setFlowRateMlH(
-      aiSuggestion.flowRateMlH
-    );
-    setDistanceMm(aiSuggestion.distanceMm);
-  };
-
-  const handleSaveConfig = async (
-    event: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const saveRun = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-
-    if (
-      !selectedFormulationId ||
-      !runName.trim() ||
-      isSaving
-    ) {
+    if (!projectId || !formulationId || !setupId || !runName.trim() || !selectedSetup) {
+      setError("Complete project, formulation, setup and run code.");
       return;
     }
-
     setIsSaving(true);
-    setSaveError("");
-
+    setError("");
     try {
       await onAddExperiment({
-        formulationId:
-          selectedFormulationId,
-
-        operationIdentifier:
-          runName.trim(),
-
-        machineModel:
-          "Fluidnatek LE-500",
-
-        injectorType,
-
-        collectorType,
-
+        formulationId,
+        operationIdentifier: runName.trim(),
+        machineModel: selectedSetup.machine.model,
+        injectorType: selectedSetup.injector.type,
+        collectorType: selectedSetup.collector.type,
         voltageKv,
-
         flowRateMlH,
-
         distanceMm,
-
-        jetStabilityGrade:
-          jetStability,
-
-        operatorComments:
-          operatorComments.trim() ||
-          (
-            lang === "it"
-              ? "Prova registrata con successo"
-              : lang === "es"
-                ? "Prueba registrada correctamente"
-                : "Run recorded successfully"
-          ),
-
-        sourceFile:
-          "Manual Input",
+        jetStabilityGrade: processability,
+        operatorComments: comments.trim(),
+        sourceFile: "Manual Input",
+        temperatureC,
+        humidityPct,
       });
-
       setRunName("");
-      setOperatorComments("");
-    } catch (error: unknown) {
-      setSaveError(
-        error instanceof Error
-          ? error.message
-          : lang === "it"
-            ? "Impossibile registrare l'esperimento."
-            : lang === "es"
-              ? "No se pudo registrar el experimento."
-              : "Unable to save the experiment."
-      );
+      setComments("");
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : "Unable to save the run.");
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div
-      id="runconfig-view"
-      className="flex-1 select-none space-y-8 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5]"
-    >
-      <div className="flex items-center gap-3">
-        <Activity className="h-8 w-8 text-teal-400" />
+    <main className="flex-1 overflow-y-auto bg-slate-100 p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Workflow steps 5–10</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-950">Live Telemetry & Smart Memory</h1>
+        <p className="mt-2 text-sm text-slate-500">No Co-Pilot. Historical evidence only; current parameters are entered manually.</p>
 
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">
-            {t.runConfigTitle}
-          </h2>
+        <form onSubmit={saveRun} className="mt-6 space-y-5">
+          <Step number={1} icon={FolderKanban} title="Select project">
+            <select value={projectId} onChange={(e) => { setProjectId(e.target.value); setFormulationId(""); setCharacterizationId(""); setSetupId(""); }} className="input">
+              <option value="">Select project</option>
+              {projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </Step>
 
-          <p className="text-xs text-zinc-400">
-            {t.runConfigSubtitle}
-          </p>
-        </div>
-      </div>
+          <Step number={2} icon={FlaskConical} title="Select formulation">
+            <select value={formulationId} disabled={!projectId} onChange={(e) => { setFormulationId(e.target.value); setCharacterizationId(""); const f=formulations.find((x)=>x.id===e.target.value); setRunName(f ? `${f.polymerName.split(" ")[0].toUpperCase()}-${Date.now().toString().slice(-5)}` : ""); }} className="input">
+              <option value="">Select formulation</option>
+              {availableFormulations.map((item) => <option key={item.id} value={item.id}>{item.polymerName} / {item.solvent} · {item.solidsContentPct} wt %</option>)}
+            </select>
+            {selectedFormulation && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Composition: <strong>{selectedFormulation.polymerName}</strong> / {selectedFormulation.solvent} · {selectedFormulation.solidsContentPct} wt %</p>}
+          </Step>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <div className="flex flex-col space-y-6 rounded-2xl border border-[#27272a] bg-[#18181b] p-6 shadow-xl lg:col-span-7">
-          <div className="flex items-center gap-2">
-            <Sliders className="h-5 w-5 text-teal-400" />
+          <Step number={3} icon={TestTube2} title="Review characterization">
+            <select value={characterizationId} disabled={!formulationId} onChange={(e) => setCharacterizationId(e.target.value)} className="input">
+              <option value="">No characterization selected</option>
+              {availableCharacterizations.map((item) => <option key={item.id} value={item.id}>{item.measuredAt ? new Date(item.measuredAt).toLocaleDateString() : "Unknown date"} · viscosity {item.viscosityMpas ?? "N/D"} · conductivity {item.conductivityUsCm ?? "N/D"}</option>)}
+            </select>
+          </Step>
 
-            <h3 className="text-md font-bold text-white">
-              {t.hwConfigSectionTitle}
-            </h3>
-          </div>
+          <Step number={4} icon={SlidersHorizontal} title="Select setup">
+            <select value={setupId} disabled={!projectId} onChange={(e) => setSetupId(e.target.value)} className="input">
+              <option value="">Select setup</option>
+              {availableSetups.map((item) => <option key={item.id} value={item.id}>{item.name ?? item.machine.model} · {item.injector.type} · {item.collector.type}</option>)}
+            </select>
+          </Step>
 
-          <form
-            onSubmit={handleSaveConfig}
-            className="space-y-6"
-          >
-            <div className="space-y-3 rounded-xl border border-[#27272a]/80 bg-[#0a0a0b]/70 p-4">
-              <label className="block text-xs font-bold uppercase tracking-widest text-teal-400">
-                {t.step1RecipeSelection}
-              </label>
-
-              <select
-                id="run-formulation-select"
-                value={selectedFormulationId}
-                onChange={(event) => {
-                  handleApplyFormulationParams(
-                    event.target.value
-                  );
-                }}
-                className="w-full cursor-pointer rounded-lg border border-[#27272a] bg-[#18181b] px-3 py-2.5 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
-              >
-                <option
-                  value=""
-                  className="text-zinc-500"
-                >
-                  {t.selectRecipePlaceholder}
-                </option>
-
-                {formulations.map(
-                  (formulation) => (
-                    <option
-                      key={formulation.id}
-                      value={formulation.id}
-                      className="bg-[#18181b]"
-                    >
-                      {formulation.polymerName}
-                      {" | "}
-                      {formulation.solvent}
-                      {" ("}
-                      {formulation.solidsContentPct}
-                      {"% "}
-                      {lang === "it"
-                        ? "solidi"
-                        : lang === "es"
-                          ? "sólidos"
-                          : "solids"}
-                      {")"}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
-
-            {selectedFormulationId ? (
-              <div className="animate-fadeIn space-y-5">
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                      {t.runIdentifier}
-                    </label>
-
-                    <input
-                      id="run-name-input"
-                      type="text"
-                      placeholder={
-                        t.runIdPlaceholder
-                      }
-                      value={runName}
-                      onChange={(event) => {
-                        setRunName(
-                          event.target.value
-                        );
-                      }}
-                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                      {t.injectorLabel}
-                    </label>
-
-                    <select
-                      id="injector-select"
-                      value={injectorType}
-                      onChange={(event) => {
-                        const value =
-                          event.target.value;
-
-                        if (
-                          value ===
-                            "Single Emitter" ||
-                          value === "Coaxial" ||
-                          value ===
-                            "Multi-emitter (x4)" ||
-                          value ===
-                            "Multi-needle (x8)"
-                        ) {
-                          setInjectorType(value);
-                        }
-                      }}
-                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
-                    >
-                      <option
-                        value="Single Emitter"
-                        className="bg-[#18181b]"
-                      >
-                        Single Emitter (
-                        {lang === "it"
-                          ? "Singolo ago"
-                          : lang === "es"
-                            ? "Aguja única"
-                            : "Single needle"}
-                        )
-                      </option>
-
-                      <option
-                        value="Coaxial"
-                        className="bg-[#18181b]"
-                      >
-                        Coaxial (
-                        {lang === "it"
-                          ? "Coassiale nucleo-guscio"
-                          : lang === "es"
-                            ? "Coaxial núcleo-funda"
-                            : "Coaxial core-shell"}
-                        )
-                      </option>
-
-                      <option
-                        value="Multi-emitter (x4)"
-                        className="bg-[#18181b]"
-                      >
-                        Multi-emitter (
-                        {lang === "it"
-                          ? "x4 Ugelli"
-                          : lang === "es"
-                            ? "x4 boquillas"
-                            : "x4 emitters"}
-                        )
-                      </option>
-
-                      <option
-                        value="Multi-needle (x8)"
-                        className="bg-[#18181b]"
-                      >
-                        Multi-needle (
-                        {lang === "it"
-                          ? "x8 Aghi paralleli"
-                          : lang === "es"
-                            ? "x8 agujas paralelas"
-                            : "x8 parallel needles"}
-                        )
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                      {t.collectorLabel}
-                    </label>
-
-                    <select
-                      id="collector-select"
-                      value={collectorType}
-                      onChange={(event) => {
-                        const value =
-                          event.target.value;
-
-                        if (
-                          value ===
-                            "Flat Plate" ||
-                          value ===
-                            "Rotating Drum" ||
-                          value === "Mandrel" ||
-                          value ===
-                            "Y-axis Stage"
-                        ) {
-                          setCollectorType(value);
-                        }
-                      }}
-                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
-                    >
-                      <option
-                        value="Flat Plate"
-                        className="bg-[#18181b]"
-                      >
-                        Flat Plate (
-                        {lang === "it"
-                          ? "Piastra fissa"
-                          : lang === "es"
-                            ? "Placa plana fija"
-                            : "Fixed flat plate"}
-                        )
-                      </option>
-
-                      <option
-                        value="Rotating Drum"
-                        className="bg-[#18181b]"
-                      >
-                        Rotating Drum (
-                        {lang === "it"
-                          ? "Tamburo rotante veloce"
-                          : lang === "es"
-                            ? "Tambor giratorio rápido"
-                            : "Fast rotating drum"}
-                        )
-                      </option>
-
-                      <option
-                        value="Mandrel"
-                        className="bg-[#18181b]"
-                      >
-                        Mandrel (
-                        {lang === "it"
-                          ? "Mandrino rotante per tubolari"
-                          : lang === "es"
-                            ? "Mandril giratorio para tubulares"
-                            : "Rotating mandrel for tubes"}
-                        )
-                      </option>
-
-                      <option
-                        value="Y-axis Stage"
-                        className="bg-[#18181b]"
-                      >
-                        Y-axis Stage (
-                        {lang === "it"
-                          ? "Asse motorizzato XY"
-                          : lang === "es"
-                            ? "Eje motorizado XY"
-                            : "Motorized XY stage"}
-                        )
-                      </option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                        {t.needleToCollectorDistance}
-                      </label>
-
-                      <span className="font-mono text-xs font-bold text-teal-400">
-                        {distanceMm} mm
-                      </span>
-                    </div>
-
-                    <input
-                      id="distance-slider"
-                      type="range"
-                      min="50"
-                      max="300"
-                      step="5"
-                      value={distanceMm}
-                      onChange={(event) => {
-                        setDistanceMm(
-                          Number.parseInt(
-                            event.target.value,
-                            10
-                          )
-                        );
-                      }}
-                      className="h-2 w-full cursor-pointer rounded-lg bg-[#0a0a0b] accent-teal-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 rounded-xl border border-[#27272a]/60 bg-[#0a0a0b]/40 p-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                      {t.targetVoltage}
-                    </label>
-
-                    <input
-                      id="run-voltage-input"
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={voltageKv}
-                      onChange={(event) => {
-                        setVoltageKv(
-                          Number.parseFloat(
-                            event.target.value
-                          ) || 0
-                        );
-                      }}
-                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                      {t.targetFlow}
-                    </label>
-
-                    <input
-                      id="run-flow-input"
-                      type="number"
-                      step="0.05"
-                      min="0"
-                      value={flowRateMlH}
-                      onChange={(event) => {
-                        setFlowRateMlH(
-                          Number.parseFloat(
-                            event.target.value
-                          ) || 0
-                        );
-                      }}
-                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                    {t.processabilityRating}
-                  </label>
-
-                  <div className="grid grid-cols-5 gap-2">
-                    {(
-                      [1, 2, 3, 4, 5] as const
-                    ).map((grade) => {
-                      const labelsIt = [
-                        "Gocciolamento",
-                        "Instabile",
-                        "Accettabile",
-                        "Stabile",
-                        "Taylor Cone Eccellente",
-                      ];
-
-                      const labelsEs = [
-                        "Goteo",
-                        "Inestable",
-                        "Aceptable",
-                        "Estable",
-                        "Cono Taylor Excelente",
-                      ];
-
-                      const labelsEn = [
-                        "Dripping",
-                        "Unstable",
-                        "Acceptable",
-                        "Stable",
-                        "Excellent Taylor Cone",
-                      ];
-
-                      const labels =
-                        lang === "it"
-                          ? labelsIt
-                          : lang === "es"
-                            ? labelsEs
-                            : labelsEn;
-
-                      const isSelected =
-                        jetStability === grade;
-
-                      return (
-                        <button
-                          key={grade}
-                          id={`stability-btn-${grade}`}
-                          type="button"
-                          onClick={() => {
-                            setJetStability(
-                              grade
-                            );
-                          }}
-                          className={`cursor-pointer rounded-xl border p-2 text-xs font-semibold transition ${
-                            isSelected
-                              ? "border-teal-500 bg-teal-500/10 text-teal-400 shadow-md shadow-teal-950/20"
-                              : "border-[#27272a] bg-[#0a0a0b] text-zinc-400 hover:border-zinc-700"
-                          }`}
-                        >
-                          <div className="text-sm">
-                            {grade} ★
-                          </div>
-
-                          <div className="mt-0.5 text-[9px] font-normal leading-tight text-zinc-500">
-                            {labels[grade - 1]}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                    {t.operatorNotesLabel}
-                  </label>
-
-                  <textarea
-                    id="run-comments-textarea"
-                    rows={2}
-                    placeholder={
-                      lang === "it"
-                        ? "Annota la morfologia visiva al microscopio..."
-                        : lang === "es"
-                          ? "Anotar la morfología visual al microscopio..."
-                          : "Write down the visual morphology under microscope..."
-                    }
-                    value={operatorComments}
-                    onChange={(event) => {
-                      setOperatorComments(
-                        event.target.value
-                      );
-                    }}
-                    className="w-full resize-none rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3.5 py-2.5 text-sm text-[#f4f4f5] placeholder-zinc-600 focus:border-teal-400 focus:outline-none"
-                  />
-                </div>
-
-                {saveError && (
-                  <div
-                    role="alert"
-                    className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400"
-                  >
-                    {saveError}
-                  </div>
-                )}
-
-                <button
-                  id="submit-run-btn"
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 font-extrabold text-black shadow-lg transition hover:bg-teal-400 hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader className="h-4 w-4 animate-spin" />
-
-                      {lang === "it"
-                        ? "Registrazione in corso..."
-                        : lang === "es"
-                          ? "Registrando..."
-                          : "Saving..."}
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 fill-current" />
-                      {t.saveAndStartButton}
-                    </>
-                  )}
-                </button>
-              </div>
+          <Step number={5} icon={BarChart3} title="Historical evidence">
+            {similarRuns.length === 0 ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Insufficient historical evidence. Enter current parameters manually.</div>
             ) : (
-              <div className="rounded-xl border border-dashed border-[#27272a] bg-[#0a0a0b]/40 py-20 text-center text-zinc-500">
-                {t.selectFormulationWarning}
+              <div className="grid gap-3 sm:grid-cols-4">
+                <Metric label="Similar runs" value={String(similarRuns.length)} />
+                <Metric label="Voltage range" value={formatRange(evidence.voltage, "kV")} />
+                <Metric label="Flow range" value={formatRange(evidence.flow, "mL/h")} />
+                <Metric label="Distance range" value={formatRange(evidence.distance, "mm")} />
               </div>
             )}
-          </form>
-        </div>
+          </Step>
 
-        <div className="flex flex-col lg:col-span-5">
-          <div className="flex h-full min-h-[600px] flex-col space-y-6 rounded-2xl border border-[#27272a] bg-[#18181b] p-6 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-teal-400" />
+          <Step
+  number={6}
+  icon={Activity}
+  title="Enter current operating parameters"
+>
+  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <NumericField
+      label="Voltage"
+      unit="kV"
+      value={voltageKv}
+      onChange={(value) => {
+        if (value !== undefined) {
+          setVoltageKv(value);
+        }
+      }}
+      min={0}
+      max={100}
+      decimals={2}
+      placeholder="15.00"
+    />
 
-                <h3 className="text-md font-bold text-white">
-                  {t.smartMemoryTitle}
-                </h3>
-              </div>
+    <NumericField
+      label="Flow rate"
+      unit="mL/h"
+      value={flowRateMlH}
+      onChange={(value) => {
+        if (value !== undefined) {
+          setFlowRateMlH(value);
+        }
+      }}
+      min={0}
+      max={100}
+      decimals={3}
+      placeholder="0.850"
+    />
 
-              <span className="rounded-full border border-teal-500/20 bg-teal-500/15 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-teal-400">
-                Co-Pilot
-              </span>
-            </div>
+    <NumericField
+      label="Distance"
+      unit="mm"
+      value={distanceMm}
+      onChange={(value) => {
+        if (value !== undefined) {
+          setDistanceMm(value);
+        }
+      }}
+      min={1}
+      max={1000}
+      decimals={1}
+      placeholder="150.0"
+    />
 
-            <p className="text-xs leading-relaxed text-zinc-400">
-              {t.smartMemorySub}
-            </p>
+    <NumericField
+      label="Temperature"
+      unit="°C"
+      value={temperatureC}
+      onChange={(value) =>
+  setTemperatureC(value ?? 0)
+}
+      min={-20}
+      max={100}
+      decimals={1}
+      placeholder="23.0"
+    />
 
-            <div className="space-y-4 rounded-xl border border-[#27272a] bg-[#0a0a0b] p-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-teal-400">
-                {t.chemicalParamsHeader}
-              </h4>
+    <NumericField
+      label="Humidity"
+      unit="%"
+      value={humidityPct}
+      onChange={(value) =>
+  setHumidityPct(value ?? 0)
+}
+      min={0}
+      max={100}
+      decimals={1}
+      placeholder="40.0"
+    />
 
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between border-b border-[#27272a]/50 pb-1">
-                  <span className="text-zinc-400">
-                    {t.targetPolymerLabel}
-                  </span>
+    <label className="block">
+      <span className="label">
+        Run code
+      </span>
 
-                  <span className="font-semibold text-white">
-                    {aiPolymer ||
-                      (
-                        lang === "it"
-                          ? "Nessuno (Seleziona formula)"
-                          : lang === "es"
-                            ? "Ninguno (Selecciona fórmula)"
-                            : "None (Select recipe)"
-                      )}
-                  </span>
-                </div>
-
-                <div className="flex justify-between border-b border-[#27272a]/50 pb-1">
-                  <span className="text-zinc-400">
-                    {t.solventLabel}
-                  </span>
-
-                  <span className="font-semibold text-white">
-                    {aiSolvent || "N/A"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-zinc-400">
-                    {t.solidsPercentageLabel}
-                  </span>
-
-                  <span className="font-mono text-white">
-                    {aiPolymer
-                      ? `${aiSolids}%`
-                      : "N/A"}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                id="generate-prediction-btn"
-                type="button"
-                disabled={
-                  !aiPolymer ||
-                  isAiLoading
-                }
-                onClick={() => {
-                  void triggerAISuggestion();
-                }}
-                className="mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-teal-500/10 bg-[#18181b] px-4 py-2.5 text-xs font-bold text-teal-400 transition hover:border-teal-500/20 hover:bg-[#27272a] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {isAiLoading ? (
-                  <>
-                    <Loader className="h-4 w-4 animate-spin text-teal-400" />
-
-                    <span>
-                      {lang === "it"
-                        ? "Generazione in corso..."
-                        : lang === "es"
-                          ? "Generando..."
-                          : "Generating..."}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    <span>
-                      {t.calculateParamsButton}
-                    </span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {aiError && (
-              <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>{aiError}</span>
-              </div>
-            )}
-
-            {aiSuggestion ? (
-              <div className="animate-fadeIn flex flex-1 flex-col space-y-4 rounded-xl border border-teal-500/30 bg-[#0a0a0b] p-4">
-                <div className="flex items-center justify-between border-b border-[#27272a] pb-2">
-                  <h4 className="flex items-center gap-1.5 text-xs font-bold text-white">
-                    <Check className="h-4 w-4 text-teal-400" />
-                    {t.aiReportHeader}
-                  </h4>
-
-                  <button
-                    id="apply-ai-report-btn"
-                    type="button"
-                    onClick={applyAISuggestedParams}
-                    className="cursor-pointer rounded bg-teal-500 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-black transition hover:bg-teal-400"
-                  >
-                    {t.applyButton}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
-                    <span className="block font-mono text-[10px] text-zinc-500">
-                      ⚡ ALTA TENSIONE
-                    </span>
-
-                    <span className="font-mono text-sm font-bold text-teal-400">
-                      {aiSuggestion.voltageKv} kV
-                    </span>
-                  </div>
-
-                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
-                    <span className="block font-mono text-[10px] text-zinc-500">
-                      💧 PORTATA POMPA
-                    </span>
-
-                    <span className="font-mono text-sm font-bold text-teal-400">
-                      {aiSuggestion.flowRateMlH} mL/h
-                    </span>
-                  </div>
-
-                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
-                    <span className="block font-mono text-[10px] text-zinc-500">
-                      📏 DISTANZA EMETTITORE
-                    </span>
-
-                    <span className="font-mono text-sm font-bold text-white">
-                      {aiSuggestion.distanceMm} mm
-                    </span>
-                  </div>
-
-                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
-                    <span className="block font-mono text-[10px] text-zinc-500">
-                      🌡️ CLIMA CAMERA
-                    </span>
-
-                    <span className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-white">
-                      <Thermometer className="h-3 w-3 text-red-400" />
-                      {aiSuggestion.temperatureC}°C
-
-                      <CloudLightning className="h-3 w-3 text-teal-400" />
-                      {aiSuggestion.humidityPct}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                    {t.scientificReasoning}
-                  </span>
-
-                  <p className="h-24 overflow-y-auto rounded-lg border border-[#27272a] bg-[#18181b] p-2.5 text-xs leading-relaxed text-zinc-300">
-                    {aiSuggestion.reasoning}
-                  </p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                    {t.inSituGuidelines}
-                  </span>
-
-                  <ul className="space-y-1 text-[11px] text-zinc-400">
-                    {aiSuggestion.tips.map(
-                      (tip, index) => (
-                        <li
-                          key={`${tip}-${index}`}
-                          className="flex items-start gap-1.5"
-                        >
-                          <span className="font-bold text-teal-400">
-                            •
-                          </span>
-
-                          <span>{tip}</span>
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              !isAiLoading && (
-                <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#27272a] bg-[#0a0a0b]/40 py-12 text-zinc-600">
-                  <HelpCircle className="mb-2 h-10 w-10 text-zinc-800" />
-
-                  <p className="text-xs">
-                    {lang === "it"
-                      ? "Nessun report generato."
-                      : lang === "es"
-                        ? "Ningún reporte generado."
-                        : "No report generated."}
-                  </p>
-
-                  <p className="text-[10px] text-zinc-700">
-                    {lang === "it"
-                      ? "Seleziona una formula e calcola i parametri."
-                      : lang === "es"
-                        ? "Seleccione una fórmula y calcule los parámetros."
-                        : "Select a recipe and calculate parameters."}
-                  </p>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-
-      <MemorySearchPanel
-        projects={projects}
-        formulations={formulations}
-        experiments={experiments}
-        formulationId={selectedFormulationId}
-        voltageKv={voltageKv}
-        flowRateMlH={flowRateMlH}
-        distanceMm={distanceMm}
-        onApplyRecommendation={(parameters) => {
-          setVoltageKv(parameters.voltageKv);
-          setFlowRateMlH(
-            parameters.flowRateMlH
-          );
-          setDistanceMm(
-            parameters.distanceMm
-          );
-        }}
+      <input
+        value={runName}
+        onChange={(event) =>
+          setRunName(event.target.value)
+        }
+        className="input"
       />
-    </div>
+    </label>
+  </div>
+</Step>
+
+          <Step number={7} icon={CheckCircle2} title="Evaluate processability (1–4)">
+            <div className="grid gap-3 sm:grid-cols-4">
+              {GRADES.map((grade) => (
+                <button key={grade} type="button" onClick={() => setProcessability(grade)} className={`rounded-2xl border p-4 text-left ${processability===grade ? "border-blue-500 bg-blue-50 ring-4 ring-blue-100" : "border-slate-200 bg-white"}`}>
+                  <span className="text-2xl font-bold">{grade}</span>
+                  <p className="text-xs text-slate-500">{gradeLabel(grade, lang)}</p>
+                </button>
+              ))}
+            </div>
+            <textarea rows={3} value={comments} onChange={(e)=>setComments(e.target.value)} placeholder="Process comments" className="input mt-4 resize-none" />
+          </Step>
+
+          {error && <div className="flex gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="h-4 w-4" />{error}</div>}
+
+          <button type="submit" disabled={isSaving} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 font-bold text-white hover:bg-blue-700 disabled:opacity-50">
+            <Play className="h-4 w-4" />{isSaving ? "Saving..." : "Save run and update memory"}
+          </button>
+        </form>
+      </div>
+      <style>{`.input{width:100%;border:1px solid #e2e8f0;border-radius:1rem;background:#f8fafc;padding:.75rem 1rem;font-size:.875rem;outline:none}.input:focus{border-color:#60a5fa;box-shadow:0 0 0 4px #dbeafe}.label{display:block;margin-bottom:.5rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b}`}</style>
+    </main>
   );
 }
+
+function Step({ number, icon: Icon, title, children }: { number:number; icon:typeof Activity; title:string; children:React.ReactNode }) {
+  return <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><header className="mb-5 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 font-bold text-white">{number}</span><Icon className="h-5 w-5 text-blue-600"/><h2 className="font-bold text-slate-950">{title}</h2></header>{children}</section>;
+}
+function Metric({label,value}:{label:string;value:string}){return <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{label}</p><p className="mt-2 font-mono font-bold">{value}</p></div>}
+function range(values:number[]):Range|null{const valid=values.filter(Number.isFinite);return valid.length?{min:Math.min(...valid),max:Math.max(...valid)}:null}
+function formatRange(value:Range|null,unit:string):string{return value?`${value.min.toFixed(2)}–${value.max.toFixed(2)} ${unit}`:"N/D"}
+function gradeLabel(grade:1|2|3|4,lang:Language):string{const labels={it:["Non processabile","Instabile","Accettabile","Stabile"],en:["Not processable","Unstable","Acceptable","Stable"],es:["No procesable","Inestable","Aceptable","Estable"]} as const;return labels[lang][grade-1]}

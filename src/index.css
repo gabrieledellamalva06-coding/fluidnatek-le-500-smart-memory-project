@@ -71,3 +71,163 @@ button { cursor: pointer; }
   border-color: rgba(34, 211, 238, 0.16);
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.025), transparent 70%), rgba(4, 6, 9, 0.7);
 }
+
+/* ==========================================================================
+   FLUIDNATEK / BIOINICIA LIGHT CONTENT THEME
+   Keeps the sidebar intact and converts legacy dark pages to the new
+   professional white / cyan / teal visual language.
+   ========================================================================== */
+
+.fnk-content-theme {
+  --fnk-primary: #0ea5a8;
+  --fnk-primary-dark: #087f82;
+  --fnk-primary-soft: #e8fafa;
+  --fnk-blue: #2563eb;
+  --fnk-page: #f1f5f9;
+  --fnk-panel: #ffffff;
+  --fnk-border: #dbe4ee;
+  --fnk-text: #0f172a;
+  --fnk-muted: #64748b;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(14, 165, 168, 0.08),
+      transparent 32rem
+    ),
+    var(--fnk-page);
+  color: var(--fnk-text);
+}
+
+/* Legacy black page backgrounds */
+.fnk-content-theme [class*="bg-[#0a0a0b]"],
+.fnk-content-theme [class*="bg-[#0d0d0f]"],
+.fnk-content-theme [class*="bg-[#0d1015]"] {
+  background-color: #f1f5f9 !important;
+}
+
+/* Legacy dark panels */
+.fnk-content-theme [class*="bg-[#18181b]"],
+.fnk-content-theme [class*="bg-[#171717]"] {
+  background-color: #ffffff !important;
+}
+
+/* Dark transparent panels */
+.fnk-content-theme [class*="bg-black"],
+.fnk-content-theme [class*="bg-zinc-9"],
+.fnk-content-theme [class*="bg-zinc-8"] {
+  background-color: #f8fafc !important;
+}
+
+/* Borders */
+.fnk-content-theme [class*="border-[#27272a]"],
+.fnk-content-theme [class*="border-zinc-8"],
+.fnk-content-theme [class*="border-white"] {
+  border-color: #dbe4ee !important;
+}
+
+/* Main text */
+.fnk-content-theme .text-white,
+.fnk-content-theme [class*="text-[#f4f4f5]"],
+.fnk-content-theme .text-zinc-100,
+.fnk-content-theme .text-zinc-200,
+.fnk-content-theme .text-zinc-300 {
+  color: #0f172a !important;
+}
+
+/* Secondary text */
+.fnk-content-theme .text-zinc-400,
+.fnk-content-theme .text-zinc-500,
+.fnk-content-theme .text-zinc-600,
+.fnk-content-theme .text-zinc-700 {
+  color: #64748b !important;
+}
+
+/* Bioinicia accent colors */
+.fnk-content-theme .text-teal-400,
+.fnk-content-theme .text-cyan-300,
+.fnk-content-theme .text-cyan-400,
+.fnk-content-theme [class*="text-teal-"] {
+  color: #0f9fa3 !important;
+}
+
+.fnk-content-theme [class*="bg-teal-500"],
+.fnk-content-theme [class*="bg-cyan-400"] {
+  background-color: #14b8a6 !important;
+}
+
+.fnk-content-theme [class*="border-teal-"],
+.fnk-content-theme [class*="border-cyan-"] {
+  border-color: #5eead4 !important;
+}
+
+/* All inputs, selects and textareas */
+.fnk-content-theme input,
+.fnk-content-theme select,
+.fnk-content-theme textarea {
+  border: 1px solid #cbd5e1 !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  caret-color: #0f9fa3;
+}
+
+.fnk-content-theme input::placeholder,
+.fnk-content-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.fnk-content-theme input:focus,
+.fnk-content-theme select:focus,
+.fnk-content-theme textarea:focus {
+  border-color: #14b8a6 !important;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.14) !important;
+  outline: none !important;
+}
+
+/* Critical: dropdown text must remain readable */
+.fnk-content-theme select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Cards and panels */
+.fnk-content-theme .fnk-panel,
+.fnk-content-theme .fnk-metric-card {
+  border-color: #dbe4ee !important;
+  background-color: #ffffff !important;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Dashed upload and empty-state boxes */
+.fnk-content-theme [class*="border-dashed"] {
+  border-color: #99f6e4 !important;
+  background-color: #f0fdfa !important;
+}
+
+/* Tables and separators */
+.fnk-content-theme [class*="divide-"],
+.fnk-content-theme [class*="border-b"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Buttons that were black */
+.fnk-content-theme button[class*="bg-[#0a0a0b]"],
+.fnk-content-theme button[class*="bg-[#18181b]"] {
+  border-color: #cbd5e1 !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.fnk-content-theme button[class*="bg-[#0a0a0b]"]:hover,
+.fnk-content-theme button[class*="bg-[#18181b]"]:hover {
+  border-color: #5eead4 !important;
+  background-color: #f0fdfa !important;
+}
+
+/* Tooltips remain dark for chart readability */
+.recharts-tooltip-wrapper [class*="bg-[#0d0d0f]"] {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}

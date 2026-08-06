@@ -1,458 +1,1041 @@
-import React, { useState } from "react";
-import { FolderPlus, Beaker, Layers, Plus, AlertCircle, Trash2, Tag } from "lucide-react";
-import { Project, Formulation } from "../types";
-import { AVAILABLE_POLYMERS, AVAILABLE_SOLVENTS } from "../seedData";
-import { TRANSLATIONS, Language } from "../lib/translations";
-import MaterialAutocomplete from "./MaterialAutocomplete";
+import React, {
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Beaker,
+  CalendarDays,
+  FlaskConical,
+  Plus,
+  TestTube2,
+} from "lucide-react";
+
+import type {
+  Formulation,
+  Project,
+} from "../types";
+
+import type {
+  SolutionCharacterization,
+} from "../core/types/characterization";
+
+import type {
+  CreateSolutionCharacterizationInput,
+} from "../application/characterizations/characterization.service";
+
+import type {
+  Language,
+} from "../lib/translations";
 
 interface FormulationsProps {
   projects: Project[];
+
   formulations: Formulation[];
-  onAddProject: (p: Omit<Project, "id" | "createdAt">) => void;
-  onAddFormulation: (f: Omit<Formulation, "id">) => void;
-  onDeleteProject?: (id: string) => void;
-  onDeleteFormulation?: (id: string) => void;
+
+  characterizations: SolutionCharacterization[];
+
+  onAddFormulation: (
+    formulation: Omit<Formulation, "id">
+  ) => void | Promise<void>;
+
+  onAddCharacterization: (
+    input: CreateSolutionCharacterizationInput
+  ) => void | Promise<void>;
+
   lang: Language;
 }
+
+interface FormulationFormState {
+  projectId: string;
+  polymerName: string;
+  solventName: string;
+  concentrationPct: number;
+}
+
+interface CharacterizationFormState {
+  formulationId: string;
+  solidsContentPct: number | undefined;
+  viscosityMpas: number | undefined;
+  conductivityUsCm: number | undefined;
+  densityGcm3: number | undefined;
+  surfaceTensionMnM: number | undefined;
+  ph: number | undefined;
+  notes: string;
+}
+
+const EMPTY_CHARACTERIZATION: CharacterizationFormState = {
+  formulationId: "",
+  solidsContentPct: undefined,
+  viscosityMpas: undefined,
+  conductivityUsCm: undefined,
+  densityGcm3: undefined,
+  surfaceTensionMnM: undefined,
+  ph: undefined,
+  notes: "",
+};
 
 export default function Formulations({
   projects,
   formulations,
-  onAddProject,
+  characterizations,
   onAddFormulation,
-  onDeleteProject,
-  onDeleteFormulation,
-  lang
+  onAddCharacterization,
 }: FormulationsProps) {
-  const t = TRANSLATIONS[lang];
+  const [selectedProjectId, setSelectedProjectId] =
+    useState(projects[0]?.id ?? "");
 
-  // Project Form State
-  const [newProjName, setNewProjName] = useState("");
-  const [newProjDesc, setNewProjDesc] = useState("");
-  const [projectError, setProjectError] = useState("");
-
-  // Formulation Form State
-  const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [selectedPolymer, setSelectedPolymer] = useState(AVAILABLE_POLYMERS[0]);
-  const [selectedSolvent, setSelectedSolvent] = useState(AVAILABLE_SOLVENTS[0]);
-
-  // Custom manual insertion overrides
-  const [customPolymer, setCustomPolymer] = useState("");
-  const [customSolvent, setCustomSolvent] = useState("");
-
-  const [solidsContent, setSolidsContent] = useState<number>(12.0);
-  const [viscosity, setViscosity] = useState<number>(350);
-  const [conductivity, setConductivity] = useState<number>(5.5);
-  const [density, setDensity] = useState<number>(1.05);
-  const [formulationError, setFormulationError] = useState("");
-
-  const handleCreateProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProjectError("");
-
-    if (!newProjName.trim()) {
-      setProjectError(t.projectErrorRequired);
-      return;
-    }
-
-    if (projects.some((p) => p.name.toLowerCase() === newProjName.trim().toLowerCase())) {
-      setProjectError(t.projectErrorDuplicate);
-      return;
-    }
-
-    onAddProject({
-      name: newProjName.trim(),
-      description: newProjDesc.trim()
+  const [formulationForm, setFormulationForm] =
+    useState<FormulationFormState>({
+      projectId: projects[0]?.id ?? "",
+      polymerName: "",
+      solventName: "",
+      concentrationPct: 0,
     });
 
-    setNewProjName("");
-    setNewProjDesc("");
+  const [
+    characterizationForm,
+    setCharacterizationForm,
+  ] =
+    useState<CharacterizationFormState>(
+      EMPTY_CHARACTERIZATION
+    );
+
+  const [formulationError, setFormulationError] =
+    useState("");
+
+  const [
+    characterizationError,
+    setCharacterizationError,
+  ] = useState("");
+
+  const [isSavingFormulation, setIsSavingFormulation] =
+    useState(false);
+
+  const [
+    isSavingCharacterization,
+    setIsSavingCharacterization,
+  ] = useState(false);
+
+  const visibleFormulations = useMemo(
+    () =>
+      formulations.filter(
+        (formulation) =>
+          !selectedProjectId ||
+          formulation.projectId ===
+            selectedProjectId
+      ),
+    [formulations, selectedProjectId]
+  );
+
+  const handleProjectContextChange = (
+    projectId: string
+  ): void => {
+    setSelectedProjectId(projectId);
+
+    setFormulationForm(
+      (currentForm) => ({
+        ...currentForm,
+        projectId,
+      })
+    );
+
+    setCharacterizationForm(
+      EMPTY_CHARACTERIZATION
+    );
   };
 
-  const handleCreateFormulation = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateFormulation = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    const projectId =
+      formulationForm.projectId.trim();
+
+    const polymerName =
+      formulationForm.polymerName.trim();
+
+    const solventName =
+      formulationForm.solventName.trim();
+
+    if (!projectId) {
+      setFormulationError(
+        "Select a project before creating the formulation."
+      );
+      return;
+    }
+
+    if (!polymerName) {
+      setFormulationError(
+        "Enter at least one polymer."
+      );
+      return;
+    }
+
+    if (!solventName) {
+      setFormulationError(
+        "Enter at least one solvent."
+      );
+      return;
+    }
+
     setFormulationError("");
+    setIsSavingFormulation(true);
 
-    if (!selectedProjectId) {
-      setFormulationError(lang === "it"
-        ? "Seleziona un progetto valido prima dell'invio."
-        : lang === "es"
-          ? "Seleccione un proyecto válido antes del envío."
-          : "Select a valid project before submitting.");
+    try {
+      await onAddFormulation({
+        projectId,
+        polymerName,
+        solvent: solventName,
+
+        /*
+         * Compatibility fields.
+         *
+         * The current UI model still exposes these values on Formulation,
+         * but measured properties are no longer entered here.
+         */
+        solidsContentPct:
+          formulationForm.concentrationPct,
+
+        viscosityMpas: 0,
+        conductivityUsCm: 0,
+        densityGcm3: 0,
+
+        materialBatchIds: [],
+      });
+
+      setFormulationForm({
+        projectId,
+        polymerName: "",
+        solventName: "",
+        concentrationPct: 0,
+      });
+    } catch (error: unknown) {
+      setFormulationError(
+        getErrorMessage(
+          error,
+          "Unable to create formulation."
+        )
+      );
+    } finally {
+      setIsSavingFormulation(false);
+    }
+  };
+
+  const handleCreateCharacterization = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    if (
+      !characterizationForm.formulationId
+    ) {
+      setCharacterizationError(
+        "Select a formulation before saving the characterization."
+      );
       return;
     }
 
-    // Determine final material values (either selected from list or custom typed)
-    const finalPolymer = selectedPolymer === "CUSTOM" ? customPolymer.trim() : selectedPolymer;
-    const finalSolvent = selectedSolvent === "CUSTOM" ? customSolvent.trim() : selectedSolvent;
+    setCharacterizationError("");
+    setIsSavingCharacterization(true);
 
-    if (!finalPolymer) {
-      setFormulationError(lang === "it"
-        ? "Inserisci il nome del polimero personalizzato."
-        : lang === "es"
-          ? "Introduzca el nombre del polímero personalizado."
-          : "Please enter the custom polymer name.");
-      return;
+    try {
+      await onAddCharacterization({
+        formulationId:
+          characterizationForm.formulationId,
+
+        solidsContentPct:
+          characterizationForm.solidsContentPct,
+
+        viscosityMpas:
+          characterizationForm.viscosityMpas,
+
+        conductivityUsCm:
+          characterizationForm.conductivityUsCm,
+
+        densityGcm3:
+          characterizationForm.densityGcm3,
+
+        surfaceTensionMnM:
+          characterizationForm.surfaceTensionMnM,
+
+        ph:
+          characterizationForm.ph,
+
+        measuredAt:
+          new Date().toISOString(),
+
+        notes:
+          characterizationForm.notes.trim() ||
+          undefined,
+      });
+
+      setCharacterizationForm({
+        ...EMPTY_CHARACTERIZATION,
+        formulationId:
+          characterizationForm.formulationId,
+      });
+    } catch (error: unknown) {
+      setCharacterizationError(
+        getErrorMessage(
+          error,
+          "Unable to save characterization."
+        )
+      );
+    } finally {
+      setIsSavingCharacterization(false);
     }
-
-    if (!finalSolvent) {
-      setFormulationError(lang === "it"
-        ? "Inserisci il nome del solvente personalizzato."
-        : lang === "es"
-          ? "Introduzca el nombre del solvente personalizado."
-          : "Please enter the custom solvent name.");
-      return;
-    }
-
-    onAddFormulation({
-      projectId: selectedProjectId,
-      polymerName: finalPolymer,
-      solvent: finalSolvent,
-      solidsContentPct: solidsContent,
-      viscosityMpas: viscosity,
-      conductivityUsCm: conductivity,
-      densityGcm3: density,
-
-      materialBatchIds: []
-    });
-
-    // Reset formulation params
-    setCustomPolymer("");
-    setCustomSolvent("");
-    setSelectedPolymer(AVAILABLE_POLYMERS[0]);
-    setSelectedSolvent(AVAILABLE_SOLVENTS[0]);
-    setSolidsContent(12.0);
-    setViscosity(350);
-    setConductivity(5.5);
-    setDensity(1.05);
   };
 
   return (
-    <div id="formulations-view" className="flex-1 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5] flex flex-col space-y-8 select-none">
+    <main className="flex-1 overflow-y-auto bg-slate-100 p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        <header>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+            Workflow steps 2–3
+          </p>
 
-      {/* Title Header */}
-      <div className="flex items-center gap-3">
-        <Beaker className="w-8 h-8 text-teal-400" />
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">{t.formTitle}</h2>
-          <p className="text-xs text-zinc-400">{t.formSubtitle}</p>
-        </div>
-      </div>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+            Formulations & Characterization
+          </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">
+            Formulations define intended composition.
+            Characterization records contain measured
+            properties and remain separate from the
+            formulation.
+          </p>
+        </header>
 
-        {/* Creation Forms Column */}
-        <div className="lg:col-span-5 flex flex-col space-y-6">
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <label className="block max-w-xl">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+              Active project context
+            </span>
 
-          {/* Create Project Card */}
-          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5 shadow-lg">
-            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center gap-2">
-              <FolderPlus className="w-4.5 h-4.5 text-teal-400" />
-              {t.newProjectTitle}
-            </h3>
+            <select
+              value={selectedProjectId}
+              onChange={(event) =>
+                handleProjectContextChange(
+                  event.target.value
+                )
+              }
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+            >
+              <option value="">
+                Select project
+              </option>
 
-            <form onSubmit={handleCreateProject} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  {t.projectCode}
-                </label>
-                <input
-                  id="project-code-input"
-                  type="text"
-                  placeholder={t.projectCodePlaceholder}
-                  value={newProjName}
-                  onChange={(e) => setNewProjName(e.target.value)}
-                  className="w-full bg-[#0a0a0b] text-[#f4f4f5] placeholder-zinc-600 text-sm px-3.5 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  {t.projectDesc}
-                </label>
-                <textarea
-                  id="project-desc-input"
-                  rows={2}
-                  placeholder={t.projectDescPlaceholder}
-                  value={newProjDesc}
-                  onChange={(e) => setNewProjDesc(e.target.value)}
-                  className="w-full bg-[#0a0a0b] text-[#f4f4f5] placeholder-zinc-600 text-sm px-3.5 py-2 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 transition resize-none"
-                />
-              </div>
-
-              {projectError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{projectError}</span>
-                </div>
-              )}
-
-              <button
-                id="save-project-btn"
-                type="submit"
-                className="w-full bg-teal-500 hover:bg-teal-400 text-black text-sm font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                {t.saveProject}
-              </button>
-            </form>
-          </div>
-
-          {/* Create Formulation Card */}
-          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5 shadow-lg">
-            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center gap-2">
-              <Beaker className="w-4.5 h-4.5 text-teal-400" />
-              {t.newFormulationTitle}
-            </h3>
-
-            <div className="p-3 bg-teal-500/5 border border-teal-500/15 text-teal-400/90 rounded-xl text-xs flex items-start gap-2.5 mb-4">
-              <AlertCircle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
-              <span>
-                <strong>{t.integrityRuleTitle}</strong> {t.integrityRuleBody}
-              </span>
-            </div>
-
-            <form onSubmit={handleCreateFormulation} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  {t.associateToProject}
-                </label>
-                <select
-                  id="association-project-select"
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full bg-[#0a0a0b] text-[#f4f4f5] text-sm px-3.5 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 cursor-pointer"
+              {projects.map((project) => (
+                <option
+                  key={project.id}
+                  value={project.id}
                 >
-                  <option value="" className="text-zinc-600">{t.selectProjectPlaceholder}</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id} className="bg-[#18181b]">{p.name}</option>
-                  ))}
-                </select>
-              </div>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </section>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                    {t.polymerLabel}
-                  </label>
-                  <MaterialAutocomplete
-                    type="polymer"
-                    value={selectedPolymer}
-                    onChange={setSelectedPolymer}
-                  />
-                </div>
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <SectionHeading
+              icon={FlaskConical}
+              colorClass="bg-blue-50 text-blue-600"
+              title="Create formulation"
+              subtitle="Intended materials, concentrations and ratios."
+            />
 
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                    {t.solventLabel}
-                  </label>
-                  <MaterialAutocomplete
-                    type="solvent"
-                    value={selectedSolvent}
-                    onChange={setSelectedSolvent}
-                  />
-                </div>
-              </div>
+            <form
+              onSubmit={handleCreateFormulation}
+              className="mt-6 space-y-4"
+            >
+              <TextField
+                label="Polymer"
+                placeholder="Example: PEO 300 kDa"
+                value={
+                  formulationForm.polymerName
+                }
+                onChange={(polymerName) =>
+                  setFormulationForm(
+                    (currentForm) => ({
+                      ...currentForm,
+                      polymerName,
+                    })
+                  )
+                }
+              />
 
-              
+              <TextField
+                label="Solvent"
+                placeholder="Example: distilled water"
+                value={
+                  formulationForm.solventName
+                }
+                onChange={(solventName) =>
+                  setFormulationForm(
+                    (currentForm) => ({
+                      ...currentForm,
+                      solventName,
+                    })
+                  )
+                }
+              />
 
-              
-                
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                    {t.solidsContentPct}
-                  </label>
-                  <input
-                    id="solids-input-box"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={solidsContent}
-                    onChange={(e) => setSolidsContent(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                    {t.viscosityMpas}
-                  </label>
-                  <input
-                    id="viscosity-input-box"
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={viscosity}
-                    onChange={(e) => setViscosity(parseInt(e.target.value) || 0)}
-                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                    {t.conductivityUsCm}
-                  </label>
-                  <input
-                    id="conductivity-input-box"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={conductivity}
-                    onChange={(e) => setConductivity(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                    {t.densityGcm3}
-                  </label>
-                  <input
-                    id="density-input-box"
-                    type="number"
-                    step="0.01"
-                    min="0.1"
-                    max="5"
-                    value={density}
-                    onChange={(e) => setDensity(parseFloat(e.target.value) || 0.1)}
-                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
-                  />
-                </div>
-              </div>
+              <RequiredNumberField
+                label="Nominal concentration"
+                unit="wt %"
+                min={0}
+                max={100}
+                value={
+                  formulationForm.concentrationPct
+                }
+                onChange={(concentrationPct) =>
+                  setFormulationForm(
+                    (currentForm) => ({
+                      ...currentForm,
+                      concentrationPct,
+                    })
+                  )
+                }
+              />
 
               {formulationError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{formulationError}</span>
-                </div>
+                <ErrorMessage
+                  message={formulationError}
+                />
               )}
 
               <button
-                id="save-formulation-btn"
                 type="submit"
-                className="w-full bg-teal-500 hover:bg-teal-400 text-black text-sm font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 cursor-pointer"
+                disabled={
+                  isSavingFormulation ||
+                  !formulationForm.projectId
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Plus className="w-4 h-4" />
-                {t.registerFormulaButton}
+                <Plus className="h-4 w-4" />
+
+                {isSavingFormulation
+                  ? "Saving..."
+                  : "Save formulation"}
               </button>
             </form>
-          </div>
+          </section>
 
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <SectionHeading
+              icon={TestTube2}
+              colorClass="bg-violet-50 text-violet-600"
+              title="Add characterization"
+              subtitle="Measured properties stored as a separate dated record."
+            />
+
+            <form
+              onSubmit={
+                handleCreateCharacterization
+              }
+              className="mt-6 space-y-4"
+            >
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Formulation
+                </span>
+
+                <select
+                  value={
+                    characterizationForm.formulationId
+                  }
+                  onChange={(event) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        formulationId:
+                          event.target.value,
+                      })
+                    )
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+                >
+                  <option value="">
+                    Select formulation
+                  </option>
+
+                  {visibleFormulations.map(
+                    (formulation) => (
+                      <option
+                        key={formulation.id}
+                        value={formulation.id}
+                      >
+                        {getFormulationLabel(
+                          formulation
+                        )}
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <OptionalNumberField
+                  label="Measured solid content"
+                  unit="wt %"
+                  min={0}
+                  max={100}
+                  value={
+                    characterizationForm.solidsContentPct
+                  }
+                  onChange={(
+                    solidsContentPct
+                  ) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        solidsContentPct,
+                      })
+                    )
+                  }
+                />
+
+                <OptionalNumberField
+                  label="Viscosity"
+                  unit="mPa·s"
+                  min={0}
+                  value={
+                    characterizationForm.viscosityMpas
+                  }
+                  onChange={(viscosityMpas) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        viscosityMpas,
+                      })
+                    )
+                  }
+                />
+
+                <OptionalNumberField
+                  label="Conductivity"
+                  unit="µS/cm"
+                  min={0}
+                  value={
+                    characterizationForm.conductivityUsCm
+                  }
+                  onChange={(
+                    conductivityUsCm
+                  ) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        conductivityUsCm,
+                      })
+                    )
+                  }
+                />
+
+                <OptionalNumberField
+                  label="Density"
+                  unit="g/cm³"
+                  min={0}
+                  value={
+                    characterizationForm.densityGcm3
+                  }
+                  onChange={(densityGcm3) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        densityGcm3,
+                      })
+                    )
+                  }
+                />
+
+                <OptionalNumberField
+                  label="Surface tension"
+                  unit="mN/m"
+                  min={0}
+                  value={
+                    characterizationForm.surfaceTensionMnM
+                  }
+                  onChange={(
+                    surfaceTensionMnM
+                  ) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        surfaceTensionMnM,
+                      })
+                    )
+                  }
+                />
+
+                <OptionalNumberField
+                  label="pH"
+                  unit=""
+                  min={0}
+                  max={14}
+                  value={
+                    characterizationForm.ph
+                  }
+                  onChange={(ph) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        ph,
+                      })
+                    )
+                  }
+                />
+              </div>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Measurement notes
+                </span>
+
+                <textarea
+                  rows={3}
+                  value={
+                    characterizationForm.notes
+                  }
+                  onChange={(event) =>
+                    setCharacterizationForm(
+                      (currentForm) => ({
+                        ...currentForm,
+                        notes:
+                          event.target.value,
+                      })
+                    )
+                  }
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+                />
+              </label>
+
+              {characterizationError && (
+                <ErrorMessage
+                  message={
+                    characterizationError
+                  }
+                />
+              )}
+
+              <button
+                type="submit"
+                disabled={
+                  isSavingCharacterization ||
+                  !characterizationForm.formulationId
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" />
+
+                {isSavingCharacterization
+                  ? "Saving..."
+                  : "Save characterization"}
+              </button>
+            </form>
+          </section>
         </div>
 
-        {/* Database View Columns */}
-        <div className="lg:col-span-7 flex flex-col space-y-6">
-          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-6 min-h-[600px] flex flex-col">
-            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-6 flex items-center gap-2">
-              <Layers className="w-4.5 h-4.5 text-teal-400" />
-              {t.activeRecipesTitle}
-            </h3>
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <SectionHeading
+            icon={Beaker}
+            colorClass="bg-slate-100 text-slate-600"
+            title="Registered formulations"
+            subtitle={`${visibleFormulations.length} formulations in the selected project`}
+          />
 
-            {projects.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 py-16">
-                <Tag className="w-12 h-12 text-zinc-700 mb-3" />
-                <p className="text-sm">{t.noProjectsMessage}</p>
-                <p className="text-xs text-zinc-600 mt-1">{t.createProjectPrompt}</p>
-              </div>
-            ) : (
-              <div className="space-y-6 overflow-y-auto flex-1 pr-1 max-h-[700px]">
-                {projects.map((proj) => {
-                  const projectFormulations = formulations.filter((f) => f.projectId === proj.id);
-                  return (
-                    <div key={proj.id} id={`project-accordion-${proj.id}`} className="bg-[#0a0a0b]/80 rounded-xl border border-[#27272a] overflow-hidden">
-                      {/* Project Header section */}
-                      <div className="p-4 bg-[#0a0a0b] border-b border-[#27272a]/80 flex justify-between items-start gap-4">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-mono bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded font-bold uppercase">
-                            {lang === "it" ? "Progetto" : lang === "es" ? "Proyecto" : "Project"}
-                          </span>
-                          <h4 className="text-sm font-bold text-white mt-1">{proj.name}</h4>
-                          {proj.description && (
-                            <p className="text-xs text-zinc-400 leading-relaxed">{proj.description}</p>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {visibleFormulations.map(
+              (formulation) => {
+                const records =
+                  characterizations
+                    .filter(
+                      (characterization) =>
+                        characterization.formulationId ===
+                        formulation.id
+                    )
+                    .sort(
+                      compareCharacterizations
+                    );
+
+                return (
+                  <article
+                    key={formulation.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                  >
+                    <h3 className="font-bold text-slate-900">
+                      {getFormulationLabel(
+                        formulation
+                      )}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Nominal concentration:{" "}
+                      {
+                        formulation.solidsContentPct
+                      }{" "}
+                      wt %
+                    </p>
+
+                    <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                        <CalendarDays className="h-4 w-4 text-violet-500" />
+                        Characterization history
+                      </div>
+
+                      {records.length === 0 ? (
+                        <p className="mt-3 text-xs text-slate-400">
+                          No characterization
+                          records.
+                        </p>
+                      ) : (
+                        <div className="mt-3 space-y-2">
+                          {records.map(
+                            (record) => (
+                              <CharacterizationCard
+                                key={record.id}
+                                record={record}
+                              />
+                            )
                           )}
                         </div>
-                        {onDeleteProject && (
-                          <button
-                            onClick={() => onDeleteProject(proj.id)}
-                            className="text-zinc-600 hover:text-red-400 p-1.5 rounded-lg hover:bg-[#18181b] transition cursor-pointer"
-                            title="Rimuovi progetto"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Associated Formulations */}
-                      <div className="p-4 space-y-3">
-                        <h5 className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">
-                          {t.registeredFormulations} ({projectFormulations.length})
-                        </h5>
-
-                        {projectFormulations.length === 0 ? (
-                          <p className="text-xs text-zinc-600 italic py-2">
-                            {t.noFormulationsMessage}
-                          </p>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {projectFormulations.map((form) => (
-                              <div
-                                key={form.id}
-                                id={`form-badge-${form.id}`}
-                                className="bg-[#18181b] border border-[#27272a]/80 p-3.5 rounded-xl space-y-2.5 relative group"
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div className="space-y-0.5">
-                                    <div className="text-xs font-bold text-zinc-100">{form.polymerName}</div>
-                                    <div className="text-[10px] text-zinc-400 font-medium">{t.solventLabel} {form.solvent}</div>
-                                  </div>
-                                  {onDeleteFormulation && (
-                                    <button
-                                      onClick={() => onDeleteFormulation(form.id)}
-                                      className="text-zinc-600 hover:text-red-400 p-1 rounded hover:bg-[#0a0a0b] transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                                      title="Rimuovi formula"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px] font-mono text-zinc-400 bg-[#0a0a0b]/60 p-2 rounded-lg border border-[#27272a]/40">
-                                  <div>
-                                    <span className="text-zinc-600 block">{t.solidsShort}:</span>
-                                    <span className="text-teal-400 font-bold">{form.solidsContentPct}%</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-zinc-600 block">{t.viscosityShort}:</span>
-                                    <span className="text-white text-[9px]">{form.viscosityMpas} mPa·s</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-zinc-600 block">{t.conductivityShort}:</span>
-                                    <span className="text-white text-[9px]">{form.conductivityUsCm} µS</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-zinc-600 block">{t.densityShort}:</span>
-                                    <span className="text-white text-[9px]">{form.densityGcm3} g/cm³</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
+                  </article>
+                );
+              }
+            )}
+
+            {visibleFormulations.length ===
+              0 && (
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-300 py-16 text-center text-sm text-slate-400">
+                No formulations registered in
+                this project.
               </div>
             )}
           </div>
-        </div>
+        </section>
+      </div>
+    </main>
+  );
+}
 
+interface SectionHeadingProps {
+  icon: typeof Beaker;
+  colorClass: string;
+  title: string;
+  subtitle: string;
+}
+
+function SectionHeading({
+  icon: Icon,
+  colorClass,
+  title,
+  subtitle,
+}: SectionHeadingProps) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={`rounded-2xl p-3 ${colorClass}`}
+      >
+        <Icon className="h-5 w-5" />
       </div>
 
+      <div>
+        <h2 className="font-bold text-slate-950">
+          {title}
+        </h2>
+
+        <p className="text-xs text-slate-500">
+          {subtitle}
+        </p>
+      </div>
     </div>
   );
+}
+
+interface TextFieldProps {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function TextField({
+  label,
+  placeholder,
+  value,
+  onChange,
+}: TextFieldProps) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+        {label}
+      </span>
+
+      <input
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+      />
+    </label>
+  );
+}
+
+interface RequiredNumberFieldProps {
+  label: string;
+  unit: string;
+  value: number;
+  min?: number;
+  max?: number;
+  onChange: (value: number) => void;
+}
+
+function RequiredNumberField({
+  label,
+  unit,
+  value,
+  min,
+  max,
+  onChange,
+}: RequiredNumberFieldProps) {
+  return (
+    <NumberInputContainer
+      label={label}
+      unit={unit}
+    >
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        step={0.01}
+        onChange={(event) =>
+          onChange(
+            Number.parseFloat(
+              event.target.value
+            ) || 0
+          )
+        }
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-4 pr-20 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+      />
+    </NumberInputContainer>
+  );
+}
+
+interface OptionalNumberFieldProps {
+  label: string;
+  unit: string;
+  value: number | undefined;
+  min?: number;
+  max?: number;
+  onChange: (
+    value: number | undefined
+  ) => void;
+}
+
+function OptionalNumberField({
+  label,
+  unit,
+  value,
+  min,
+  max,
+  onChange,
+}: OptionalNumberFieldProps) {
+  return (
+    <NumberInputContainer
+      label={label}
+      unit={unit}
+    >
+      <input
+        type="number"
+        value={value ?? ""}
+        min={min}
+        max={max}
+        step={0.01}
+        onChange={(event) => {
+          const rawValue =
+            event.target.value;
+
+          onChange(
+            rawValue === ""
+              ? undefined
+              : Number.parseFloat(rawValue)
+          );
+        }}
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-4 pr-20 text-sm text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+      />
+    </NumberInputContainer>
+  );
+}
+
+interface NumberInputContainerProps {
+  label: string;
+  unit: string;
+  children: React.ReactNode;
+}
+
+function NumberInputContainer({
+  label,
+  unit,
+  children,
+}: NumberInputContainerProps) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+        {label}
+      </span>
+
+      <div className="relative">
+        {children}
+
+        {unit && (
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+            {unit}
+          </span>
+        )}
+      </div>
+    </label>
+  );
+}
+
+interface CharacterizationCardProps {
+  record: SolutionCharacterization;
+}
+
+function CharacterizationCard({
+  record,
+}: CharacterizationCardProps) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+      <p className="text-xs font-bold text-slate-800">
+        {formatDate(record.measuredAt)}
+      </p>
+
+      <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-500">
+        <span>
+          Viscosity:{" "}
+          {formatMeasurement(
+            record.viscosityMpas,
+            "mPa·s"
+          )}
+        </span>
+
+        <span>
+          Conductivity:{" "}
+          {formatMeasurement(
+            record.conductivityUsCm,
+            "µS/cm"
+          )}
+        </span>
+
+        <span>
+          Surface tension:{" "}
+          {formatMeasurement(
+            record.surfaceTensionMnM,
+            "mN/m"
+          )}
+        </span>
+
+        <span>
+          Solid content:{" "}
+          {formatMeasurement(
+            record.solidsContentPct,
+            "wt %"
+          )}
+        </span>
+      </div>
+
+      {record.notes && (
+        <p className="mt-2 text-xs text-slate-500">
+          {record.notes}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface ErrorMessageProps {
+  message: string;
+}
+
+function ErrorMessage({
+  message,
+}: ErrorMessageProps) {
+  return (
+    <div
+      role="alert"
+      className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700"
+    >
+      {message}
+    </div>
+  );
+}
+
+function getFormulationLabel(
+  formulation: Formulation
+): string {
+  return `${formulation.polymerName} / ${formulation.solvent}`;
+}
+
+function compareCharacterizations(
+  first: SolutionCharacterization,
+  second: SolutionCharacterization
+): number {
+  return (
+    parseDate(second.measuredAt) -
+    parseDate(first.measuredAt)
+  );
+}
+
+function parseDate(
+  value: string | undefined
+): number {
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(value);
+
+  return Number.isNaN(timestamp)
+    ? 0
+    : timestamp;
+}
+
+function formatDate(
+  value: string | undefined
+): string {
+  if (!value) {
+    return "Unknown date";
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString();
+}
+
+function formatMeasurement(
+  value: number | undefined,
+  unit: string
+): string {
+  return value === undefined
+    ? "N/D"
+    : `${value} ${unit}`;
+}
+
+function getErrorMessage(
+  error: unknown,
+  fallback: string
+): string {
+  return error instanceof Error
+    ? error.message
+    : fallback;
 }

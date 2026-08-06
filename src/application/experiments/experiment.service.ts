@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   Experiment as UiExperiment,
 } from "../../types";
 
@@ -291,10 +291,10 @@ function validateInput(
 
   if (
     input.jetStabilityGrade < 1 ||
-    input.jetStabilityGrade > 5
+    input.jetStabilityGrade > 4
   ) {
     throw new Error(
-      "Jet stability grade must be between 1 and 5."
+      "Processability grade must be between 1 and 4."
     );
   }
 }
@@ -314,3 +314,4 @@ function withoutId<
 
 export const experimentService: ExperimentService =
   new FirestoreExperimentService();
+
