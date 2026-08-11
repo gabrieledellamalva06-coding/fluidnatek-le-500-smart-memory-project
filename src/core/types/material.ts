@@ -62,7 +62,16 @@ export interface Material {
 
     molecularWeight?: string;
 
+    /** Optional family fields used by the UX and similarity context. */
+    polymerFamily?: string;
+
+    solventFamily?: string;
+
     supplier?: string;
+
+    articleNumber?: string;
+
+    batchNumber?: string;
 
     purity?: string;
 

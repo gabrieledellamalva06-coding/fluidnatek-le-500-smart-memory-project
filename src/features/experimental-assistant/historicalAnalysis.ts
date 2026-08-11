@@ -45,22 +45,36 @@ export function analyzeSimilarExperiments(
 
 function buildProcessWindow(matches: readonly SimilarityMatch[]): HistoricalProcessWindow {
   return {
-    flowRateMlH: summarize(matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.flowRateMlH))),
-    voltageKv: summarize(matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.voltageKv))),
-    hvNegativeKv: summarize(
+    flowRateMlH: summarizePlausible(
+      matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.flowRateMlH)),
+      (value) => value >= 0 && value <= 100
+    ),
+    voltageKv: summarizePlausible(
+      matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.voltageKv)),
+      (value) => Math.abs(value) <= 100
+    ),
+    hvNegativeKv: summarizePlausible(
       matches.flatMap((item) => {
         const raw = item.context.experiment.metadata?.hvNegativeKv;
         const parsed = raw === undefined ? Number.NaN : Number.parseFloat(raw);
         return Number.isFinite(parsed) ? [parsed] : [];
-      })
+      }),
+      (value) => Math.abs(value) <= 100
     ),
-    temperatureC: summarize(matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.temperatureC))),
-    humidityPct: summarize(matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.humidityPct))),
-    distanceMm: summarize(
+    temperatureC: summarizePlausible(
+      matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.temperatureC)),
+      (value) => value >= -20 && value <= 100
+    ),
+    humidityPct: summarizePlausible(
+      matches.flatMap((item) => item.context.experiment.telemetryData.map((r) => r.humidityPct)),
+      (value) => value >= 0 && value <= 100
+    ),
+    distanceMm: summarizePlausible(
       matches.flatMap((item) => {
         const telemetry = item.context.experiment.telemetryData.map((r) => r.distanceMm);
         return telemetry.length > 0 ? telemetry : [item.context.experiment.distanceMm];
-      })
+      }),
+      (value) => value >= 1 && value <= 1000
     ),
   };
 }
@@ -118,6 +132,13 @@ function summarize(values: readonly number[]): NumericSummary | undefined {
     maximum: round(Math.max(...clean), 2),
     average: round(clean.reduce((sum, value) => sum + value, 0) / clean.length, 2),
   };
+}
+
+function summarizePlausible(
+  values: readonly number[],
+  predicate: (value: number) => boolean
+): NumericSummary | undefined {
+  return summarize(values.filter((value) => Number.isFinite(value) && predicate(value)));
 }
 
 function isValidGrade(value: number): boolean {

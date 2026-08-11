@@ -13,6 +13,9 @@ import type { SourceTraceability } from "./traceability";
 export interface ProcessParameters {
     voltageKv?: number;
 
+    /** Negative/collector high voltage (HV-). */
+    collectorVoltageKv?: number;
+
     flowRateMlH?: number;
 
     distanceMm?: number;
@@ -38,8 +41,7 @@ export type ProcessabilityGrade =
     | 1
     | 2
     | 3
-    | 4
-    | 5;
+    | 4;
 
 export interface ProcessEvaluation {
     processabilityGrade?: ProcessabilityGrade;

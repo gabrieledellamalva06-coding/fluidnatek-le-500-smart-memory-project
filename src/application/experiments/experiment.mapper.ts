@@ -34,9 +34,13 @@ export interface CreateExperimentInput {
 
   voltageKv: number;
 
+  collectorVoltageKv?: number;
+
   flowRateMlH: number;
 
   distanceMm: number;
+
+  drumSpeedRpm?: number;
 
   jetStabilityGrade: ProcessabilityGrade;
 
@@ -87,8 +91,10 @@ export function createCanonicalExperiment(
 
     parameters: {
       voltageKv: input.voltageKv,
+      collectorVoltageKv: input.collectorVoltageKv,
       flowRateMlH: input.flowRateMlH,
       distanceMm: input.distanceMm,
+      collectorSpeedRpm: input.drumSpeedRpm,
     },
 
     environment:
@@ -342,6 +348,10 @@ function mapProcessRecordToTelemetry(
       processRecord.parameters
         .voltageKv ?? 0,
 
+    collectorVoltageKv:
+      processRecord.parameters
+        .collectorVoltageKv,
+
     flowRateMlH:
       processRecord.parameters
         .flowRateMlH ?? 0,
@@ -357,6 +367,10 @@ function mapProcessRecordToTelemetry(
     distanceMm:
       processRecord.parameters
         .distanceMm ?? 0,
+
+    drumSpeedRpm:
+      processRecord.parameters
+        .collectorSpeedRpm,
   };
 }
 

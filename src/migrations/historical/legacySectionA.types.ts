@@ -29,11 +29,21 @@ export interface LegacyMaterial {
   article_number: string;
   batch_number: string;
   notes: string;
+
+  /** Optional fields exported from Santiago's Lista_materiales sheets. */
+  short_name?: string;
+  polymer_family?: string;
+  solvent_family?: string;
+  available?: string;
 }
 
 export interface LegacyFormulation {
   formulation_id: string;
   project_id: string;
+
+  /** Human-readable FORMULA value from Santiago's workbook. */
+  formulation_name?: string;
+
   polymer_concentration: number | null;
   notes: string;
 }
@@ -108,6 +118,8 @@ export interface LegacyCharacterization {
   conductivity: number | null;
   surface_tension: number | null;
   solid_content: number | null;
+  density?: number | null;
+  ph?: number | null;
 
   notes: string;
 }

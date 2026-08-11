@@ -1,16 +1,28 @@
 import React, { useMemo, useState } from "react";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, FlaskConical, FolderKanban, Play, SlidersHorizontal, TestTube2 } from "lucide-react";
-
+import {
+  Activity,
+  AlertCircle,
+  BarChart3,
+  CheckCircle2,
+  Play,
+  Search,
+} from "lucide-react";
 import type { Experiment, Formulation, Project } from "../types";
-import type { SolutionCharacterization } from "../core/types/characterization";
 import type { ExperimentalSetup } from "../core/types/setup";
+import type { SolutionCharacterization } from "../core/types/characterization";
 import type { ProcessabilityGrade } from "../core/types/processRecord";
 import type { CreateExperimentInput } from "../application/experiments/experiment.mapper";
 import type { Language } from "../lib/translations";
-
 import NumericField from "./ui/NumericField";
+import { buildHistoricalContexts } from "../features/experimental-assistant/contextBuilder";
+import { searchSimilarExperiments } from "../features/experimental-assistant/similarity.engine";
+import { analyzeSimilarExperiments } from "../features/experimental-assistant/historicalAnalysis";
 
-interface RunConfigProps {
+interface Props {
+  project: Project;
+  formulation: Formulation;
+  characterization?: SolutionCharacterization;
+  setup: ExperimentalSetup;
   projects: Project[];
   formulations: Formulation[];
   characterizations: SolutionCharacterization[];
@@ -20,255 +32,264 @@ interface RunConfigProps {
   lang: Language;
 }
 
-interface Range { min: number; max: number; }
-const GRADES = [1, 2, 3, 4] as const;
+type Stage = "parameters" | "analysis" | "processability" | "review";
+const GRADES: ProcessabilityGrade[] = [1, 2, 3, 4];
 
 export default function RunConfig({
-  projects, formulations, characterizations, setups, experiments, onAddExperiment, lang,
-}: RunConfigProps) {
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
-  const [formulationId, setFormulationId] = useState("");
-  const [characterizationId, setCharacterizationId] = useState("");
-  const [setupId, setSetupId] = useState("");
-  const [runName, setRunName] = useState("");
-  const [voltageKv, setVoltageKv] = useState(15);
+  project,
+  formulation,
+  characterization,
+  setup,
+  projects,
+  formulations,
+  characterizations,
+  setups,
+  experiments,
+  onAddExperiment,
+  lang,
+}: Props) {
+  const [stage, setStage] = useState<Stage>("parameters");
   const [flowRateMlH, setFlowRateMlH] = useState(1);
+  const [voltageKv, setVoltageKv] = useState(15);
+  const [collectorVoltageKv, setCollectorVoltageKv] = useState(0);
+  const [temperatureC, setTemperatureC] = useState(25);
+  const [humidityPct, setHumidityPct] = useState(40);
   const [distanceMm, setDistanceMm] = useState(150);
-  const [temperatureC, setTemperatureC] = useState<number | undefined>();
-  const [humidityPct, setHumidityPct] = useState<number | undefined>();
+  const [drumSpeedRpm, setDrumSpeedRpm] = useState(0);
+  const [runName, setRunName] = useState("");
   const [processability, setProcessability] = useState<ProcessabilityGrade>(3);
   const [comments, setComments] = useState("");
   const [error, setError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const availableFormulations = useMemo(
-    () => formulations.filter((item) => item.projectId === projectId),
-    [formulations, projectId]
+  const contexts = useMemo(
+    () => buildHistoricalContexts(projects, formulations, characterizations, setups, experiments),
+    [projects, formulations, characterizations, setups, experiments]
   );
-  const availableCharacterizations = useMemo(
-    () => characterizations.filter((item) => item.formulationId === formulationId),
-    [characterizations, formulationId]
-  );
-  const availableSetups = useMemo(
-    () => setups.filter((item) => !item.projectId || item.projectId === projectId),
-    [setups, projectId]
-  );
-  const selectedFormulation = formulations.find((item) => item.id === formulationId) ?? null;
-  const selectedSetup = setups.find((item) => item.id === setupId) ?? null;
-  const similarRuns = useMemo(
-    () => experiments.filter((item) => item.formulationId === formulationId),
-    [experiments, formulationId]
-  );
-  const evidence = useMemo(() => ({
-    voltage: range(similarRuns.flatMap((run) => run.telemetryData.map((row) => row.voltageKv))),
-    flow: range(similarRuns.flatMap((run) => run.telemetryData.map((row) => row.flowRateMlH))),
-    distance: range(similarRuns.flatMap((run) => run.telemetryData.map((row) => row.distanceMm))),
-  }), [similarRuns]);
 
-  const saveRun = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault();
-    if (!projectId || !formulationId || !setupId || !runName.trim() || !selectedSetup) {
-      setError("Complete project, formulation, setup and run code.");
+  const query = useMemo(
+    () => ({
+      projectId: project.id,
+      formulationId: formulation.id,
+      polymer: formulation.polymerName,
+      solvent: formulation.solvent,
+      setupId: setup.id,
+      machine: setup.machine.model,
+      flowRateMlH,
+      voltageKv,
+      hvNegativeKv: collectorVoltageKv,
+      temperatureC,
+      humidityPct,
+      distanceMm,
+    }),
+    [project, formulation, setup, flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm]
+  );
+
+  const matches = useMemo(
+    () => searchSimilarExperiments(contexts, query, 30, 12),
+    [contexts, query]
+  );
+
+  const assessment = useMemo(
+    () => analyzeSimilarExperiments(matches, query),
+    [matches, query]
+  );
+
+  const analyze = () => {
+    setError("");
+    setStage("analysis");
+  };
+
+  const save = async () => {
+    if (!runName.trim()) {
+      setError("Enter a Run / Sample Code before saving.");
       return;
     }
-    setIsSaving(true);
+    setSaving(true);
     setError("");
     try {
       await onAddExperiment({
-        formulationId,
+        formulationId: formulation.id,
         operationIdentifier: runName.trim(),
-        machineModel: selectedSetup.machine.model,
-        injectorType: selectedSetup.injector.type,
-        collectorType: selectedSetup.collector.type,
+        machineModel: setup.machine.model,
+        injectorType: setup.injector.type,
+        collectorType: setup.collector.type,
         voltageKv,
+        collectorVoltageKv,
         flowRateMlH,
         distanceMm,
+        drumSpeedRpm: drumSpeedRpm > 0 ? drumSpeedRpm : undefined,
         jetStabilityGrade: processability,
         operatorComments: comments.trim(),
         sourceFile: "Manual Input",
         temperatureC,
         humidityPct,
       });
+      setStage("parameters");
       setRunName("");
       setComments("");
-    } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : "Unable to save the run.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to save experimental run.");
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
   return (
     <main className="flex-1 overflow-y-auto bg-slate-100 p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Workflow steps 5–10</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-950">Live Telemetry & Smart Memory</h1>
-        <p className="mt-2 text-sm text-slate-500">No Co-Pilot. Historical evidence only; current parameters are entered manually.</p>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Workflow steps 5–8</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-950">Experimental Run</h1>
+        <p className="mt-2 max-w-3xl text-sm text-slate-500">
+          Enter the conditions you plan to use, analyze similar historical experiments, then record the observed processability and save the run.
+        </p>
 
-        <form onSubmit={saveRun} className="mt-6 space-y-5">
-          <Step number={1} icon={FolderKanban} title="Select project">
-            <select value={projectId} onChange={(e) => { setProjectId(e.target.value); setFormulationId(""); setCharacterizationId(""); setSetupId(""); }} className="input">
-              <option value="">Select project</option>
-              {projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </Step>
+        <ContextStrip project={project} formulation={formulation} setup={setup} characterization={characterization} />
+        <Progress stage={stage} />
 
-          <Step number={2} icon={FlaskConical} title="Select formulation">
-            <select value={formulationId} disabled={!projectId} onChange={(e) => { setFormulationId(e.target.value); setCharacterizationId(""); const f=formulations.find((x)=>x.id===e.target.value); setRunName(f ? `${f.polymerName.split(" ")[0].toUpperCase()}-${Date.now().toString().slice(-5)}` : ""); }} className="input">
-              <option value="">Select formulation</option>
-              {availableFormulations.map((item) => <option key={item.id} value={item.id}>{item.polymerName} / {item.solvent} · {item.solidsContentPct} wt %</option>)}
-            </select>
-            {selectedFormulation && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Composition: <strong>{selectedFormulation.polymerName}</strong> / {selectedFormulation.solvent} · {selectedFormulation.solidsContentPct} wt %</p>}
-          </Step>
+        {stage === "parameters" && (
+          <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Activity className="h-5 w-5 text-blue-600" />
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">Current Operating Parameters</h2>
+                <p className="text-xs text-slate-500">Enter the values you want to evaluate against historical runs.</p>
+              </div>
+            </div>
 
-          <Step number={3} icon={TestTube2} title="Review characterization">
-            <select value={characterizationId} disabled={!formulationId} onChange={(e) => setCharacterizationId(e.target.value)} className="input">
-              <option value="">No characterization selected</option>
-              {availableCharacterizations.map((item) => <option key={item.id} value={item.id}>{item.measuredAt ? new Date(item.measuredAt).toLocaleDateString() : "Unknown date"} · viscosity {item.viscosityMpas ?? "N/D"} · conductivity {item.conductivityUsCm ?? "N/D"}</option>)}
-            </select>
-          </Step>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <NumericField label="Q1" unit="mL/h" value={flowRateMlH} onChange={(v) => setFlowRateMlH(v ?? 0)} min={0} decimals={3} />
+              <NumericField label="HV+" unit="kV" value={voltageKv} onChange={(v) => setVoltageKv(v ?? 0)} decimals={2} />
+              <NumericField label="HV-" unit="kV" value={collectorVoltageKv} onChange={(v) => setCollectorVoltageKv(v ?? 0)} decimals={2} />
+              <NumericField label="Temperature" unit="°C" value={temperatureC} onChange={(v) => setTemperatureC(v ?? 0)} decimals={1} />
+              <NumericField label="RH" unit="%" value={humidityPct} onChange={(v) => setHumidityPct(v ?? 0)} min={0} max={100} decimals={1} />
+              <NumericField label="dZ" unit="mm" value={distanceMm} onChange={(v) => setDistanceMm(v ?? 0)} min={0} decimals={1} />
+              <NumericField label="Drum speed" unit="rpm" value={drumSpeedRpm} onChange={(v) => setDrumSpeedRpm(v ?? 0)} min={0} decimals={0} />
+              <label className="block sm:col-span-2">
+                <span className="label">Run / Sample Code</span>
+                <input value={runName} onChange={(e) => setRunName(e.target.value)} className="input" placeholder="Example: PEO-RUN-024" />
+              </label>
+            </div>
 
-          <Step number={4} icon={SlidersHorizontal} title="Select setup">
-            <select value={setupId} disabled={!projectId} onChange={(e) => setSetupId(e.target.value)} className="input">
-              <option value="">Select setup</option>
-              {availableSetups.map((item) => <option key={item.id} value={item.id}>{item.name ?? item.machine.model} · {item.injector.type} · {item.collector.type}</option>)}
-            </select>
-          </Step>
+            <div className="mt-6 flex justify-end">
+              <button type="button" onClick={analyze} className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white">
+                <Search className="h-4 w-4" /> Analyze Similar Historical Runs
+              </button>
+            </div>
+          </section>
+        )}
 
-          <Step number={5} icon={BarChart3} title="Historical evidence">
-            {similarRuns.length === 0 ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Insufficient historical evidence. Enter current parameters manually.</div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-4">
-                <Metric label="Similar runs" value={String(similarRuns.length)} />
-                <Metric label="Voltage range" value={formatRange(evidence.voltage, "kV")} />
-                <Metric label="Flow range" value={formatRange(evidence.flow, "mL/h")} />
-                <Metric label="Distance range" value={formatRange(evidence.distance, "mm")} />
+        {stage === "analysis" && (
+          <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">Historical Analysis</h2>
+                <p className="text-xs text-slate-500">These results describe similar past experiments; they do not replace the current run.</p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <Metric label="Similar Runs" value={String(assessment.total)} />
+              <Metric label="Expected Processability" value={assessment.expectedGrade === undefined ? "No graded data" : `${assessment.expectedGrade.toFixed(2)} / 4`} />
+              <Metric label="Grade 4 Historical Success" value={assessment.grade4RatePct === undefined ? "No graded data" : `${assessment.grade4RatePct}%`} />
+            </div>
+
+            {matches.length > 0 && (
+              <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Closest Historical Runs</p>
+                <div className="mt-3 space-y-2">
+                  {matches.slice(0, 5).map((match) => (
+                    <div key={match.context.experiment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-4 py-3 text-sm">
+                      <span className="font-semibold text-slate-800">{match.context.experiment.operationIdentifier || "Historical Run"}</span>
+                      <div className="flex gap-3 text-xs text-slate-500">
+                        <span>Similarity <b className="text-slate-800">{match.score.toFixed(0)}%</b></span>
+                        {validGrade(match.context.experiment.jetStabilityGrade) && <span>Grade <b className="text-slate-800">{match.context.experiment.jetStabilityGrade}/4</b></span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-          </Step>
 
-          <Step
-  number={6}
-  icon={Activity}
-  title="Enter current operating parameters"
->
-  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-    <NumericField
-      label="Voltage"
-      unit="kV"
-      value={voltageKv}
-      onChange={(value) => {
-        if (value !== undefined) {
-          setVoltageKv(value);
-        }
-      }}
-      min={0}
-      max={100}
-      decimals={2}
-      placeholder="15.00"
-    />
+            {assessment.total === 0 ? (
+              <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">No sufficiently similar historical runs were found. You can still continue with the current settings.</p>
+            ) : (
+              <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                <Window label="Flow rate" summary={assessment.processWindow.flowRateMlH} unit="mL/h" sensible={(v) => v >= 0 && v <= 100} />
+                <Window label="HV+" summary={assessment.processWindow.voltageKv} unit="kV" sensible={(v) => Math.abs(v) <= 100} />
+                <Window label="HV-" summary={assessment.processWindow.hvNegativeKv} unit="kV" sensible={(v) => Math.abs(v) <= 100} />
+                <Window label="Temperature" summary={assessment.processWindow.temperatureC} unit="°C" sensible={(v) => v >= -20 && v <= 100} />
+                <Window label="Humidity" summary={assessment.processWindow.humidityPct} unit="%" sensible={(v) => v >= 0 && v <= 100} />
+                <Window label="Distance" summary={assessment.processWindow.distanceMm} unit="mm" sensible={(v) => v >= 1 && v <= 1000} />
+              </div>
+            )}
 
-    <NumericField
-      label="Flow rate"
-      unit="mL/h"
-      value={flowRateMlH}
-      onChange={(value) => {
-        if (value !== undefined) {
-          setFlowRateMlH(value);
-        }
-      }}
-      min={0}
-      max={100}
-      decimals={3}
-      placeholder="0.850"
-    />
+            {assessment.interpretation && <p className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm text-blue-800">{assessment.interpretation}</p>}
 
-    <NumericField
-      label="Distance"
-      unit="mm"
-      value={distanceMm}
-      onChange={(value) => {
-        if (value !== undefined) {
-          setDistanceMm(value);
-        }
-      }}
-      min={1}
-      max={1000}
-      decimals={1}
-      placeholder="150.0"
-    />
+            <div className="mt-6 flex flex-wrap justify-between gap-3">
+              <button type="button" onClick={() => setStage("parameters")} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700">Adjust Parameters</button>
+              <button type="button" onClick={() => setStage("processability")} className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white">Continue to Actual Processability</button>
+            </div>
+          </section>
+        )}
 
-    <NumericField
-      label="Temperature"
-      unit="°C"
-      value={temperatureC}
-      onChange={(value) =>
-  setTemperatureC(value ?? 0)
-}
-      min={-20}
-      max={100}
-      decimals={1}
-      placeholder="23.0"
-    />
+        {stage === "processability" && (
+          <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">Observed Processability</h2>
+                <p className="text-xs text-slate-500">After the physical run, record what actually happened using the agreed 1–4 scale.</p>
+              </div>
+            </div>
 
-    <NumericField
-      label="Humidity"
-      unit="%"
-      value={humidityPct}
-      onChange={(value) =>
-  setHumidityPct(value ?? 0)
-}
-      min={0}
-      max={100}
-      decimals={1}
-      placeholder="40.0"
-    />
-
-    <label className="block">
-      <span className="label">
-        Run code
-      </span>
-
-      <input
-        value={runName}
-        onChange={(event) =>
-          setRunName(event.target.value)
-        }
-        className="input"
-      />
-    </label>
-  </div>
-</Step>
-
-          <Step number={7} icon={CheckCircle2} title="Evaluate processability (1–4)">
-            <div className="grid gap-3 sm:grid-cols-4">
+            <div className="mt-5 grid gap-3 sm:grid-cols-4">
               {GRADES.map((grade) => (
-                <button key={grade} type="button" onClick={() => setProcessability(grade)} className={`rounded-2xl border p-4 text-left ${processability===grade ? "border-blue-500 bg-blue-50 ring-4 ring-blue-100" : "border-slate-200 bg-white"}`}>
+                <button key={grade} type="button" onClick={() => setProcessability(grade)} className={`rounded-2xl border p-4 text-left ${processability === grade ? "border-blue-500 bg-blue-50 ring-4 ring-blue-100" : "border-slate-200 bg-white"}`}>
                   <span className="text-2xl font-bold">{grade}</span>
                   <p className="text-xs text-slate-500">{gradeLabel(grade, lang)}</p>
                 </button>
               ))}
             </div>
-            <textarea rows={3} value={comments} onChange={(e)=>setComments(e.target.value)} placeholder="Process comments" className="input mt-4 resize-none" />
-          </Step>
 
-          {error && <div className="flex gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="h-4 w-4" />{error}</div>}
+            <label className="mt-5 block"><span className="label">Process Comments</span><textarea rows={4} value={comments} onChange={(e) => setComments(e.target.value)} className="input resize-none" /></label>
+            <div className="mt-6 flex justify-between"><button type="button" onClick={() => setStage("analysis")} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold">Back to Analysis</button><button type="button" onClick={() => setStage("review")} className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white">Review & Save</button></div>
+          </section>
+        )}
 
-          <button type="submit" disabled={isSaving} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 font-bold text-white hover:bg-blue-700 disabled:opacity-50">
-            <Play className="h-4 w-4" />{isSaving ? "Saving..." : "Save run and update memory"}
-          </button>
-        </form>
+        {stage === "review" && (
+          <section className="mt-6 rounded-3xl border border-emerald-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-950">Confirm & Save Experiment</h2>
+            <p className="mt-1 text-xs text-slate-500">Nothing new is requested here. Check the summary and save it to historical memory.</p>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <Metric label="Project" value={project.name} />
+              <Metric label="Formulation" value={formulation.name || formulation.polymerName} />
+              <Metric label="Setup" value={setup.name || setup.machine.model} />
+              <Metric label="Q1" value={`${flowRateMlH} mL/h`} />
+              <Metric label="HV+" value={`${voltageKv} kV`} />
+              <Metric label="HV-" value={`${collectorVoltageKv} kV`} />
+              <Metric label="RH" value={`${humidityPct}%`} />
+              <Metric label="Temperature" value={`${temperatureC} °C`} />
+              <Metric label="dZ" value={`${distanceMm} mm`} />
+              {drumSpeedRpm > 0 && <Metric label="Drum speed" value={`${drumSpeedRpm} rpm`} />}
+              <Metric label="Observed Processability" value={`${processability} / 4`} />
+              <Metric label="Run code" value={runName || "Missing"} />
+            </div>
+            {error && <div className="mt-4 flex gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="h-4 w-4" />{error}</div>}
+            <div className="mt-6 flex justify-between"><button type="button" onClick={() => setStage("processability")} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold">Edit</button><button type="button" disabled={saving} onClick={save} className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white disabled:opacity-50"><Play className="h-4 w-4" />{saving ? "Saving..." : "Save Run & Update Memory"}</button></div>
+          </section>
+        )}
       </div>
-      <style>{`.input{width:100%;border:1px solid #e2e8f0;border-radius:1rem;background:#f8fafc;padding:.75rem 1rem;font-size:.875rem;outline:none}.input:focus{border-color:#60a5fa;box-shadow:0 0 0 4px #dbeafe}.label{display:block;margin-bottom:.5rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b}`}</style>
+      <style>{`.input{width:100%;border:1px solid #e2e8f0;border-radius:1rem;background:#f8fafc;padding:.75rem 1rem;font-size:.875rem;color:#0f172a;outline:none}.input::placeholder{color:#94a3b8}.input:focus{border-color:#60a5fa;box-shadow:0 0 0 4px #dbeafe}.label{display:block;margin-bottom:.5rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b}`}</style>
     </main>
   );
 }
 
-function Step({ number, icon: Icon, title, children }: { number:number; icon:typeof Activity; title:string; children:React.ReactNode }) {
-  return <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><header className="mb-5 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 font-bold text-white">{number}</span><Icon className="h-5 w-5 text-blue-600"/><h2 className="font-bold text-slate-950">{title}</h2></header>{children}</section>;
-}
-function Metric({label,value}:{label:string;value:string}){return <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{label}</p><p className="mt-2 font-mono font-bold">{value}</p></div>}
-function range(values:number[]):Range|null{const valid=values.filter(Number.isFinite);return valid.length?{min:Math.min(...valid),max:Math.max(...valid)}:null}
-function formatRange(value:Range|null,unit:string):string{return value?`${value.min.toFixed(2)}–${value.max.toFixed(2)} ${unit}`:"N/D"}
+function Progress({ stage }: { stage: Stage }) { const items: Stage[]=["parameters","analysis","processability","review"]; const current=items.indexOf(stage); return <div className="mt-6 grid grid-cols-4 gap-2">{items.map((item,index)=><div key={item} className={`h-2 rounded-full ${index<=current?"bg-blue-600":"bg-slate-200"}`} />)}</div>; }
+function ContextStrip({ project, formulation, setup, characterization }: { project: Project; formulation: Formulation; setup: ExperimentalSetup; characterization?: SolutionCharacterization }) { return <div className="mt-6 flex flex-wrap gap-2"><Pill label="Project" value={project.name}/><Pill label="Formulation" value={formulation.name || formulation.polymerName}/><Pill label="Setup" value={setup.name || setup.machine.model}/>{characterization && <Pill label="Characterization" value={characterization.measuredAt ? new Date(characterization.measuredAt).toLocaleDateString() : "Selected"}/>}</div>; }
+function Pill({label,value}:{label:string;value:string}){return <div className="rounded-xl bg-white px-4 py-3 shadow-sm"><p className="text-[9px] font-bold uppercase text-slate-400">{label}</p><p className="text-sm font-semibold text-slate-800">{value}</p></div>}
+function Metric({label,value}:{label:string;value:string}){return <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{label}</p><p className="mt-2 font-semibold text-slate-800">{value}</p></div>}
+function Window({label,summary,unit,sensible}:{label:string;summary:{minimum:number;maximum:number;average:number}|undefined;unit:string;sensible:(value:number)=>boolean}){if(!summary||![summary.minimum,summary.maximum,summary.average].every(sensible))return null;return <div className="rounded-xl border border-slate-200 p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{label}</p><p className="mt-2 font-mono font-bold text-slate-800">{summary.minimum.toFixed(2)}–{summary.maximum.toFixed(2)} {unit}</p><p className="mt-1 text-xs text-slate-400">avg {summary.average.toFixed(2)}</p></div>}
 function gradeLabel(grade:1|2|3|4,lang:Language):string{const labels={it:["Non processabile","Instabile","Accettabile","Stabile"],en:["Not processable","Unstable","Acceptable","Stable"],es:["No procesable","Inestable","Aceptable","Estable"]} as const;return labels[lang][grade-1]}
+function validGrade(value:number):boolean{return Number.isFinite(value)&&value>=1&&value<=4}

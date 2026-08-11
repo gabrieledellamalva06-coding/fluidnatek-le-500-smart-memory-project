@@ -184,6 +184,15 @@ export class SectionAMigrationService {
         companyId
       );
 
+    // Replace only previous historical catalog records.
+    // User-created materials/formulations are preserved.
+    await this.removeObsoleteHistoricalCatalog(
+      materialRepository,
+      formulationRepository,
+      entities.materials,
+      entities.formulations
+    );
+
     await this.persistEntities(
       "projects",
       entities.projects,
@@ -368,6 +377,56 @@ export class SectionAMigrationService {
     }
 
     return "Unknown Firestore migration error.";
+  }
+
+  private async removeObsoleteHistoricalCatalog(
+    materialRepository: MaterialRepository,
+    formulationRepository: FormulationRepository,
+    targetMaterials: Material[],
+    targetFormulations: Formulation[]
+  ): Promise<void> {
+    const [
+      existingMaterials,
+      existingFormulations,
+    ] = await Promise.all([
+      materialRepository.getAll(),
+      formulationRepository.getAll(),
+    ]);
+
+    const targetMaterialIds =
+      new Set(targetMaterials.map((item) => item.id));
+
+    const targetFormulationIds =
+      new Set(targetFormulations.map((item) => item.id));
+
+    const obsoleteMaterialIds =
+      existingMaterials
+        .filter(
+          (item) =>
+            (item.id.startsWith("MIG_MAT_") ||
+              item.id.startsWith("XLS_MAT_")) &&
+            !targetMaterialIds.has(item.id)
+        )
+        .map((item) => item.id);
+
+    const obsoleteFormulationIds =
+      existingFormulations
+        .filter(
+          (item) =>
+            (item.id.startsWith("MIG_FORM_") ||
+              item.id.startsWith("XLS_FORM_")) &&
+            !targetFormulationIds.has(item.id)
+        )
+        .map((item) => item.id);
+
+    await Promise.all([
+      ...obsoleteMaterialIds.map((id) =>
+        materialRepository.delete(id)
+      ),
+      ...obsoleteFormulationIds.map((id) =>
+        formulationRepository.delete(id)
+      ),
+    ]);
   }
 
   private emptyCounts():

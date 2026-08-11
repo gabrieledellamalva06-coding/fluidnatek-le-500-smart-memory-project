@@ -186,6 +186,13 @@ function getAverageDistance(context: HistoricalExperimentContext): number | unde
 }
 
 function getHvNegative(context: HistoricalExperimentContext): number | undefined {
+  const telemetryAverage = average(
+    context.experiment.telemetryData
+      .map((item) => item.collectorVoltageKv)
+      .filter((value): value is number => value !== undefined)
+  );
+  if (telemetryAverage !== undefined) return telemetryAverage;
+
   const raw = context.experiment.metadata?.hvNegativeKv;
   if (raw === undefined) return undefined;
   const parsed = Number.parseFloat(raw);

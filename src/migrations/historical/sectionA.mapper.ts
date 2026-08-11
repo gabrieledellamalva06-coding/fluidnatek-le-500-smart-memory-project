@@ -122,8 +122,7 @@ function normalizeProcessability(
     value === 1 ||
     value === 2 ||
     value === 3 ||
-    value === 4 ||
-    value === 5
+    value === 4
   ) {
     return value;
   }
@@ -263,6 +262,38 @@ export function mapLegacyFormulationComponent(
   };
 }
 
+export function legacyFormulationDisplayName(
+  source: LegacyFormulation
+): string {
+  // New Section-A JSON generated from Santiago's workbook already stores
+  // the human-readable FORMULA value explicitly (for example NVR_OVA+TBP_3b).
+  const explicitName = source.formulation_name?.trim();
+
+  if (explicitName) {
+    return explicitName;
+  }
+
+  // Older migrated records stored the original Excel Formula ID in notes.
+  const notes = (source.notes ?? "").trim();
+  const match = notes.match(/Original formula ID:\s*([^\r\n]+)/i);
+  const originalFormulaId = match?.[1]?.trim();
+
+  if (originalFormulaId) {
+    return originalFormulaId;
+  }
+
+  // A non-generated ID is already suitable as a display label.
+  if (
+    !source.formulation_id.startsWith("MIG_FORM_") &&
+    !source.formulation_id.startsWith("XLS_FORM_")
+  ) {
+    return source.formulation_id;
+  }
+
+  // Do not expose generated database IDs to the user.
+  return "Historical formulation";
+}
+
 export function mapLegacyFormulation(
   source: LegacyFormulation,
   components: LegacyFormulationComponent[]
@@ -277,14 +308,18 @@ export function mapLegacyFormulation(
     )
     .map(mapLegacyFormulationComponent);
 
+  const displayLabel = legacyFormulationDisplayName(source);
+
   return {
     id: source.formulation_id,
 
     projectId: source.project_id,
 
-    code: source.formulation_id,
+    // Keep MIG_FORM_* only as the internal ID. The user sees the Formula ID
+    // that came from Excel (when available).
+    code: displayLabel,
 
-    name: source.formulation_id,
+    name: displayLabel,
 
     components: formulationComponents,
 

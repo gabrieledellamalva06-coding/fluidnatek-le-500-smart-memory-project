@@ -1,346 +1,2882 @@
 [
-    {
-        "formulation_component_id": "fb135890-de88-44fc-9f0f-74593b9956e6",
-        "formulation_id": "2.FORMUL",
-        "material_id": "1afff68f-25c4-468d-b638-12c1b129e25a",
-        "component_role": "polymer",
-        "concentration": 10.0,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "a1317c1d-82bf-4eb0-b739-cdaeaaa607de",
-        "formulation_id": "2.FORMUL",
-        "material_id": "623efc6e-0bb6-4eca-9ad6-8dc3e50520bf",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 100.0
-    },
-    {
-        "formulation_component_id": "MIG_COMP_8410f04b-6528-5456-97de-cc4306d6eac2",
-        "formulation_id": "MIG_FORM_d716ae2d-fffe-5157-a4ca-a9ea5fb4f2d2",
-        "material_id": "MIG_MAT_f1326c23-63f8-5ed9-b7ef-d2addf99ca7a",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_9255f92f-443f-5b3d-ac43-1da080bc51f3",
-        "formulation_id": "MIG_FORM_e6610a7b-ba7a-5650-99a5-a899f65aa59c",
-        "material_id": "MIG_MAT_fba939b3-0b8d-5410-8bd6-56079c55c7fa",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_0cd48068-411e-5f8c-824f-4cf3ace97d35",
-        "formulation_id": "MIG_FORM_dcb976fa-a657-50ae-8163-538eeaca818e",
-        "material_id": "MIG_MAT_d9866b89-0b4d-5743-b5f5-0fd8b7fa483c",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_01c1720e-36bd-5a5d-b60e-b3dcfb1be3c3",
-        "formulation_id": "MIG_FORM_c9b7c7e8-4d25-54b8-acef-ef43d2c3d979",
-        "material_id": "MIG_MAT_596ee147-f363-5ebc-bbee-7b856a75a3ce",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_5fa9824b-1bd3-54ac-849c-19daa78a9f27",
-        "formulation_id": "MIG_FORM_c7baf359-c325-59a4-b648-3220aef34da5",
-        "material_id": "MIG_MAT_00d66213-8066-52b2-b8e4-93514066290b",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_4041cf99-b111-5892-bd98-e822cadb4a21",
-        "formulation_id": "MIG_FORM_216630e9-eafd-5e42-904c-e1431a2a620f",
-        "material_id": "MIG_MAT_e3c8b84d-b059-516e-b564-159264d9476d",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_3d5d2a70-d2da-5f4c-82b1-bc4412ae050d",
-        "formulation_id": "MIG_FORM_8a13d60a-079e-5629-9c05-f7b76c4bb108",
-        "material_id": "MIG_MAT_4d4555dc-4b72-54c7-b44c-856db331de30",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_754a069a-3677-5356-963e-4457257b69fe",
-        "formulation_id": "MIG_FORM_675f2ef3-964c-5b87-a33c-86c50341182d",
-        "material_id": "MIG_MAT_e1d67653-127c-57da-a95c-7258fa27293c",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_28eb62be-5cfd-53e2-845c-f56a5dce57f2",
-        "formulation_id": "MIG_FORM_648be595-2f9b-5788-aeaf-23a3e31b8529",
-        "material_id": "MIG_MAT_84db61e7-adab-5d3c-a5bb-b6ecabc810f3",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_864df86b-83a1-556a-8f9e-3aa10b8407ed",
-        "formulation_id": "MIG_FORM_08b1e474-ea59-5311-940c-f7c7d9d3a3cd",
-        "material_id": "MIG_MAT_f6aa76c7-c9d3-5a82-906a-23fe77a8584d",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_a37542c9-32f9-5a01-82f3-27f69bc9a3b5",
-        "formulation_id": "MIG_FORM_ff5cb0c7-2d7d-5bcf-b69f-93023e3fa9a0",
-        "material_id": "MIG_MAT_35396272-68e9-5e43-b76f-7fc918dc3fcd",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_a2016a77-af9a-55d4-8fab-a51e54dc0a7a",
-        "formulation_id": "MIG_FORM_3974a5b2-aa18-5ae4-85cc-8fcd3ff09c91",
-        "material_id": "MIG_MAT_51894870-9cf5-5d5f-b84d-30271c701915",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_4a296cfc-138f-5151-8756-c8002f9fe13c",
-        "formulation_id": "MIG_FORM_06389fce-a387-55cf-84e2-b1b2d399a037",
-        "material_id": "MIG_MAT_40204107-466c-55d5-8a13-f70e4ce58a0f",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_afc958c2-4acc-5182-87c5-5295b0271009",
-        "formulation_id": "MIG_FORM_ceca2b33-6e2c-5fce-aa7f-3acf84fcbba2",
-        "material_id": "MIG_MAT_b3f41eba-f873-55ad-b094-7d290690b705",
-        "component_role": "polymer",
-        "concentration": null,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_db8f2977-a769-5d4c-a472-9abbb727c287",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_ccf8dfed-55a4-5a2d-afed-9e62741cfa30",
-        "component_role": "polymer",
-        "concentration": 10.0,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_83205dad-0b91-5d07-b0fe-209dcce30f8e",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_53c577e3-c1cb-53d6-a457-0fc96a7d101f",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 90.0
-    },
-    {
-        "formulation_component_id": "MIG_COMP_64a96b7f-c5c0-5646-84ef-9d5d61305397",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_5170aad2-8327-580a-82ac-66f227d72e1b",
-        "component_role": "polymer",
-        "concentration": 10.0,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_d1afaa42-e2a7-514a-ab1d-5c74f26174fb",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_a522e1de-d306-5266-b7a8-8c729eeac37c",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 90.4
-    },
-    {
-        "formulation_component_id": "MIG_COMP_3e6647ec-e8d3-5a58-aaf3-444bb0f9d111",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 90.0
-    },
-    {
-        "formulation_component_id": "MIG_COMP_7c389c93-e0cd-5d15-a17d-867371ecd6e0",
-        "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.0319,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_e5fca214-e5a7-5fcf-aa76-3545e8fce2a7",
-        "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.925738
-    },
-    {
-        "formulation_component_id": "MIG_COMP_0f58721b-6639-561c-a2fa-49e9688ba29b",
-        "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.0319,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_7684b5be-9d43-52a4-8192-1d6321235ea0",
-        "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.9681
-    },
-    {
-        "formulation_component_id": "MIG_COMP_f9d50a8c-e830-5c8f-88c9-c574266e4287",
-        "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.0319,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_fa0df5c5-f5a9-5a9e-bd6b-2f21cc404a76",
-        "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.9681
-    },
-    {
-        "formulation_component_id": "MIG_COMP_878af6c1-fc0c-59d7-b184-346ee6e6d029",
-        "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.03187,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_9ddcca6e-db8c-5ec1-aa7d-5f414f0f6386",
-        "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.871317
-    },
-    {
-        "formulation_component_id": "MIG_COMP_9657d3a4-3720-5f88-b05a-965939f11eef",
-        "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.03187,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_a434ede6-242a-5db7-9ba9-08f3a8b059b7",
-        "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.871317
-    },
-    {
-        "formulation_component_id": "MIG_COMP_3e36b827-7894-501d-bd71-492dee6e57e0",
-        "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.03187,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_9bdd6f4c-96f4-5bba-a2a3-2bbbdba14f7b",
-        "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.8331569999999999
-    },
-    {
-        "formulation_component_id": "MIG_COMP_3835e7b1-c7fb-5b52-a505-08d9c747f33e",
-        "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.03187,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_6054ea80-f966-5272-ab0d-8e4f90eb6a86",
-        "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.8331569999999999
-    },
-    {
-        "formulation_component_id": "MIG_COMP_abe2105d-4477-57ec-866a-4fe9350a7e65",
-        "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.03187,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_a5f97c18-ccdb-5577-af4c-4405d4a8e443",
-        "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.8331912
-    },
-    {
-        "formulation_component_id": "MIG_COMP_22073444-c043-51e4-872c-9af8378b5e50",
-        "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
-        "material_id": "MIG_MAT_b9a4e044-8722-5910-9424-14f4289fcb3c",
-        "component_role": "polymer",
-        "concentration": 0.02,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_7806e749-59c4-5acb-bcb0-7c4cc24e809b",
-        "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.98
-    },
-    {
-        "formulation_component_id": "MIG_COMP_ae5f61a6-9b7a-5cc0-9261-fd0b2995a4db",
-        "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
-        "material_id": "MIG_MAT_b22316de-fc60-578d-9157-6746ea73d464",
-        "component_role": "polymer",
-        "concentration": 0.0319,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_e55ecc70-c60e-5420-871a-ee90ac72970a",
-        "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
-        "material_id": "MIG_MAT_f9c79cdc-cfff-54b9-949d-16252a0cfc61",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 0.83313
-    },
-    {
-        "formulation_component_id": "MIG_COMP_54d457f1-27d8-5f85-a7c1-6bce6f52271d",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_7f1a93e8-8ebe-5745-8631-2b168d0c1c36",
-        "component_role": "polymer",
-        "concentration": 10.0,
-        "ratio": null
-    },
-    {
-        "formulation_component_id": "MIG_COMP_d44351f8-cef4-5a53-bea3-8991883b7e85",
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "material_id": "MIG_MAT_a7cc30dc-28ec-507d-a44e-b190ca96a680",
-        "component_role": "solvent",
-        "concentration": null,
-        "ratio": 90.0
-    }
+  {
+    "formulation_component_id": "XLS_COMP_69ccd2b3-6c87-552c-b68b-666f9f8054e3",
+    "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1f5a5b5c-11c3-5b07-b610-0cb1443250d6",
+    "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e0b951a3-59d0-574d-b07e-80768fa4d929",
+    "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f8eb5c7b-e6a7-5d72-b043-97ba524f960c",
+    "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.34,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_cedaf7b2-9c9f-5f45-9513-0e0238572a1a",
+    "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+    "material_id": "XLS_MAT_b040bc11-5011-5f1c-8501-0eab96329165",
+    "component_role": "additive",
+    "concentration": 1.9,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_63155cbc-a199-5008-b0c3-ca639734c9c0",
+    "formulation_id": "XLS_FORM_1161bf95-cc92-53ba-bb19-6c68c4d8a3ff",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e74778b5-93e0-5a9d-bc1c-6706be94dc2f",
+    "formulation_id": "XLS_FORM_1161bf95-cc92-53ba-bb19-6c68c4d8a3ff",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_eaa2ff3c-831b-5466-b49f-465d3d9a8577",
+    "formulation_id": "XLS_FORM_1161bf95-cc92-53ba-bb19-6c68c4d8a3ff",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2edf4fae-2043-5c54-8f00-e7064955759b",
+    "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_386062f5-c550-54f4-be1b-d4870c3346c5",
+    "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f5cc15a5-5b8d-53b4-aca0-b9a029308c94",
+    "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a20d8840-1956-5a7d-89b6-243e690e0ce8",
+    "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2f8d0d3e-e463-566a-b15e-ca999a0788ef",
+    "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_656254f3-edf3-52ab-8155-a4f69cbc3bc3",
+    "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b7023ba7-80c8-5a69-9d8d-dedd4e659d56",
+    "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ae7b8e99-4dea-53bc-b9ba-6e9573c170c8",
+    "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.19,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_936f2945-bc99-5f2c-a798-99182f07dcfc",
+    "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_de0b64d3-3906-5d22-b6b9-267dba31957a",
+    "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.19,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_63e70b88-c690-5228-951f-be8d35e5fa30",
+    "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_7259afd9-7bc0-519f-9086-84a1958a4eab",
+    "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f17eddc4-29ce-544b-8bf6-e9bee39d7e87",
+    "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.19,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_04405dba-2c00-5121-a8f5-c18c83ff28f4",
+    "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.34,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_deaa56a2-faa0-5aa2-90d4-ab7954a85964",
+    "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+    "material_id": "XLS_MAT_b040bc11-5011-5f1c-8501-0eab96329165",
+    "component_role": "additive",
+    "concentration": 1.9,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8d3ce687-120c-52b3-8de3-6bc5d5f51870",
+    "formulation_id": "XLS_FORM_adcbed0a-40a4-53be-a63e-f5c179b31e7b",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_08058b5d-5557-5ca9-840e-141766b67e60",
+    "formulation_id": "XLS_FORM_adcbed0a-40a4-53be-a63e-f5c179b31e7b",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_42164514-577f-5374-a285-e805aa8e63da",
+    "formulation_id": "XLS_FORM_adcbed0a-40a4-53be-a63e-f5c179b31e7b",
+    "material_id": "XLS_MAT_8aa32172-83c5-594b-a897-29dd3d167447",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_60a819ac-d044-5aa3-8a93-58e10733691f",
+    "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e828d77a-4b0d-569b-bf58-d7dcffbb16a5",
+    "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
+    "material_id": "XLS_MAT_8aa32172-83c5-594b-a897-29dd3d167447",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4f77b3fb-6570-58d4-9a09-c0d7161778bb",
+    "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_dde1fcdd-8eb6-5f3e-abff-27eaa03a699a",
+    "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a50879d0-12fd-5792-be76-eecb40ef06d6",
+    "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_83e337a1-705a-5b65-b967-df50b6a05dec",
+    "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.3362,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_94e563d9-0d38-5793-b71b-77c85f618e2a",
+    "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+    "material_id": "XLS_MAT_b040bc11-5011-5f1c-8501-0eab96329165",
+    "component_role": "additive",
+    "concentration": 1.9,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8b4ba5d0-1370-5fda-8bca-a70a4492d18e",
+    "formulation_id": "XLS_FORM_be507272-4e35-533f-be38-cb5c6c5e5776",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d8d9eb39-eba3-5e0f-8a29-1b80e3e7ce82",
+    "formulation_id": "XLS_FORM_be507272-4e35-533f-be38-cb5c6c5e5776",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_767870a7-746b-5bea-8018-988937a00e86",
+    "formulation_id": "XLS_FORM_be507272-4e35-533f-be38-cb5c6c5e5776",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.3362,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_581d6365-ef4f-5d96-add5-ceeb13a89bc6",
+    "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a01831e8-f1c2-52a2-a9f4-31818d0a1a9f",
+    "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9492b3cc-1aef-5611-8c90-550c27ca92e2",
+    "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1b1690ee-f319-5489-bbad-8c6a25b7b5ec",
+    "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.34,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_63aa6c15-60a0-5a06-983e-febdccaecc13",
+    "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+    "material_id": "XLS_MAT_fd5884c5-3eef-5f8e-b37c-126b349d9acd",
+    "component_role": "additive",
+    "concentration": 1.9,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1fa82abc-1ea7-5fcf-a70b-6b343c6dea7d",
+    "formulation_id": "XLS_FORM_5f944fa5-25e7-5b62-bdc9-1064df5abca7",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5823ab47-8d9e-5074-bc4b-bcbfcfc98f1a",
+    "formulation_id": "XLS_FORM_5f944fa5-25e7-5b62-bdc9-1064df5abca7",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e98bcd89-be75-51a0-a20b-f0ae97d80d7a",
+    "formulation_id": "XLS_FORM_5f944fa5-25e7-5b62-bdc9-1064df5abca7",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.3362,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1cee7857-60dd-5f72-8e96-d60ef9f7d8e7",
+    "formulation_id": "XLS_FORM_5f944fa5-25e7-5b62-bdc9-1064df5abca7",
+    "material_id": "XLS_MAT_b040bc11-5011-5f1c-8501-0eab96329165",
+    "component_role": "additive",
+    "concentration": 1.89536,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_59cd2797-f743-57b2-9933-4928bff6e1b5",
+    "formulation_id": "XLS_FORM_8c7bb282-fe5a-58ca-a1e4-b768b6a6c896",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f817c170-6b50-52fd-8a76-8cf9fa426277",
+    "formulation_id": "XLS_FORM_8c7bb282-fe5a-58ca-a1e4-b768b6a6c896",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_bcd7fb52-8168-5c41-99fd-afc05ffb68a7",
+    "formulation_id": "XLS_FORM_8c7bb282-fe5a-58ca-a1e4-b768b6a6c896",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.3362,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_72ba3fd3-4c33-5c36-875a-cf2e19671128",
+    "formulation_id": "XLS_FORM_63e99ffc-1e44-57f4-ae27-a1e05f60cd48",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_22c08029-0315-5680-9fed-67b79b261551",
+    "formulation_id": "XLS_FORM_63e99ffc-1e44-57f4-ae27-a1e05f60cd48",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.187,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fe3cf8cd-123b-5022-9219-b3046f7d0d21",
+    "formulation_id": "XLS_FORM_09dbf86c-24f2-546f-b492-f5445365ee92",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_22020605-861a-5680-b300-02e32f427c85",
+    "formulation_id": "XLS_FORM_09dbf86c-24f2-546f-b492-f5445365ee92",
+    "material_id": "XLS_MAT_4f0c2da2-0051-5b3f-9b6b-7bc775b5d0f6",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f0eb97e7-66dc-566e-9d8f-d4a01a271236",
+    "formulation_id": "XLS_FORM_09dbf86c-24f2-546f-b492-f5445365ee92",
+    "material_id": "XLS_MAT_b73e6fdf-3fce-52bd-af07-8587f2b0b9be",
+    "component_role": "polymer",
+    "concentration": 12.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_58fef191-8e9e-51fa-a24c-3bb9b5404c75",
+    "formulation_id": "XLS_FORM_09dbf86c-24f2-546f-b492-f5445365ee92",
+    "material_id": "XLS_MAT_69043c23-adef-5f2e-aed8-2a564b0fe436",
+    "component_role": "polymer",
+    "concentration": 0.1,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_92131786-39a9-52c7-a800-b9815f3843e0",
+    "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a207c4ed-e71f-5f3f-9fe6-862f4853b060",
+    "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.19,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_504f4202-1a5a-5e42-a805-0b59acd32c78",
+    "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.3362,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5488cc29-6ea6-56a5-86ed-6a48329153db",
+    "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+    "material_id": "XLS_MAT_b040bc11-5011-5f1c-8501-0eab96329165",
+    "component_role": "additive",
+    "concentration": 1.9,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_521d0650-755f-5f4f-9057-f48263364873",
+    "formulation_id": "XLS_FORM_0135c3ad-62ae-59f7-a32f-8371d7932f27",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_eec85dcf-81da-5dd1-a810-19b54c68c944",
+    "formulation_id": "XLS_FORM_0135c3ad-62ae-59f7-a32f-8371d7932f27",
+    "material_id": "XLS_MAT_55f31a38-688b-5b85-92aa-7c7571221eeb",
+    "component_role": "polymer",
+    "concentration": 3.087,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_48ffd348-6b4f-57bb-9fb4-d0cf9b718504",
+    "formulation_id": "XLS_FORM_0135c3ad-62ae-59f7-a32f-8371d7932f27",
+    "material_id": "XLS_MAT_a41db3a0-8291-5485-9234-28c078e51b90",
+    "component_role": "additive",
+    "concentration": 2.3362,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8e1e2a0a-990e-5e44-a6ee-b1fa226ce0e2",
+    "formulation_id": "XLS_FORM_0135c3ad-62ae-59f7-a32f-8371d7932f27",
+    "material_id": "XLS_MAT_b040bc11-5011-5f1c-8501-0eab96329165",
+    "component_role": "additive",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3d318946-5598-539b-81d6-6786c816e3d7",
+    "formulation_id": "MIG_FORM_ceceb146-0edc-574c-a6df-a7f699d5e31a",
+    "material_id": "XLS_MAT_44a663d6-aef5-5295-a43a-d2e6419a933c",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_94d47657-abcc-59b6-8d0f-08a1c7e1256b",
+    "formulation_id": "MIG_FORM_ceceb146-0edc-574c-a6df-a7f699d5e31a",
+    "material_id": "XLS_MAT_b9f06716-f03d-547b-981e-f9746aa1ffb8",
+    "component_role": "polymer",
+    "concentration": 23.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e97dedbf-bec9-59ad-8fd4-50c793c377f8",
+    "formulation_id": "MIG_FORM_ceceb146-0edc-574c-a6df-a7f699d5e31a",
+    "material_id": "XLS_MAT_79b36b79-0257-570f-82d7-76c49b345d15",
+    "component_role": "additive",
+    "concentration": 0.69,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2e386f2c-86db-546c-b078-0d9c2d7feaba",
+    "formulation_id": "MIG_FORM_d512a8fb-98d2-59a8-a718-f3b0a1e09d22",
+    "material_id": "XLS_MAT_44a663d6-aef5-5295-a43a-d2e6419a933c",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6e0822d0-01e1-5dd3-8572-e990bf3d8715",
+    "formulation_id": "MIG_FORM_d512a8fb-98d2-59a8-a718-f3b0a1e09d22",
+    "material_id": "XLS_MAT_b9f06716-f03d-547b-981e-f9746aa1ffb8",
+    "component_role": "polymer",
+    "concentration": 23.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4f846642-c3e0-5e9d-9153-0739ef56190f",
+    "formulation_id": "MIG_FORM_d512a8fb-98d2-59a8-a718-f3b0a1e09d22",
+    "material_id": "XLS_MAT_79b36b79-0257-570f-82d7-76c49b345d15",
+    "component_role": "additive",
+    "concentration": 2.3,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_16d4be67-56a8-5ea0-89d8-70a1239e6160",
+    "formulation_id": "MIG_FORM_87d62de2-41d2-577a-808e-fa5e17b10b2c",
+    "material_id": "XLS_MAT_44a663d6-aef5-5295-a43a-d2e6419a933c",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_62967795-b255-5848-9b05-f34a24889008",
+    "formulation_id": "MIG_FORM_87d62de2-41d2-577a-808e-fa5e17b10b2c",
+    "material_id": "XLS_MAT_b9f06716-f03d-547b-981e-f9746aa1ffb8",
+    "component_role": "polymer",
+    "concentration": 20.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a4dab361-e3c3-52cc-9314-c5fc8675eb4e",
+    "formulation_id": "MIG_FORM_87d62de2-41d2-577a-808e-fa5e17b10b2c",
+    "material_id": "XLS_MAT_79b36b79-0257-570f-82d7-76c49b345d15",
+    "component_role": "additive",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_26c1e915-714a-56fa-8218-127661be1806",
+    "formulation_id": "MIG_FORM_837283d8-0539-5dfc-b362-ace7eaa167c0",
+    "material_id": "XLS_MAT_44a663d6-aef5-5295-a43a-d2e6419a933c",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b923669d-359e-5487-8b7c-a335f8b29a06",
+    "formulation_id": "MIG_FORM_837283d8-0539-5dfc-b362-ace7eaa167c0",
+    "material_id": "XLS_MAT_b9f06716-f03d-547b-981e-f9746aa1ffb8",
+    "component_role": "polymer",
+    "concentration": 23.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5c4124f4-242a-5c6b-b78a-c1ab151e37a4",
+    "formulation_id": "MIG_FORM_837283d8-0539-5dfc-b362-ace7eaa167c0",
+    "material_id": "XLS_MAT_79b36b79-0257-570f-82d7-76c49b345d15",
+    "component_role": "additive",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_62f83e13-6b48-58d3-9146-e7f30e9923d4",
+    "formulation_id": "MIG_FORM_4b1813e4-5c6c-5150-b315-5525a82d2173",
+    "material_id": "XLS_MAT_44a663d6-aef5-5295-a43a-d2e6419a933c",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2745432b-04e7-5e49-9a43-891daf8a7e77",
+    "formulation_id": "MIG_FORM_4b1813e4-5c6c-5150-b315-5525a82d2173",
+    "material_id": "XLS_MAT_b9f06716-f03d-547b-981e-f9746aa1ffb8",
+    "component_role": "polymer",
+    "concentration": 25.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_74f47d40-a1c7-53ea-ba43-4f1283a9c9dc",
+    "formulation_id": "MIG_FORM_4b1813e4-5c6c-5150-b315-5525a82d2173",
+    "material_id": "XLS_MAT_79b36b79-0257-570f-82d7-76c49b345d15",
+    "component_role": "additive",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f4e0f703-f859-5e95-b2fa-cda1157e485b",
+    "formulation_id": "XLS_FORM_2eae345e-76a2-5967-ac2d-b58674f40714",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a90f6102-a668-5822-a68c-d9602acd32d5",
+    "formulation_id": "XLS_FORM_2eae345e-76a2-5967-ac2d-b58674f40714",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_7ac84f6c-b174-5bf8-9eb2-41433842197d",
+    "formulation_id": "XLS_FORM_2eae345e-76a2-5967-ac2d-b58674f40714",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b4034ff8-ce6a-5241-a5ad-9de467e4d409",
+    "formulation_id": "XLS_FORM_2eae345e-76a2-5967-ac2d-b58674f40714",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1054a961-87b5-512e-a330-2b81865ce408",
+    "formulation_id": "XLS_FORM_2eae345e-76a2-5967-ac2d-b58674f40714",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_30a3f2d1-9028-556f-8902-eccd5e3e7410",
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1a8729c3-2a6a-53d3-8899-afc3ca130a0e",
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5dace956-ead3-5899-bcf2-f9f911f7d002",
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5de7e704-fe8b-5ecd-8e78-010724ee3fd7",
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_42009f80-60de-5047-a9f5-c53b5c837b6b",
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_acf850b8-4ccc-5d61-afdd-b07d2c5d7ba1",
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_06f22a0c-62b7-5701-8941-6f7641908d38",
+    "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_92dfeb6c-619f-5cb2-b884-e91b93b873ff",
+    "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1a3820e9-07c8-5db2-9f51-b3d47665ebbf",
+    "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a9c3d6e3-3bf2-5edc-9c21-8294b97c0d23",
+    "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.4,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6ba3cdc7-43f9-5139-ad63-8ce4327ebd98",
+    "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f21c916d-a22e-5ded-8e0f-26101aa34a81",
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e50a0e73-9cc7-5d9a-9b12-db94a41ab975",
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_97d4e82a-1952-539d-8d08-e2214e3ba755",
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8e4382cb-4193-5b6c-bcf7-f1ef4803c979",
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_abda922d-cf9d-523f-8dfc-a75d9b3fbaff",
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_42b584ff-e4d7-53cb-aa05-2ddce0a7a4b3",
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "material_id": "XLS_MAT_8ef0bf86-2386-5cc5-9b66-1d04e4f23df0",
+    "component_role": "additive",
+    "concentration": 0.7,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4fcfde3c-5c5c-5396-8aeb-624bd1feea78",
+    "formulation_id": "MIG_FORM_e62d2b32-0d5f-551f-ac44-84c497694a81",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6fe3721a-3714-5f0f-8f5d-74f3f742ba27",
+    "formulation_id": "MIG_FORM_e62d2b32-0d5f-551f-ac44-84c497694a81",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5dfa1708-09c1-5aee-8f20-73e9d9ee2b11",
+    "formulation_id": "MIG_FORM_e62d2b32-0d5f-551f-ac44-84c497694a81",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_18234e69-736c-5c11-9333-1cb9c88191b9",
+    "formulation_id": "MIG_FORM_e62d2b32-0d5f-551f-ac44-84c497694a81",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 2.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_453d9adc-3800-5293-87a4-3e7aaee47f0a",
+    "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_49cdd3ed-dd01-5242-a826-e1c54d876acb",
+    "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_528329dd-eb61-5320-b912-fc89931e02a0",
+    "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5207bb48-aa6d-5b7c-9aac-6eefa8a8314b",
+    "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.3,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_df6447c2-904c-56f8-ba94-1b2509970a35",
+    "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 2.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a1442b2d-762b-56ee-9ad4-de93327d6588",
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_914379d6-fa99-597b-bf1d-5184499caa20",
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_07f62910-5d9d-5cdc-8957-5dab455b424d",
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_21f834a4-b208-547e-88b8-ae6b15efe5e1",
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "material_id": "XLS_MAT_184830de-4217-5d1e-a2ad-2bcab7778286",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_316572a8-990f-50af-bf83-864ac82940f6",
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_730ee8e4-2d2b-5a38-9146-88571f3a54de",
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_eedba959-5741-53df-8ad6-0c3654559e7f",
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4d94776c-1f66-5035-83b7-ee37c8315e89",
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_070f2093-139c-555d-9ec2-25e0e6c2939e",
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_19066301-c9ae-5847-a7ec-bc268db0d814",
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ce51e982-a633-5f34-854c-88de6674dce3",
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4f5dd2dc-caed-54be-89eb-407807a30c4f",
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_877b7d9a-40ed-505f-97ff-636b308a46d0",
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_760ab0a4-452d-5c6e-b3a6-cfc0e16f14e0",
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d773b127-7bc5-52f8-9c25-789841b534ce",
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_321089ca-f582-5e65-9d7b-e53cfca06e51",
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_be8b0875-9a9f-53e5-9641-99bb6c9f6651",
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fb4bd8eb-1135-59ae-a932-c5e32c690014",
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_eb000417-db28-55d4-8bac-ffe7b000757c",
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_191baa51-7063-5f94-a93f-ecdc52c9d221",
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8e7445fa-ef62-52d9-a17f-abb4e5f0ada6",
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_012c1202-27ad-57f4-83dd-eef13e369f51",
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4eb937ff-eb95-5186-bd34-2d4ccf59b369",
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ef539e47-dc20-56c7-8aa5-efd0958fc0a8",
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 4.35,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f4269d18-1983-5869-bff8-3ed151ff1fde",
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_19a1de1c-6e56-5f4a-a3bd-b41d76d1de69",
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "material_id": "XLS_MAT_70e2b880-0fd3-5899-b0e9-be6c07210273",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d47a1a22-9fca-5651-8de0-b09d864775b1",
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "material_id": "XLS_MAT_440ed179-66d7-576b-97a5-23c6af4686f6",
+    "component_role": "polymer",
+    "concentration": 12.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_93b75b6a-6b1d-52fc-9bcc-2b6b04250074",
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 3.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_0b2761da-de18-5fbf-8652-8a14a229cf02",
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 0.15,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b9c185a2-7b76-57eb-8854-a5aa1aa00491",
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_eb2afd81-fef9-5a27-badb-f98c39756b28",
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f5ee40a5-9001-5e3e-b636-5643b712718f",
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_31546c2f-26a0-5a5c-abd2-881a96cd09cf",
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "material_id": "XLS_MAT_ef370c59-82ea-5083-ab8b-54ae2f41f226",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9b1fb8a4-7e34-5833-86de-923fdbbbc8f9",
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2071d46b-1e5e-566b-83eb-5640ffd24ce9",
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3a0bd0eb-c370-5d8b-823f-393987d7e8ac",
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_636c39bb-6e26-53a6-acdf-10cac761acb5",
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 75.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_91cc7584-f907-52a0-90c1-d6f5a1f5488a",
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 25.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_965741eb-3803-5704-8ad4-acbfee35ee24",
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "material_id": "XLS_MAT_ef370c59-82ea-5083-ab8b-54ae2f41f226",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c31efb87-37cf-5a42-a236-7fc77145e240",
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c8c3cb6a-acfc-52ee-8bf2-f3a17c8f38bf",
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.55,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b3c00cf8-76d6-528c-85ac-e2b50425e66a",
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 2.95,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b368c155-a016-5cb8-b495-7e5fb6d1e9e5",
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_bbacbb7d-0d8e-5cd5-aa2c-9a648363717a",
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3a0d4a14-4352-569e-83c4-d1d9ba84d2da",
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_419271a0-ce05-5e5c-8e8a-12d1bf4195ea",
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "material_id": "XLS_MAT_cfa249b8-034d-54a7-aab1-9e769005c278",
+    "component_role": "polymer",
+    "concentration": 2.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3e705a06-2b5a-54b9-9307-aecde0ad141b",
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 1.6,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6549b1ba-b3bd-5355-bb1c-d5e63758c45e",
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 3.2,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8ce4f3a2-386d-5561-92f4-63b6ea834c93",
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9420fa0c-1510-53aa-af37-aecf78e9bb87",
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "material_id": "XLS_MAT_70e2b880-0fd3-5899-b0e9-be6c07210273",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_108637c4-95e7-560e-99a2-db4bb6fc1686",
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "material_id": "XLS_MAT_1c3a8d7f-4772-5006-9dfe-f52f12ab8b13",
+    "component_role": "polymer",
+    "concentration": 0.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e30454f8-ff85-508e-aa60-27da8be72928",
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "material_id": "XLS_MAT_440ed179-66d7-576b-97a5-23c6af4686f6",
+    "component_role": "polymer",
+    "concentration": 12.1,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e6600a62-9919-54a4-9da9-b8e62917163c",
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 0.15,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_50fb1aae-7d31-5384-a1dc-80b6857e137d",
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "additive",
+    "concentration": 1.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_11077a19-4fdc-5275-b1bc-6d4875fb2646",
+    "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_953cf869-0b58-561f-9062-dafcbd7a684e",
+    "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
+    "material_id": "XLS_MAT_70e2b880-0fd3-5899-b0e9-be6c07210273",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_01bab20b-4c92-54be-b086-45d5c8865ca6",
+    "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
+    "material_id": "XLS_MAT_1c3a8d7f-4772-5006-9dfe-f52f12ab8b13",
+    "component_role": "polymer",
+    "concentration": 0.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_991719dc-0c5f-540a-9e94-669b1139a7b7",
+    "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "polymer",
+    "concentration": 1.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5934d035-28d7-5f5b-be6e-28c1f0360ef2",
+    "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
+    "material_id": "XLS_MAT_440ed179-66d7-576b-97a5-23c6af4686f6",
+    "component_role": "polymer",
+    "concentration": 12.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3771b398-5318-56b1-8a8a-7e7a22f33c14",
+    "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_65845ab1-175c-52cb-954b-c739a6f933c4",
+    "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
+    "material_id": "XLS_MAT_70e2b880-0fd3-5899-b0e9-be6c07210273",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6a9731f7-f158-5956-85d8-b7b61ab44c44",
+    "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
+    "material_id": "XLS_MAT_1c3a8d7f-4772-5006-9dfe-f52f12ab8b13",
+    "component_role": "polymer",
+    "concentration": 0.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ef23e357-c6c3-52e4-877e-4c4bd06887d1",
+    "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4296dedc-2f64-5531-a84c-ff81da725ede",
+    "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
+    "material_id": "XLS_MAT_440ed179-66d7-576b-97a5-23c6af4686f6",
+    "component_role": "polymer",
+    "concentration": 13.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6e529759-6979-5ae1-8740-149349643e59",
+    "formulation_id": "MIG_FORM_df6a98e3-5ea8-5b64-aae2-8071474bdb31",
+    "material_id": "XLS_MAT_8105f11a-87a9-57cf-bc74-f2a7c156d305",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_4f75ecfa-3626-5e01-b152-3ba348b00455",
+    "formulation_id": "MIG_FORM_df6a98e3-5ea8-5b64-aae2-8071474bdb31",
+    "material_id": "XLS_MAT_725dc167-b1d0-5b5f-a27b-e0f2813f96d4",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a81683a0-0333-5483-8a24-9b41c4cb35a6",
+    "formulation_id": "MIG_FORM_df6a98e3-5ea8-5b64-aae2-8071474bdb31",
+    "material_id": "XLS_MAT_c2d427c1-13d5-5eaf-9a88-6c2ab6338a20",
+    "component_role": "polymer",
+    "concentration": 18.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d1a3b202-4238-56c7-8e17-5ef03a067cab",
+    "formulation_id": "MIG_FORM_df6a98e3-5ea8-5b64-aae2-8071474bdb31",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6b25188a-fac7-51e6-88f0-9239b6043f28",
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 88.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3c625d0e-6450-57aa-9abb-85e2be33fbfd",
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "material_id": "XLS_MAT_70e2b880-0fd3-5899-b0e9-be6c07210273",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 12.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_40dd57a7-ee1d-567e-8ea1-4614b823c4e4",
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "material_id": "XLS_MAT_1c3a8d7f-4772-5006-9dfe-f52f12ab8b13",
+    "component_role": "polymer",
+    "concentration": 0.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8f0684ff-e446-5c26-ab3c-46db2d517d65",
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "polymer",
+    "concentration": 1.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_132a6a0a-b8aa-5abd-bc7c-95fdd2abe2ca",
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "material_id": "XLS_MAT_440ed179-66d7-576b-97a5-23c6af4686f6",
+    "component_role": "polymer",
+    "concentration": 12.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b87cc446-9c8a-52ca-96ed-ab8ca6017b63",
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "material_id": "XLS_MAT_640e3364-4c3e-561f-a5ad-302930a4c056",
+    "component_role": "additive",
+    "concentration": 0.15,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3238052f-efe1-55a9-b47c-ddd495a3a62d",
+    "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 88.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_58ac1520-a539-5eab-af06-e2184811452a",
+    "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
+    "material_id": "XLS_MAT_70e2b880-0fd3-5899-b0e9-be6c07210273",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 12.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_54682776-560d-5c13-9e8b-87e6167df5d0",
+    "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
+    "material_id": "XLS_MAT_1c3a8d7f-4772-5006-9dfe-f52f12ab8b13",
+    "component_role": "polymer",
+    "concentration": 0.75,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a47e8f98-884d-5f8c-95b2-99f315233cb7",
+    "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
+    "material_id": "XLS_MAT_b593103f-e84c-5e60-aa90-fc4421524c64",
+    "component_role": "polymer",
+    "concentration": 1.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_712ef6c0-63b8-59d5-946f-37d0dbf7b085",
+    "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
+    "material_id": "XLS_MAT_440ed179-66d7-576b-97a5-23c6af4686f6",
+    "component_role": "polymer",
+    "concentration": 12.25,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_bf4a32fd-2421-515f-a34c-7cc260bb8721",
+    "formulation_id": "MIG_FORM_1e0d2f23-5555-5890-84a7-ad21bc27d997",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2488222d-b557-5b36-9fc2-c79cb388599d",
+    "formulation_id": "MIG_FORM_1e0d2f23-5555-5890-84a7-ad21bc27d997",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c9ccd4bc-4b86-5c93-a691-c1517ec1682d",
+    "formulation_id": "MIG_FORM_1e0d2f23-5555-5890-84a7-ad21bc27d997",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e87277f3-e303-5770-8b3f-84a716cf90eb",
+    "formulation_id": "MIG_FORM_607f97f2-68b4-599f-be91-1d781fe83bcf",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6e1134d8-41c4-526b-b79e-36315e4b5418",
+    "formulation_id": "MIG_FORM_607f97f2-68b4-599f-be91-1d781fe83bcf",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ae6a044a-02df-5cf1-b9cd-c3ee3c751677",
+    "formulation_id": "MIG_FORM_607f97f2-68b4-599f-be91-1d781fe83bcf",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6b2f6811-ff92-5722-aa7b-0db08c6cda75",
+    "formulation_id": "MIG_FORM_e59c1291-0343-5d23-bcb2-19eb71a877d4",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_56983e4a-54b1-5130-95bf-d5645e16fe79",
+    "formulation_id": "MIG_FORM_e59c1291-0343-5d23-bcb2-19eb71a877d4",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 0.8,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_0f437c3c-53fc-58b5-a56f-bbf242245128",
+    "formulation_id": "MIG_FORM_5042d2ce-7c5f-5ffd-be7b-aefe63f0d381",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_0a605180-37c6-5912-99ee-8ec27fcfaa6b",
+    "formulation_id": "MIG_FORM_5042d2ce-7c5f-5ffd-be7b-aefe63f0d381",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_75a09869-3fa6-5833-a300-dd529e44f7cf",
+    "formulation_id": "MIG_FORM_5042d2ce-7c5f-5ffd-be7b-aefe63f0d381",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b24d4e1c-45b4-5e9e-8330-0329aed21dbe",
+    "formulation_id": "MIG_FORM_dd8b7850-326c-5c6d-9bb6-90aacf2f2fc5",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_45f41b78-195c-5f9f-a7ba-7853e4e474a8",
+    "formulation_id": "MIG_FORM_dd8b7850-326c-5c6d-9bb6-90aacf2f2fc5",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_7add5e45-dbfc-5d99-b35d-7480a23317d4",
+    "formulation_id": "MIG_FORM_77c24131-a85e-5528-92ed-2238477baa9c",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3fea1eba-edb3-5319-a7e2-2c967f8cf4a2",
+    "formulation_id": "MIG_FORM_77c24131-a85e-5528-92ed-2238477baa9c",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 1.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f1752b90-efa0-57ee-90fd-912e898e848e",
+    "formulation_id": "XLS_FORM_f481e9bf-e0ce-5456-88a9-982355f12949",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_58fc9400-70a6-52cb-a3e2-53327715fe0c",
+    "formulation_id": "XLS_FORM_f481e9bf-e0ce-5456-88a9-982355f12949",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2ae66b4a-3eba-531f-8b28-fd5d706ace41",
+    "formulation_id": "XLS_FORM_f481e9bf-e0ce-5456-88a9-982355f12949",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e37d1079-dd3b-5abe-95bd-7c42f258488a",
+    "formulation_id": "MIG_FORM_69e92eb0-0420-590d-b375-e00644e39e51",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e8b456bb-273d-5d97-bd58-59ae10abc6fa",
+    "formulation_id": "MIG_FORM_69e92eb0-0420-590d-b375-e00644e39e51",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_33ecc595-84e1-5798-af0b-1221749be96f",
+    "formulation_id": "MIG_FORM_69e92eb0-0420-590d-b375-e00644e39e51",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f03c796d-9f8d-508b-943a-61c0b125a7ae",
+    "formulation_id": "MIG_FORM_ba57daa9-ca28-5b41-b385-8e40371de86d",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_48c7f7dc-a34e-5431-be9b-16de6b92e14b",
+    "formulation_id": "MIG_FORM_ba57daa9-ca28-5b41-b385-8e40371de86d",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d0be6242-3d4f-51e6-9b40-710c43469dcd",
+    "formulation_id": "MIG_FORM_ba57daa9-ca28-5b41-b385-8e40371de86d",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_75bc4c60-c57d-5419-9654-238c932dc149",
+    "formulation_id": "MIG_FORM_29df0e86-7777-58e7-9235-a765aa216f93",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f2aef2b3-c110-5152-b027-d38dcb3d8864",
+    "formulation_id": "MIG_FORM_29df0e86-7777-58e7-9235-a765aa216f93",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_413ff8b9-28f7-5c46-aa56-49bca10fa75c",
+    "formulation_id": "MIG_FORM_84fa00f5-45af-5237-9647-a6d09a58ad76",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9fe2303d-3cb7-5a22-8351-a700ed297e1c",
+    "formulation_id": "MIG_FORM_84fa00f5-45af-5237-9647-a6d09a58ad76",
+    "material_id": "XLS_MAT_a6a3550a-7c89-582b-aac3-acc398199c45",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e78325ab-fc6a-59d4-b1dc-7687b201d881",
+    "formulation_id": "MIG_FORM_3f4b1a11-db18-5509-be8a-14ff91a6f32e",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_df9ac5bc-fd36-5712-b71d-5c7c5522c0d2",
+    "formulation_id": "MIG_FORM_3f4b1a11-db18-5509-be8a-14ff91a6f32e",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_55443929-ee0c-5e35-a6d5-8abfb8a49615",
+    "formulation_id": "MIG_FORM_3f4b1a11-db18-5509-be8a-14ff91a6f32e",
+    "material_id": "XLS_MAT_5806f6df-6b9c-5ddf-9482-0e48c1ecfbb3",
+    "component_role": "polymer",
+    "concentration": 3.19,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_f9d8bb50-1a9a-5b05-86ae-74fc3df6949e",
+    "formulation_id": "MIG_FORM_4fd530e4-ba3e-5763-9dda-b370cd7f376f",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b5b851a1-f653-502e-93b4-400ea5c0bf1a",
+    "formulation_id": "MIG_FORM_4fd530e4-ba3e-5763-9dda-b370cd7f376f",
+    "material_id": "XLS_MAT_5806f6df-6b9c-5ddf-9482-0e48c1ecfbb3",
+    "component_role": "polymer",
+    "concentration": 3.19,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5de91c9c-e76a-5eaf-9055-5cb31934b6f9",
+    "formulation_id": "MIG_FORM_93cdf381-2c12-5ca2-b698-b9480832b9bf",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 0.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5850f54d-8a4d-58a1-98b9-2a82e6c9cb99",
+    "formulation_id": "MIG_FORM_93cdf381-2c12-5ca2-b698-b9480832b9bf",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_790758bc-ae06-5582-a686-2e172640c774",
+    "formulation_id": "MIG_FORM_93cdf381-2c12-5ca2-b698-b9480832b9bf",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_889783af-0e0e-57ea-84d6-de8c5a83d6e9",
+    "formulation_id": "MIG_FORM_1d030a45-ffe8-50e6-82ac-5dffe55a2572",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9f0d71c0-3777-5199-8c8d-5de1d8207c37",
+    "formulation_id": "MIG_FORM_1d030a45-ffe8-50e6-82ac-5dffe55a2572",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ec8c423f-5de3-5a3c-9644-424799a37553",
+    "formulation_id": "MIG_FORM_1d030a45-ffe8-50e6-82ac-5dffe55a2572",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_cbd2174b-b11f-510a-89e6-6fd23c794b11",
+    "formulation_id": "MIG_FORM_d754d9c8-48b6-5ab9-8eb3-62d190b32dcf",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1f46b40f-b174-5f75-aeae-1656125af54c",
+    "formulation_id": "MIG_FORM_d754d9c8-48b6-5ab9-8eb3-62d190b32dcf",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2114c256-bfde-5b23-8a03-38cedd7b7fff",
+    "formulation_id": "MIG_FORM_d754d9c8-48b6-5ab9-8eb3-62d190b32dcf",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_7ac98f15-dce3-5f16-8748-5e1c729fac8b",
+    "formulation_id": "XLS_FORM_2f6e1d44-5025-53a2-8fec-de17c9e4b992",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 0.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e5a789b7-ea82-5eee-8961-bd3f9c78d9e5",
+    "formulation_id": "XLS_FORM_2f6e1d44-5025-53a2-8fec-de17c9e4b992",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2ec33738-d42f-5396-9d71-d1f63e08f521",
+    "formulation_id": "XLS_FORM_2f6e1d44-5025-53a2-8fec-de17c9e4b992",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_74730240-6793-58ed-b7e7-9ccb27369166",
+    "formulation_id": "XLS_FORM_b166a047-b148-5933-a8a0-e9f82e42e822",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8b64e050-faec-5c60-b7eb-89f6aad864d0",
+    "formulation_id": "XLS_FORM_b166a047-b148-5933-a8a0-e9f82e42e822",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_176b18fe-7f74-5db3-b389-2b087ebcf664",
+    "formulation_id": "XLS_FORM_b166a047-b148-5933-a8a0-e9f82e42e822",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_dc79a16d-3eb1-59ac-b9f0-61e2c864e714",
+    "formulation_id": "XLS_FORM_1e8fde13-0af5-5960-a393-b45682f818b8",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6007bf98-23ee-5fdc-a034-45c876649f9d",
+    "formulation_id": "XLS_FORM_1e8fde13-0af5-5960-a393-b45682f818b8",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_413f7af3-f4db-5534-b865-5b6c31f45aa8",
+    "formulation_id": "XLS_FORM_1e8fde13-0af5-5960-a393-b45682f818b8",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_381dc016-561c-56d4-a466-c6094d07ab6a",
+    "formulation_id": "MIG_FORM_f7c11cc6-6485-5f44-9b29-fb028cce6f68",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 0.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_62e5e8bf-c5e0-5fad-8077-02645164c3f3",
+    "formulation_id": "MIG_FORM_f7c11cc6-6485-5f44-9b29-fb028cce6f68",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_092527ea-adf7-5d91-83f2-cc959500e80c",
+    "formulation_id": "MIG_FORM_f7c11cc6-6485-5f44-9b29-fb028cce6f68",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 13.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_bb6e8cac-f558-55f5-9835-f4af8b0a545d",
+    "formulation_id": "MIG_FORM_f8c009d2-14ce-57f2-808d-ba51cd1c1cc9",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_acef9101-beb7-5493-90ce-c13bc3726c4f",
+    "formulation_id": "MIG_FORM_f8c009d2-14ce-57f2-808d-ba51cd1c1cc9",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_efea2c5b-ef63-5ba3-9c07-fe0754bf12fd",
+    "formulation_id": "MIG_FORM_f8c009d2-14ce-57f2-808d-ba51cd1c1cc9",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 13.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2dd6c747-de5d-504d-87fd-b83c6ec91485",
+    "formulation_id": "MIG_FORM_c0c20133-f4d3-5996-9bd2-60f30a88eb18",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_76ef6faf-82eb-5d67-95b3-eb61dc2a9d80",
+    "formulation_id": "MIG_FORM_c0c20133-f4d3-5996-9bd2-60f30a88eb18",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9111a8a6-5bf1-50a8-ae38-995d196d58b1",
+    "formulation_id": "MIG_FORM_c0c20133-f4d3-5996-9bd2-60f30a88eb18",
+    "material_id": "XLS_MAT_08e982bb-1d7f-5da6-a101-93eae8e6417d",
+    "component_role": "polymer",
+    "concentration": 13.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_25d707d6-d5a2-5cc3-8e20-a5dc8d3c144a",
+    "formulation_id": "XLS_FORM_0f778c4b-d64d-5c7f-b02c-9b07fe1c4c83",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2e156497-6082-55a4-9644-8c6f72ae39f6",
+    "formulation_id": "XLS_FORM_0f778c4b-d64d-5c7f-b02c-9b07fe1c4c83",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_412bb529-b7ce-51ba-8fcd-3842a3f9f007",
+    "formulation_id": "XLS_FORM_0f778c4b-d64d-5c7f-b02c-9b07fe1c4c83",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_da5584d0-b859-52c5-a35d-a77dd4e88e7e",
+    "formulation_id": "XLS_FORM_0f778c4b-d64d-5c7f-b02c-9b07fe1c4c83",
+    "material_id": "XLS_MAT_7b8001bb-3961-50e5-8a24-5e72195751e3",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e931edf4-eacc-5015-93a8-ea34c65e2826",
+    "formulation_id": "XLS_FORM_e2fce3e4-fe8a-58a4-9553-d7bfdc774091",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_def10c80-8be4-52ba-adc2-74a88a4f23b1",
+    "formulation_id": "XLS_FORM_e2fce3e4-fe8a-58a4-9553-d7bfdc774091",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ae28bcab-17a8-56e2-9f72-39ee15c286b7",
+    "formulation_id": "XLS_FORM_e2fce3e4-fe8a-58a4-9553-d7bfdc774091",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fa7afc4e-7598-5b09-a276-5d4237120ee1",
+    "formulation_id": "XLS_FORM_e2fce3e4-fe8a-58a4-9553-d7bfdc774091",
+    "material_id": "XLS_MAT_207a0040-3b1a-55f5-8c49-54ec4c0c01cd",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fcfedbad-e5a4-5862-b658-e71328a4098c",
+    "formulation_id": "XLS_FORM_a61a301c-f436-5e3b-9a73-5e4a21d382e9",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_bdc77020-4a02-53ec-8327-e9e2a3dda6f0",
+    "formulation_id": "XLS_FORM_a61a301c-f436-5e3b-9a73-5e4a21d382e9",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_07de716a-a6b5-51e6-83ce-4d609bd71a1b",
+    "formulation_id": "XLS_FORM_a61a301c-f436-5e3b-9a73-5e4a21d382e9",
+    "material_id": "XLS_MAT_f6b54f02-5c59-5b40-8a00-ffdb72e3788d",
+    "component_role": "polymer",
+    "concentration": 20.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_579eb408-0a63-5fab-ac73-002673a43dc6",
+    "formulation_id": "XLS_FORM_a61a301c-f436-5e3b-9a73-5e4a21d382e9",
+    "material_id": "XLS_MAT_28e1e73f-451d-5a9b-96fd-40c7016f1fa4",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a05272be-fb13-5b9e-ba86-940f40db21e8",
+    "formulation_id": "XLS_FORM_d5a73fdc-65d2-5230-892f-e43a41f23abb",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_44fcc243-cc5a-500c-b83f-9976f007365a",
+    "formulation_id": "XLS_FORM_d5a73fdc-65d2-5230-892f-e43a41f23abb",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a51f6803-1cdb-58f6-b534-e08e6bd00da4",
+    "formulation_id": "XLS_FORM_d5a73fdc-65d2-5230-892f-e43a41f23abb",
+    "material_id": "XLS_MAT_f6b54f02-5c59-5b40-8a00-ffdb72e3788d",
+    "component_role": "polymer",
+    "concentration": 20.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_452218ee-c8aa-5ea5-89ee-b59df49300bc",
+    "formulation_id": "XLS_FORM_0bc391cc-bfb0-56b5-88db-1ce6968d23d1",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 50.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_e5843d38-2c84-5684-9558-1571785ee0c5",
+    "formulation_id": "XLS_FORM_0bc391cc-bfb0-56b5-88db-1ce6968d23d1",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 50.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5e6a34b5-4331-5cd8-97e2-b79603a7ba25",
+    "formulation_id": "XLS_FORM_0bc391cc-bfb0-56b5-88db-1ce6968d23d1",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1a3566e8-0c0d-5f21-baac-ce4570d49d56",
+    "formulation_id": "XLS_FORM_0bc391cc-bfb0-56b5-88db-1ce6968d23d1",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 4.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d5e8262c-a0f3-5e2c-8f68-72df0062b5cc",
+    "formulation_id": "XLS_FORM_0bc391cc-bfb0-56b5-88db-1ce6968d23d1",
+    "material_id": "XLS_MAT_e7142e88-d7e2-5a81-a0f8-eae880cb53fe",
+    "component_role": "polymer",
+    "concentration": 0.1,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8b88548b-79fa-51fd-9e6b-814bb55f626d",
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 51.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_856715cb-9060-5627-8555-4c100043a3bf",
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 49.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6ba3610a-2662-5440-aef1-d9725ea80882",
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3198d09e-422b-5bfa-9382-25e17b1798ce",
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 4.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fa40b245-de79-5f68-9ce4-b04d666625b3",
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "material_id": "XLS_MAT_f6b54f02-5c59-5b40-8a00-ffdb72e3788d",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c5cdcdb0-15ed-5eaf-a748-4269c11ffd3d",
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "material_id": "XLS_MAT_e7142e88-d7e2-5a81-a0f8-eae880cb53fe",
+    "component_role": "additive",
+    "concentration": 0.1,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5205d588-00ba-5d8d-b3e7-489ce60cdf72",
+    "formulation_id": "XLS_FORM_079e6165-8710-5bd7-82af-4dac5a281576",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9e309bba-13f5-5048-9a40-c8087954dbb8",
+    "formulation_id": "XLS_FORM_079e6165-8710-5bd7-82af-4dac5a281576",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a2be1ea9-83da-5699-89c5-3e193860eb9b",
+    "formulation_id": "XLS_FORM_079e6165-8710-5bd7-82af-4dac5a281576",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 6.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a55ba0ac-7e15-5a64-a223-d6ceea076c7c",
+    "formulation_id": "XLS_FORM_079e6165-8710-5bd7-82af-4dac5a281576",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c9b3d26e-6d05-52cf-877a-cde99feb1cd2",
+    "formulation_id": "XLS_FORM_079e6165-8710-5bd7-82af-4dac5a281576",
+    "material_id": "XLS_MAT_f6b54f02-5c59-5b40-8a00-ffdb72e3788d",
+    "component_role": "polymer",
+    "concentration": 1.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_bb735173-4835-576b-ba0f-bcbb787be215",
+    "formulation_id": "XLS_FORM_b36b7489-b8d8-5e68-a355-03548c0dde4f",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c0e5fb54-44cc-528b-b6cb-26040bc881ea",
+    "formulation_id": "XLS_FORM_b36b7489-b8d8-5e68-a355-03548c0dde4f",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_096ebccf-c265-5c54-8992-25d80d7c8cba",
+    "formulation_id": "XLS_FORM_b36b7489-b8d8-5e68-a355-03548c0dde4f",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a554551a-3ac3-56df-a56b-43676fe15696",
+    "formulation_id": "XLS_FORM_b36b7489-b8d8-5e68-a355-03548c0dde4f",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 4.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a76c4b2a-651a-56d2-84c1-b702b8e5c358",
+    "formulation_id": "XLS_FORM_b36b7489-b8d8-5e68-a355-03548c0dde4f",
+    "material_id": "XLS_MAT_e7142e88-d7e2-5a81-a0f8-eae880cb53fe",
+    "component_role": "polymer",
+    "concentration": 0.1,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a7a5793f-29e6-5ff8-bfca-b55be8cba9e9",
+    "formulation_id": "XLS_FORM_4e72931a-66ab-5e5e-8e41-61ebeb2a4e23",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 50.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_568c5e77-8e9d-59b5-acd9-edca6208b0bf",
+    "formulation_id": "XLS_FORM_4e72931a-66ab-5e5e-8e41-61ebeb2a4e23",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 50.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_30e42f52-5a05-52b6-be2f-fe549024c333",
+    "formulation_id": "XLS_FORM_4e72931a-66ab-5e5e-8e41-61ebeb2a4e23",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c5f8e237-8a5b-5354-9efd-f013be1700ba",
+    "formulation_id": "XLS_FORM_4e72931a-66ab-5e5e-8e41-61ebeb2a4e23",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 4.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6625e51d-3aea-538f-9104-424d880e03ac",
+    "formulation_id": "XLS_FORM_4e72931a-66ab-5e5e-8e41-61ebeb2a4e23",
+    "material_id": "XLS_MAT_e7142e88-d7e2-5a81-a0f8-eae880cb53fe",
+    "component_role": "polymer",
+    "concentration": 0.5,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_dc83d441-7d50-54bb-bf87-a786b312b0bc",
+    "formulation_id": "XLS_FORM_5bc55803-a828-5c96-af45-27e27ffc73ae",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 50.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c713a9aa-f81d-5248-ab31-e88aa46b78b5",
+    "formulation_id": "XLS_FORM_5bc55803-a828-5c96-af45-27e27ffc73ae",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 50.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_187b26bd-d659-5451-8216-9e1b0f867849",
+    "formulation_id": "XLS_FORM_5bc55803-a828-5c96-af45-27e27ffc73ae",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 8.1,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_62b1a4c6-973d-5cb4-9e8d-a160a9d30437",
+    "formulation_id": "XLS_FORM_5bc55803-a828-5c96-af45-27e27ffc73ae",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 4.3,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8765cf76-b1d6-59e8-8fdb-6e4ffab02d20",
+    "formulation_id": "XLS_FORM_5bc55803-a828-5c96-af45-27e27ffc73ae",
+    "material_id": "XLS_MAT_e7142e88-d7e2-5a81-a0f8-eae880cb53fe",
+    "component_role": "polymer",
+    "concentration": 0.12,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_22e53574-2a11-5db4-81d3-265688af2474",
+    "formulation_id": "XLS_FORM_8cdff9ef-68d6-506a-a6b4-d047c0f19486",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_694f6530-3dbc-54fd-8057-bd6166339cd7",
+    "formulation_id": "XLS_FORM_8cdff9ef-68d6-506a-a6b4-d047c0f19486",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_a16b37bb-175d-5da8-a3d5-cd1881363b39",
+    "formulation_id": "XLS_FORM_8cdff9ef-68d6-506a-a6b4-d047c0f19486",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_83f8a363-38d1-5550-8d04-e4b2afac94d6",
+    "formulation_id": "XLS_FORM_8cdff9ef-68d6-506a-a6b4-d047c0f19486",
+    "material_id": "XLS_MAT_a29316b1-4f86-5504-8aa0-34c2ee89398f",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_066159ee-3087-512f-a882-ee22e17ea708",
+    "formulation_id": "XLS_FORM_e5772933-4014-5c1e-8694-65989cc0ec40",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_67fbb42a-b497-59b0-8366-b3491aae42c9",
+    "formulation_id": "XLS_FORM_e5772933-4014-5c1e-8694-65989cc0ec40",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ebd8a3e6-6cee-5252-aa32-f40a2f8340bb",
+    "formulation_id": "XLS_FORM_e5772933-4014-5c1e-8694-65989cc0ec40",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8c0c5797-165a-5dad-8cba-bb315544d61f",
+    "formulation_id": "XLS_FORM_e5772933-4014-5c1e-8694-65989cc0ec40",
+    "material_id": "XLS_MAT_0c427d37-92eb-54ed-b252-948fad2a071e",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c81a0994-ef22-5ee8-a4ea-64fd0ea2b6a1",
+    "formulation_id": "XLS_FORM_a3b7c635-636c-5983-b9e9-03528feef8c0",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_63729194-479e-5050-a355-96ddeb141812",
+    "formulation_id": "XLS_FORM_a3b7c635-636c-5983-b9e9-03528feef8c0",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fd856294-1ce6-5657-a775-4f9e94049661",
+    "formulation_id": "XLS_FORM_a3b7c635-636c-5983-b9e9-03528feef8c0",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_29df80f7-1bb5-568b-ac09-62c93b91df9b",
+    "formulation_id": "XLS_FORM_a3b7c635-636c-5983-b9e9-03528feef8c0",
+    "material_id": "XLS_MAT_9828c82e-8651-5237-8d36-17f0e54f1562",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ffdb3abe-f5a4-5cbc-be8a-bc905523a7c7",
+    "formulation_id": "XLS_FORM_ded98689-53d2-5d9c-9d31-1ab33cee25c2",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_b362a2c6-202e-57f3-9e63-16b9f6f63ae3",
+    "formulation_id": "XLS_FORM_ded98689-53d2-5d9c-9d31-1ab33cee25c2",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ec3b4ef2-7dc4-50d2-a596-e0c9d5aff8c6",
+    "formulation_id": "XLS_FORM_ded98689-53d2-5d9c-9d31-1ab33cee25c2",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_d6b92271-4930-507b-9d90-e46f6856fdb3",
+    "formulation_id": "XLS_FORM_ded98689-53d2-5d9c-9d31-1ab33cee25c2",
+    "material_id": "XLS_MAT_d42b4a46-a56a-5156-a24a-1d7091bab490",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_46cdbcfb-aa67-53cd-94b3-ed421e9e95a5",
+    "formulation_id": "XLS_FORM_11baece2-a4be-5a7d-98f9-0338b517f997",
+    "material_id": "XLS_MAT_e076b98b-272b-54d0-8098-5868d950c204",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_c53b4f2a-85ec-58ea-8e33-a93b8686ade9",
+    "formulation_id": "XLS_FORM_11baece2-a4be-5a7d-98f9-0338b517f997",
+    "material_id": "XLS_MAT_0840ccf8-2d69-597a-bc56-e971303861c1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_99194b73-f5bd-58f4-9b82-2a8bcb282373",
+    "formulation_id": "XLS_FORM_11baece2-a4be-5a7d-98f9-0338b517f997",
+    "material_id": "XLS_MAT_3974f93a-4b5c-52a1-90e7-0391d44ea25b",
+    "component_role": "polymer",
+    "concentration": 8.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_35e4ea0c-9a2c-54bd-880a-150de320c258",
+    "formulation_id": "XLS_FORM_f2f564fc-2aff-58ff-847d-ee677e4b67b8",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3fd29da8-a02b-5bb7-99f6-60417dd7ed83",
+    "formulation_id": "XLS_FORM_f2f564fc-2aff-58ff-847d-ee677e4b67b8",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_9309d7c3-b727-55d6-ac7e-9a4f8a002e0b",
+    "formulation_id": "XLS_FORM_f2f564fc-2aff-58ff-847d-ee677e4b67b8",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6e9d7292-b0ea-5b45-8edf-8a3d4adbff16",
+    "formulation_id": "XLS_FORM_f2f564fc-2aff-58ff-847d-ee677e4b67b8",
+    "material_id": "XLS_MAT_c11a030a-a5f6-55ea-a81f-c3cf04038e76",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_023a5a67-e036-58ad-8eab-78a4371e4c70",
+    "formulation_id": "XLS_FORM_21810adf-a929-5b8a-bbf2-b174a8c9726c",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 92.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_aea5aea4-e2f3-501a-b7e2-d2c23a11d65e",
+    "formulation_id": "XLS_FORM_21810adf-a929-5b8a-bbf2-b174a8c9726c",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 8.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ffc6804e-25cc-5a00-9726-1d20a37087ce",
+    "formulation_id": "XLS_FORM_21810adf-a929-5b8a-bbf2-b174a8c9726c",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2b97ba70-a13f-5717-8b8e-6dee5a3267af",
+    "formulation_id": "XLS_FORM_21810adf-a929-5b8a-bbf2-b174a8c9726c",
+    "material_id": "XLS_MAT_c11a030a-a5f6-55ea-a81f-c3cf04038e76",
+    "component_role": "polymer",
+    "concentration": 5.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_177e5290-ae05-5677-8b69-6f52f3d7cf9d",
+    "formulation_id": "XLS_FORM_c34a1e22-bcee-53ce-b43d-1eace851e6cf",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_1b0bb375-7933-50c3-9ff3-789aabf5191f",
+    "formulation_id": "XLS_FORM_c34a1e22-bcee-53ce-b43d-1eace851e6cf",
+    "material_id": "XLS_MAT_c59f0909-4437-572a-aff5-8d218e4332b1",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 10.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_cfc2bd2a-f37f-50c2-a240-5f23f3b4132e",
+    "formulation_id": "XLS_FORM_c34a1e22-bcee-53ce-b43d-1eace851e6cf",
+    "material_id": "XLS_MAT_d1f5e6d7-f01f-5442-b33d-01dd24e9d3eb",
+    "component_role": "polymer",
+    "concentration": 9.85,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_12c0d946-0a97-5e8c-abea-f792834207b8",
+    "formulation_id": "XLS_FORM_c34a1e22-bcee-53ce-b43d-1eace851e6cf",
+    "material_id": "XLS_MAT_c11a030a-a5f6-55ea-a81f-c3cf04038e76",
+    "component_role": "polymer",
+    "concentration": 0.15,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_606ace69-36c2-5c91-9fb7-536972f5d132",
+    "formulation_id": "XLS_FORM_32d61f6d-0be0-5a89-abdd-716133081fa1",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_2304a555-4e54-5cee-86f3-3b5de891e0a3",
+    "formulation_id": "XLS_FORM_32d61f6d-0be0-5a89-abdd-716133081fa1",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_de24d2c3-61a2-56e8-927c-6d173f1cc3d0",
+    "formulation_id": "XLS_FORM_32d61f6d-0be0-5a89-abdd-716133081fa1",
+    "material_id": "XLS_MAT_f6b54f02-5c59-5b40-8a00-ffdb72e3788d",
+    "component_role": "polymer",
+    "concentration": 20.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_5ef73aef-4043-52d8-990a-e17fd0db87a3",
+    "formulation_id": "XLS_FORM_de734f2d-4987-5717-bf7d-fce08db675b5",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 70.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_fac69262-c906-5856-bed5-d8d48ce8b797",
+    "formulation_id": "XLS_FORM_de734f2d-4987-5717-bf7d-fce08db675b5",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 30.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_8d54e010-a19a-5088-b9fc-86dadf645961",
+    "formulation_id": "XLS_FORM_de734f2d-4987-5717-bf7d-fce08db675b5",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 13.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_6ee44ad1-9e39-596c-87b5-3f4488239a4b",
+    "formulation_id": "XLS_FORM_00bced42-51ae-5503-a9e0-e047904bd16b",
+    "material_id": "XLS_MAT_8dfb0c50-c350-522a-8b9e-04d08348e37e",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 80.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_eecccd7d-59fb-59cc-a8dd-245dee354b9f",
+    "formulation_id": "XLS_FORM_00bced42-51ae-5503-a9e0-e047904bd16b",
+    "material_id": "XLS_MAT_c2a56621-910c-527d-9bef-b3827c3509f9",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 20.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_ab174e7a-446f-5b95-9ddc-b41dd50e91b5",
+    "formulation_id": "XLS_FORM_00bced42-51ae-5503-a9e0-e047904bd16b",
+    "material_id": "XLS_MAT_8d3b74e7-e648-550d-8b25-47f4102897c7",
+    "component_role": "polymer",
+    "concentration": 6.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_3c3b55b0-db02-58ca-b852-aa933ca41c83",
+    "formulation_id": "XLS_FORM_00bced42-51ae-5503-a9e0-e047904bd16b",
+    "material_id": "XLS_MAT_f6b54f02-5c59-5b40-8a00-ffdb72e3788d",
+    "component_role": "polymer",
+    "concentration": 2.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_7109a4bf-b9d5-5a18-8509-097547c22f81",
+    "formulation_id": "XLS_FORM_85ceccd3-0cf4-59d1-9d4d-ce65375141b1",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "XLS_COMP_43917d64-0233-52bf-a843-5e189581a236",
+    "formulation_id": "XLS_FORM_85ceccd3-0cf4-59d1-9d4d-ce65375141b1",
+    "material_id": "XLS_MAT_2db22caf-f67a-5596-936d-5ce3eff2ae59",
+    "component_role": "polymer",
+    "concentration": 6.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "XLS_COMP_68c4f787-13cf-56bf-8979-6dfb16429bce",
+    "formulation_id": "XLS_FORM_85ceccd3-0cf4-59d1-9d4d-ce65375141b1",
+    "material_id": "XLS_MAT_67b567cd-e72c-5c7d-a73b-16f1ae49f19c",
+    "component_role": "polymer",
+    "concentration": 7.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "fb135890-de88-44fc-9f0f-74593b9956e6",
+    "formulation_id": "2.FORMUL",
+    "material_id": "1afff68f-25c4-468d-b638-12c1b129e25a",
+    "component_role": "polymer",
+    "concentration": 10.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "a1317c1d-82bf-4eb0-b739-cdaeaaa607de",
+    "formulation_id": "2.FORMUL",
+    "material_id": "623efc6e-0bb6-4eca-9ad6-8dc3e50520bf",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 100.0
+  },
+  {
+    "formulation_component_id": "MIG_COMP_8410f04b-6528-5456-97de-cc4306d6eac2",
+    "formulation_id": "MIG_FORM_d716ae2d-fffe-5157-a4ca-a9ea5fb4f2d2",
+    "material_id": "MIG_MAT_f1326c23-63f8-5ed9-b7ef-d2addf99ca7a",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_9255f92f-443f-5b3d-ac43-1da080bc51f3",
+    "formulation_id": "MIG_FORM_e6610a7b-ba7a-5650-99a5-a899f65aa59c",
+    "material_id": "MIG_MAT_fba939b3-0b8d-5410-8bd6-56079c55c7fa",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_0cd48068-411e-5f8c-824f-4cf3ace97d35",
+    "formulation_id": "MIG_FORM_dcb976fa-a657-50ae-8163-538eeaca818e",
+    "material_id": "MIG_MAT_d9866b89-0b4d-5743-b5f5-0fd8b7fa483c",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_01c1720e-36bd-5a5d-b60e-b3dcfb1be3c3",
+    "formulation_id": "MIG_FORM_c9b7c7e8-4d25-54b8-acef-ef43d2c3d979",
+    "material_id": "MIG_MAT_596ee147-f363-5ebc-bbee-7b856a75a3ce",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_5fa9824b-1bd3-54ac-849c-19daa78a9f27",
+    "formulation_id": "MIG_FORM_c7baf359-c325-59a4-b648-3220aef34da5",
+    "material_id": "MIG_MAT_00d66213-8066-52b2-b8e4-93514066290b",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_4041cf99-b111-5892-bd98-e822cadb4a21",
+    "formulation_id": "MIG_FORM_216630e9-eafd-5e42-904c-e1431a2a620f",
+    "material_id": "MIG_MAT_e3c8b84d-b059-516e-b564-159264d9476d",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_3d5d2a70-d2da-5f4c-82b1-bc4412ae050d",
+    "formulation_id": "MIG_FORM_8a13d60a-079e-5629-9c05-f7b76c4bb108",
+    "material_id": "MIG_MAT_4d4555dc-4b72-54c7-b44c-856db331de30",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_754a069a-3677-5356-963e-4457257b69fe",
+    "formulation_id": "MIG_FORM_675f2ef3-964c-5b87-a33c-86c50341182d",
+    "material_id": "MIG_MAT_e1d67653-127c-57da-a95c-7258fa27293c",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_28eb62be-5cfd-53e2-845c-f56a5dce57f2",
+    "formulation_id": "MIG_FORM_648be595-2f9b-5788-aeaf-23a3e31b8529",
+    "material_id": "MIG_MAT_84db61e7-adab-5d3c-a5bb-b6ecabc810f3",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_864df86b-83a1-556a-8f9e-3aa10b8407ed",
+    "formulation_id": "MIG_FORM_08b1e474-ea59-5311-940c-f7c7d9d3a3cd",
+    "material_id": "MIG_MAT_f6aa76c7-c9d3-5a82-906a-23fe77a8584d",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_a37542c9-32f9-5a01-82f3-27f69bc9a3b5",
+    "formulation_id": "MIG_FORM_ff5cb0c7-2d7d-5bcf-b69f-93023e3fa9a0",
+    "material_id": "MIG_MAT_35396272-68e9-5e43-b76f-7fc918dc3fcd",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_a2016a77-af9a-55d4-8fab-a51e54dc0a7a",
+    "formulation_id": "MIG_FORM_3974a5b2-aa18-5ae4-85cc-8fcd3ff09c91",
+    "material_id": "MIG_MAT_51894870-9cf5-5d5f-b84d-30271c701915",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_4a296cfc-138f-5151-8756-c8002f9fe13c",
+    "formulation_id": "MIG_FORM_06389fce-a387-55cf-84e2-b1b2d399a037",
+    "material_id": "MIG_MAT_40204107-466c-55d5-8a13-f70e4ce58a0f",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_afc958c2-4acc-5182-87c5-5295b0271009",
+    "formulation_id": "MIG_FORM_ceca2b33-6e2c-5fce-aa7f-3acf84fcbba2",
+    "material_id": "MIG_MAT_b3f41eba-f873-55ad-b094-7d290690b705",
+    "component_role": "polymer",
+    "concentration": null,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_db8f2977-a769-5d4c-a472-9abbb727c287",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_4b03e885-a93a-5cfc-af93-0eeee62352c7",
+    "component_role": "polymer",
+    "concentration": 10.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_83205dad-0b91-5d07-b0fe-209dcce30f8e",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_e4f5434d-93cd-5439-bc96-c39400049a6f",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "MIG_COMP_64a96b7f-c5c0-5646-84ef-9d5d61305397",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_f746220f-15e7-5d46-ba10-9b4d685909c4",
+    "component_role": "polymer",
+    "concentration": 10.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_d1afaa42-e2a7-514a-ab1d-5c74f26174fb",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_2f2a23e6-3bca-5885-881a-6470908a01f3",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.4
+  },
+  {
+    "formulation_component_id": "MIG_COMP_3e6647ec-e8d3-5a58-aaf3-444bb0f9d111",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_c7314dd9-3e59-53f3-991c-60be1301a7be",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  },
+  {
+    "formulation_component_id": "MIG_COMP_54d457f1-27d8-5f85-a7c1-6bce6f52271d",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_8f6c8aeb-001c-5c8e-8e2d-554bf0b36b57",
+    "component_role": "polymer",
+    "concentration": 10.0,
+    "ratio": null
+  },
+  {
+    "formulation_component_id": "MIG_COMP_d44351f8-cef4-5a53-bea3-8991883b7e85",
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "material_id": "XLS_MAT_9f27665f-5204-5921-94a9-2a2af49c3b53",
+    "component_role": "solvent",
+    "concentration": null,
+    "ratio": 90.0
+  }
 ]

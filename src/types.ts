@@ -46,8 +46,25 @@ export interface Formulation {
   id: string;
   projectId: string;
 
+  /** Human readable formulation name/code. */
+  name?: string;
+
   polymerName: string;
+  polymerMaterialId?: string;
+  polymerConcentrationPct?: number;
+
+  /** Legacy combined solvent description, kept for compatibility. */
   solvent: string;
+
+  solvent1Name?: string;
+  solvent1MaterialId?: string;
+  solvent1RatioPct?: number;
+
+  solvent2Name?: string;
+  solvent2MaterialId?: string;
+  solvent2RatioPct?: number;
+
+  notes?: string;
 
   solidsContentPct: number;
   viscosityMpas: number;
@@ -64,12 +81,14 @@ export interface TelemetryRecord {
   timestampSec: number;
 
   voltageKv: number;
+  collectorVoltageKv?: number;
   flowRateMlH: number;
 
   temperatureC: number;
   humidityPct: number;
 
   distanceMm: number;
+  drumSpeedRpm?: number;
 }
 
 export interface Experiment {

@@ -1,428 +1,751 @@
 [
-    {
-        "formulation_id": "2.FORMUL",
-        "project_id": "a69aba3c-c498-49d3-9c7f-718028e23dd8",
-        "polymer_concentration": 10.0,
-        "notes": ""
-    },
-    {
-        "formulation_id": "MIG_FORM_15d1022f-7618-51ce-8ada-73ecc9e02b53",
-        "project_id": "FTK-Example",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID was missing; review required."
-    },
-    {
-        "formulation_id": "MIG_FORM_d716ae2d-fffe-5157-a4ca-a9ea5fb4f2d2",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-003\n(15% in 70% Acetone + 15% Water)"
-    },
-    {
-        "formulation_id": "MIG_FORM_e6610a7b-ba7a-5650-99a5-a899f65aa59c",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-004\n(15% in 42.5% DMSO + 42.5% Eth.Ac.)"
-    },
-    {
-        "formulation_id": "MIG_FORM_dcb976fa-a657-50ae-8163-538eeaca818e",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-005\n(10% in 45% DMSO + 45% Eth.Ac.)"
-    },
-    {
-        "formulation_id": "MIG_FORM_c9b7c7e8-4d25-54b8-acef-ef43d2c3d979",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-006\n(13% in 37% DMSO + 50% Eth.Ac.)"
-    },
-    {
-        "formulation_id": "MIG_FORM_c7baf359-c325-59a4-b648-3220aef34da5",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-007\n(15% in 35% DMSO + 50% Eth.Ac.)"
-    },
-    {
-        "formulation_id": "MIG_FORM_216630e9-eafd-5e42-904c-e1431a2a620f",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-007"
-    },
-    {
-        "formulation_id": "MIG_FORM_8a13d60a-079e-5629-9c05-f7b76c4bb108",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-009\n(17% in 40% DMSO + 43% Eth.Ac.)"
-    },
-    {
-        "formulation_id": "MIG_FORM_675f2ef3-964c-5b87-a33c-86c50341182d",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-009"
-    },
-    {
-        "formulation_id": "MIG_FORM_648be595-2f9b-5788-aeaf-23a3e31b8529",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-008\n(15% in 40% DMSO + 45% Eth.Ac.)"
-    },
-    {
-        "formulation_id": "MIG_FORM_08b1e474-ea59-5311-940c-f7c7d9d3a3cd",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-008"
-    },
-    {
-        "formulation_id": "MIG_FORM_ff5cb0c7-2d7d-5bcf-b69f-93023e3fa9a0",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010"
-    },
-    {
-        "formulation_id": "MIG_FORM_3974a5b2-aa18-5ae4-85cc-8fcd3ff09c91",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010a"
-    },
-    {
-        "formulation_id": "MIG_FORM_06389fce-a387-55cf-84e2-b1b2d399a037",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010b"
-    },
-    {
-        "formulation_id": "MIG_FORM_ceca2b33-6e2c-5fce-aa7f-3acf84fcbba2",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010c"
-    },
-    {
-        "formulation_id": "MIG_FORM_dc4711f8-8712-506d-8cee-da87cdcfc1dc",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID was missing; review required."
-    },
-    {
-        "formulation_id": "MIG_FORM_b7476495-0cfe-5eb5-b951-bb53ab0d1c0e",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID was missing; review required."
-    },
-    {
-        "formulation_id": "MIG_FORM_33533b3c-68b3-525b-9562-3129bc61729c",
-        "project_id": "LEGACY_EXCEL",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID was missing; review required."
-    },
-    {
-        "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
-        "project_id": "FTK-Example",
-        "polymer_concentration": 10.0,
-        "notes": "Migrated historical formulation. Original formula ID: FTK-Exa_PVA_1"
-    },
-    {
-        "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.0319,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_OVA+TBP_1"
-    },
-    {
-        "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.0319,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_Placebo_1c"
-    },
-    {
-        "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.0319,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_Placebo_1d"
-    },
-    {
-        "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.03187,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_Placebo_2"
-    },
-    {
-        "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.03187,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_Placebo_2b"
-    },
-    {
-        "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.03187,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_OVA+TBP_3"
-    },
-    {
-        "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.03187,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_OVA+TBP_3b"
-    },
-    {
-        "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.03187,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_OVA+TBP_3c"
-    },
-    {
-        "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.02,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_Placebo_3"
-    },
-    {
-        "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
-        "project_id": "1_2021_CROXX_Nov",
-        "polymer_concentration": 0.0319,
-        "notes": "Migrated historical formulation. Original formula ID: NVR_OVA+TBP_3d"
-    },
-    {
-        "formulation_id": "MIG_FORM_4b1813e4-5c6c-5150-b315-5525a82d2173",
-        "project_id": "3_2023_PAN",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PES_25_ZnO"
-    },
-    {
-        "formulation_id": "MIG_FORM_837283d8-0539-5dfc-b362-ace7eaa167c0",
-        "project_id": "3_2023_PAN",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PES_23_ZnO"
-    },
-    {
-        "formulation_id": "MIG_FORM_87d62de2-41d2-577a-808e-fa5e17b10b2c",
-        "project_id": "3_2023_PAN",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PES_20_ZnO"
-    },
-    {
-        "formulation_id": "MIG_FORM_ceceb146-0edc-574c-a6df-a7f699d5e31a",
-        "project_id": "3_2023_PAN",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PES_23_ZnO_3"
-    },
-    {
-        "formulation_id": "MIG_FORM_d512a8fb-98d2-59a8-a718-f3b0a1e09d22",
-        "project_id": "3_2023_PAN",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PES_23_ZnO_10"
-    },
-    {
-        "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_1_CTRL"
-    },
-    {
-        "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_1"
-    },
-    {
-        "formulation_id": "MIG_FORM_df6a98e3-5ea8-5b64-aae2-8071474bdb31",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF2_CTRL"
-    },
-    {
-        "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PLACEBO"
-    },
-    {
-        "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_1_CTRL_V2"
-    },
-    {
-        "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_1_V2"
-    },
-    {
-        "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_2"
-    },
-    {
-        "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PVP_3"
-    },
-    {
-        "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PVP_4"
-    },
-    {
-        "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PULL_2"
-    },
-    {
-        "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_2b"
-    },
-    {
-        "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PCL_1"
-    },
-    {
-        "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PCL_2"
-    },
-    {
-        "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_2c"
-    },
-    {
-        "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_2d"
-    },
-    {
-        "formulation_id": "MIG_FORM_e62d2b32-0d5f-551f-ac44-84c497694a81",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_2e"
-    },
-    {
-        "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_3"
-    },
-    {
-        "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
-        "project_id": "5_POCS_CAF",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: CAF_PEO_2f"
-    },
-    {
-        "formulation_id": "MIG_FORM_f7c11cc6-6485-5f44-9b29-fb028cce6f68",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO(200K) 13%-STD (WATER)"
-    },
-    {
-        "formulation_id": "MIG_FORM_f8c009d2-14ce-57f2-808d-ba51cd1c1cc9",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO(200K) 13%-STD (ETOH/WATER 30:70)"
-    },
-    {
-        "formulation_id": "MIG_FORM_c0c20133-f4d3-5996-9bd2-60f30a88eb18",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO(200K) 13%-STD (ETOH/WATER 70:30)"
-    },
-    {
-        "formulation_id": "MIG_FORM_93cdf381-2c12-5ca2-b698-b9480832b9bf",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO(400K) 5%-STD (WATER)"
-    },
-    {
-        "formulation_id": "MIG_FORM_1d030a45-ffe8-50e6-82ac-5dffe55a2572",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO(400K) 5%-STD (ETOH/WATER 30:70)"
-    },
-    {
-        "formulation_id": "MIG_FORM_d754d9c8-48b6-5ab9-8eb3-62d190b32dcf",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO(400K) 5%-STD (ETOH/WATER 70:30)"
-    },
-    {
-        "formulation_id": "MIG_FORM_29df0e86-7777-58e7-9235-a765aa216f93",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_2%"
-    },
-    {
-        "formulation_id": "MIG_FORM_ba57daa9-ca28-5b41-b385-8e40371de86d",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_2%_90H2O:10EtOH"
-    },
-    {
-        "formulation_id": "MIG_FORM_69e92eb0-0420-590d-b375-e00644e39e51",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_2%_70H2O:30EtOH"
-    },
-    {
-        "formulation_id": "MIG_FORM_77c24131-a85e-5528-92ed-2238477baa9c",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_1,5%"
-    },
-    {
-        "formulation_id": "MIG_FORM_dd8b7850-326c-5c6d-9bb6-90aacf2f2fc5",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_1%"
-    },
-    {
-        "formulation_id": "MIG_FORM_5042d2ce-7c5f-5ffd-be7b-aefe63f0d381",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_1%_90H2O:10EtOH"
-    },
-    {
-        "formulation_id": "MIG_FORM_607f97f2-68b4-599f-be91-1d781fe83bcf",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_1%_70H2O:30EtOH"
-    },
-    {
-        "formulation_id": "MIG_FORM_1e0d2f23-5555-5890-84a7-ad21bc27d997",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_1%_30H2O:70EtOH"
-    },
-    {
-        "formulation_id": "MIG_FORM_e59c1291-0343-5d23-bcb2-19eb71a877d4",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_4M_0,8%"
-    },
-    {
-        "formulation_id": "MIG_FORM_4fd530e4-ba3e-5763-9dda-b370cd7f376f",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_900k_3.2%"
-    },
-    {
-        "formulation_id": "MIG_FORM_3f4b1a11-db18-5509-be8a-14ff91a6f32e",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_900k_3.2%_90H2O:10EtOH"
-    },
-    {
-        "formulation_id": "MIG_FORM_84fa00f5-45af-5237-9647-a6d09a58ad76",
-        "project_id": "6_POCS_PEO",
-        "polymer_concentration": null,
-        "notes": "Migrated historical formulation. Original formula ID: PEO_2M_2%"
-    }
+  {
+    "formulation_id": "MIG_FORM_26f9011a-6ea8-59ea-b3f6-ebfadec86a91",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_OVA+TBP_3b",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_1161bf95-cc92-53ba-bb19-6c68c4d8a3ff",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_2c",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_528375f6-676a-5614-b4c4-3a9f3ff083e9",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_2b",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_07540620-d2ff-5d9c-be6c-c9cb1956d57a",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_2",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_34786bc6-cd0c-5b2d-956f-458aeebeac8b",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_1d",
+    "polymer_concentration": 3.19,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_509e5f75-6737-53ea-8b8b-c2bad73f63ce",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_1c",
+    "polymer_concentration": 3.19,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_791cb94e-0eff-56d2-8955-37c1a6e48bf1",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_OVA+TBP_3d",
+    "polymer_concentration": 3.19,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_adcbed0a-40a4-53be-a63e-f5c179b31e7b",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_3b",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere"
+  },
+  {
+    "formulation_id": "MIG_FORM_c8beef08-1819-5aaf-9c17-6958a8062fec",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_3",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_1254b7f9-5570-50ae-bbcd-a6988e8fa360",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_OVA+TBP_3c",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_be507272-4e35-533f-be38-cb5c6c5e5776",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_TBP_2",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_489ccde1-0790-50da-b8ea-e3facd873933",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_OVA+TBP_3",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_5f944fa5-25e7-5b62-bdc9-1064df5abca7",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_OVA+TBP_2",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_8c7bb282-fe5a-58ca-a1e4-b768b6a6c896",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_TBP_1",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_63e99ffc-1e44-57f4-ae27-a1e05f60cd48",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_Placebo_1",
+    "polymer_concentration": 3.187,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_09dbf86c-24f2-546f-b492-f5445365ee92",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_PCL",
+    "polymer_concentration": 12.1,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_55416387-318f-5914-aa6f-e9b945422c38",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "NVR_OVA+TBP_1",
+    "polymer_concentration": 3.19,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm. Preparation notes: Disolver PEO en H2O, meidr conductividad (C) y tension superficial (TS), añadir OVA (dejar disolver durante 2h) y"
+  },
+  {
+    "formulation_id": "XLS_FORM_0135c3ad-62ae-59f7-a32f-8371d7932f27",
+    "project_id": "1_2021_CROXX_Nov",
+    "formulation_name": "ALLERO",
+    "polymer_concentration": 3.087,
+    "notes": "Imported from Santiago workbook: 1_2021_CROXX_Nov.xlsm. Preparation notes: Disolver PEO en H2O, meidr conductividad (C) y tension superficial (TS), añadir OVA (dejar disolver durante 2h) y"
+  },
+  {
+    "formulation_id": "MIG_FORM_ceceb146-0edc-574c-a6df-a7f699d5e31a",
+    "project_id": "3_2023_PAN",
+    "formulation_name": "PES_23_ZnO_3",
+    "polymer_concentration": 23.0,
+    "notes": "Imported from Santiago workbook: 3_2023_PAN.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_d512a8fb-98d2-59a8-a718-f3b0a1e09d22",
+    "project_id": "3_2023_PAN",
+    "formulation_name": "PES_23_ZnO_10",
+    "polymer_concentration": 23.0,
+    "notes": "Imported from Santiago workbook: 3_2023_PAN.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_87d62de2-41d2-577a-808e-fa5e17b10b2c",
+    "project_id": "3_2023_PAN",
+    "formulation_name": "PES_20_ZnO",
+    "polymer_concentration": 20.0,
+    "notes": "Imported from Santiago workbook: 3_2023_PAN.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_837283d8-0539-5dfc-b362-ace7eaa167c0",
+    "project_id": "3_2023_PAN",
+    "formulation_name": "PES_23_ZnO",
+    "polymer_concentration": 23.0,
+    "notes": "Imported from Santiago workbook: 3_2023_PAN.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_4b1813e4-5c6c-5150-b315-5525a82d2173",
+    "project_id": "3_2023_PAN",
+    "formulation_name": "PES_25_ZnO",
+    "polymer_concentration": 25.0,
+    "notes": "Imported from Santiago workbook: 3_2023_PAN.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_2eae345e-76a2-5967-ac2d-b58674f40714",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_placebo",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_19c44eb3-12aa-50fb-8eee-267cd26b866e",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2v2",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_1ffa4e4d-04aa-5498-afb3-ad0a98cb1780",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2f",
+    "polymer_concentration": 12.0,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_a5755743-ce17-54ed-97ea-9bfc5f167ec2",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_3",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_e62d2b32-0d5f-551f-ac44-84c497694a81",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2e",
+    "polymer_concentration": 9.0,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_33c377ff-98ab-5ab6-b66f-97643d4337a4",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2d",
+    "polymer_concentration": 9.0,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_162e013a-fe3e-5314-801b-8a14e2b2e365",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2c",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_0e998304-8872-5b34-b51d-d7e4c9019d2d",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PCL_2",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_c76b7f62-a1f8-5535-a151-f0cfd0acd637",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PCL_1",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_853e99e0-3f81-5f26-92f2-ea2754ab29b2",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2b",
+    "polymer_concentration": 10.0,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_490c0216-5a6d-56f5-9c14-87eea286e84c",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PULL_2",
+    "polymer_concentration": 15.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: IPA al final"
+  },
+  {
+    "formulation_id": "MIG_FORM_5864b7b6-8218-56bd-98a4-37c7d27f94f7",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PVP_4",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_2e160592-cafe-51c2-aca4-5527b50f3b30",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PVP_3",
+    "polymer_concentration": 10.0,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_b98c3c4b-4e3c-5a81-ac53-eca007144d50",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PEO_2",
+    "polymer_concentration": 11.25,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_3435d7b9-02bc-577e-96b8-5312be8700e9",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_1_V2",
+    "polymer_concentration": 12.85,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: CAFEINA en agua a 37 grados. Cuando se disuelva PVOH a 37. Luego pululan y luego ISOP"
+  },
+  {
+    "formulation_id": "MIG_FORM_d8894ee2-b150-593b-b240-e5bf5cf46d66",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_1_CTRL_V2",
+    "polymer_concentration": 14.5,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: CAFEINA en agua a 37 grados. Cuando se disuelva PVOH a 37. Luego pululan y luego ISOP"
+  },
+  {
+    "formulation_id": "MIG_FORM_0d9f2f56-fc92-5486-8b34-0cdb5578c732",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_PLACEBO",
+    "polymer_concentration": 14.5,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: CAFEINA en agua a 37 grados. Cuando se disuelva PVOH a 37. Luego pululan y luego ISOP"
+  },
+  {
+    "formulation_id": "MIG_FORM_df6a98e3-5ea8-5b64-aae2-8071474bdb31",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF2_CTRL",
+    "polymer_concentration": 20.0,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: Cafeína en DMF, El eudragit en cloroformo, se mezclan ambos después"
+  },
+  {
+    "formulation_id": "MIG_FORM_a5086149-fc9e-56dd-8fce-226948c78162",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_1",
+    "polymer_concentration": 14.5,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: Cafeina en agua, ACIDO OLEICO EN ISOPROPANOL. Luego PVOH en agua, luego Pululano en agua, finalmente el isopropanol a todo"
+  },
+  {
+    "formulation_id": "MIG_FORM_1c5dfa40-dccd-54a2-8825-13d28c277839",
+    "project_id": "5_POCS_CAF",
+    "formulation_name": "CAF_1_CTRL",
+    "polymer_concentration": 14.5,
+    "notes": "Imported from Santiago workbook: 5_POCS_CAF.xlsm. Preparation notes: CAFEINA en agua a 37 grados. Cuando se disuelva PVOH a 37. Luego pululan y luego ISOP"
+  },
+  {
+    "formulation_id": "MIG_FORM_1e0d2f23-5555-5890-84a7-ad21bc27d997",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_1%_30H2O:70EtOH",
+    "polymer_concentration": 1.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_607f97f2-68b4-599f-be91-1d781fe83bcf",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_1%_70H2O:30EtOH",
+    "polymer_concentration": 1.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_e59c1291-0343-5d23-bcb2-19eb71a877d4",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_0,8%",
+    "polymer_concentration": 0.8,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_5042d2ce-7c5f-5ffd-be7b-aefe63f0d381",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_1%_90H2O:10EtOH",
+    "polymer_concentration": 1.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_dd8b7850-326c-5c6d-9bb6-90aacf2f2fc5",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_1%",
+    "polymer_concentration": 1.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_77c24131-a85e-5528-92ed-2238477baa9c",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_1,5%",
+    "polymer_concentration": 1.5,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "XLS_FORM_f481e9bf-e0ce-5456-88a9-982355f12949",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_2%_30H2O:70EtOH",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_69e92eb0-0420-590d-b375-e00644e39e51",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_2%_70H2O:30EtOH",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_ba57daa9-ca28-5b41-b385-8e40371de86d",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_2%_90H2O:10EtOH",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_29df0e86-7777-58e7-9235-a765aa216f93",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_4M_2%",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_84fa00f5-45af-5237-9647-a6d09a58ad76",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_2M_2%",
+    "polymer_concentration": 2.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución (puede llevar de 24 a 48h). Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_3f4b1a11-db18-5509-be8a-14ff91a6f32e",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_900k_3.2%_90H2O:10EtOH",
+    "polymer_concentration": 3.19,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución. Dejar atemperar. Añadir EtOH. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_4fd530e4-ba3e-5763-9dda-b370cd7f376f",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO_900k_3.2%",
+    "polymer_concentration": 3.19,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Calentar el H2O a 70ºC, cuando este alrededor de 50ºC añadir el PEO lentamente para evitar que se aglomere agitando a 900rpm. Una vez añadido, bajar la T a 37ºC y dejar agitando a 900rpm hasta completa disolución. Dejar atemperar. Sacar burbujas."
+  },
+  {
+    "formulation_id": "MIG_FORM_93cdf381-2c12-5ca2-b698-b9480832b9bf",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(400K) 5%-STD (WATER)",
+    "polymer_concentration": 5.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "MIG_FORM_1d030a45-ffe8-50e6-82ac-5dffe55a2572",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(400K) 5%-STD (ETOH/WATER 30:70)",
+    "polymer_concentration": 5.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "MIG_FORM_d754d9c8-48b6-5ab9-8eb3-62d190b32dcf",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(400K) 5%-STD (ETOH/WATER 70:30)",
+    "polymer_concentration": 5.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "XLS_FORM_2f6e1d44-5025-53a2-8fec-de17c9e4b992",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(400K) 8%-STD (WATER)",
+    "polymer_concentration": 8.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "XLS_FORM_b166a047-b148-5933-a8a0-e9f82e42e822",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(400K) 8%-STD (ETOH/WATER 30:70)",
+    "polymer_concentration": 8.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "XLS_FORM_1e8fde13-0af5-5960-a393-b45682f818b8",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(400K) 8%-STD (ETOH/WATER 70:30)",
+    "polymer_concentration": 8.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "MIG_FORM_f7c11cc6-6485-5f44-9b29-fb028cce6f68",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(200K) 13%-STD (WATER)",
+    "polymer_concentration": 13.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm."
+  },
+  {
+    "formulation_id": "MIG_FORM_f8c009d2-14ce-57f2-808d-ba51cd1c1cc9",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(200K) 13%-STD (ETOH/WATER 30:70)",
+    "polymer_concentration": 13.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "MIG_FORM_c0c20133-f4d3-5996-9bd2-60f30a88eb18",
+    "project_id": "6_POCS_PEO",
+    "formulation_name": "PEO(200K) 13%-STD (ETOH/WATER 70:30)",
+    "polymer_concentration": 13.0,
+    "notes": "Imported from Santiago workbook: 6_POCS_PEO.xlsm. Preparation notes: Importante: PEO se añade al H2O. El Etanol se va añadiendo poco a poco después."
+  },
+  {
+    "formulation_id": "XLS_FORM_0f778c4b-d64d-5c7f-b02c-9b07fe1c4c83",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_HONEY",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_e2fce3e4-fe8a-58a4-9553-d7bfdc774091",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_ORANGE",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_a61a301c-f436-5e3b-9a73-5e4a21d382e9",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PAC-PEG",
+    "polymer_concentration": 25.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_d5a73fdc-65d2-5230-892f-e43a41f23abb",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PAC-2",
+    "polymer_concentration": 20.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_0bc391cc-bfb0-56b5-88db-1ce6968d23d1",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PVP/CBP_MeOH/DMF",
+    "polymer_concentration": 12.1,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_1e4ceef7-42ea-5863-8ffb-1f5813bdf6b6",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PVP/PAC/CBP",
+    "polymer_concentration": 17.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_079e6165-8710-5bd7-82af-4dac5a281576",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PVP/PAC",
+    "polymer_concentration": 8.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_b36b7489-b8d8-5e68-a355-03548c0dde4f",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PVP/CBP_ClMeOH_b",
+    "polymer_concentration": 12.1,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_4e72931a-66ab-5e5e-8e41-61ebeb2a4e23",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PVP/CBP_H2O/EtOH_R",
+    "polymer_concentration": 12.5,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_5bc55803-a828-5c96-af45-27e27ffc73ae",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PVP/CBP_H2O/EtOH_2",
+    "polymer_concentration": 12.52,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: Mezlar carbopol en agua, añadir polimeros y por último EtOH, agitacion con iman"
+  },
+  {
+    "formulation_id": "XLS_FORM_8cdff9ef-68d6-506a-a6b4-d047c0f19486",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_RUBY",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_e5772933-4014-5c1e-8694-65989cc0ec40",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_FROST",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_a3b7c635-636c-5983-b9e9-03528feef8c0",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_GREEN",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: electroestira muy bien"
+  },
+  {
+    "formulation_id": "XLS_FORM_ded98689-53d2-5d9c-9d31-1ab33cee25c2",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_BLUE",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: electroestira muy bien"
+  },
+  {
+    "formulation_id": "XLS_FORM_11baece2-a4be-5a7d-98f9-0338b517f997",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PVP + Sabor Mentol CHIKLES",
+    "polymer_concentration": 8.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: Mezaclar todo a la vez"
+  },
+  {
+    "formulation_id": "XLS_FORM_f2f564fc-2aff-58ff-847d-ee677e4b67b8",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_GOLD(2)",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_21810adf-a929-5b8a-bbf2-b174a8c9726c",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_GOLD(3)",
+    "polymer_concentration": 14.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_c34a1e22-bcee-53ce-b43d-1eace851e6cf",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PCL_GOLD",
+    "polymer_concentration": 10.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm."
+  },
+  {
+    "formulation_id": "XLS_FORM_32d61f6d-0be0-5a89-abdd-716133081fa1",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PAC",
+    "polymer_concentration": 20.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: electroestira nanofibras (300nm) no parece adherir puede ser util para filtracion o para encapsulacion de APIS"
+  },
+  {
+    "formulation_id": "XLS_FORM_de734f2d-4987-5717-bf7d-fce08db675b5",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO-STD",
+    "polymer_concentration": 13.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: se disueleve bien, el EtOH hay que añadirlo en cowless"
+  },
+  {
+    "formulation_id": "XLS_FORM_00bced42-51ae-5503-a9e0-e047904bd16b",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "PEO/PAC",
+    "polymer_concentration": 8.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: adhiere y retiene"
+  },
+  {
+    "formulation_id": "XLS_FORM_85ceccd3-0cf4-59d1-9d4d-ce65375141b1",
+    "project_id": "8_POCS_ADHESIVO_2",
+    "formulation_name": "formula generica",
+    "polymer_concentration": 13.0,
+    "notes": "Imported from Santiago workbook: 8_POCS_ADHESIVO_2.xlsm. Preparation notes: un comentairo"
+  },
+  {
+    "formulation_id": "2.FORMUL",
+    "project_id": "a69aba3c-c498-49d3-9c7f-718028e23dd8",
+    "polymer_concentration": 10.0,
+    "notes": "",
+    "formulation_name": "2.FORMUL"
+  },
+  {
+    "formulation_id": "MIG_FORM_15d1022f-7618-51ce-8ada-73ecc9e02b53",
+    "project_id": "FTK-Example",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID was missing; review required.",
+    "formulation_name": "Historical formulation (name missing)"
+  },
+  {
+    "formulation_id": "MIG_FORM_d716ae2d-fffe-5157-a4ca-a9ea5fb4f2d2",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-003\n(15% in 70% Acetone + 15% Water)",
+    "formulation_name": "FTK-CelAc-003"
+  },
+  {
+    "formulation_id": "MIG_FORM_e6610a7b-ba7a-5650-99a5-a899f65aa59c",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-004\n(15% in 42.5% DMSO + 42.5% Eth.Ac.)",
+    "formulation_name": "FTK-CelAc-004"
+  },
+  {
+    "formulation_id": "MIG_FORM_dcb976fa-a657-50ae-8163-538eeaca818e",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-005\n(10% in 45% DMSO + 45% Eth.Ac.)",
+    "formulation_name": "FTK-CelAc-005"
+  },
+  {
+    "formulation_id": "MIG_FORM_c9b7c7e8-4d25-54b8-acef-ef43d2c3d979",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-006\n(13% in 37% DMSO + 50% Eth.Ac.)",
+    "formulation_name": "FTK-CelAc-006"
+  },
+  {
+    "formulation_id": "MIG_FORM_c7baf359-c325-59a4-b648-3220aef34da5",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-007\n(15% in 35% DMSO + 50% Eth.Ac.)",
+    "formulation_name": "FTK-CelAc-007"
+  },
+  {
+    "formulation_id": "MIG_FORM_216630e9-eafd-5e42-904c-e1431a2a620f",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-007",
+    "formulation_name": "FTK-CelAc-007"
+  },
+  {
+    "formulation_id": "MIG_FORM_8a13d60a-079e-5629-9c05-f7b76c4bb108",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-009\n(17% in 40% DMSO + 43% Eth.Ac.)",
+    "formulation_name": "FTK-CelAc-009"
+  },
+  {
+    "formulation_id": "MIG_FORM_675f2ef3-964c-5b87-a33c-86c50341182d",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-009",
+    "formulation_name": "FTK-CelAc-009"
+  },
+  {
+    "formulation_id": "MIG_FORM_648be595-2f9b-5788-aeaf-23a3e31b8529",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-008\n(15% in 40% DMSO + 45% Eth.Ac.)",
+    "formulation_name": "FTK-CelAc-008"
+  },
+  {
+    "formulation_id": "MIG_FORM_08b1e474-ea59-5311-940c-f7c7d9d3a3cd",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-008",
+    "formulation_name": "FTK-CelAc-008"
+  },
+  {
+    "formulation_id": "MIG_FORM_ff5cb0c7-2d7d-5bcf-b69f-93023e3fa9a0",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010",
+    "formulation_name": "FTK-CelAc-010"
+  },
+  {
+    "formulation_id": "MIG_FORM_3974a5b2-aa18-5ae4-85cc-8fcd3ff09c91",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010a",
+    "formulation_name": "FTK-CelAc-010a"
+  },
+  {
+    "formulation_id": "MIG_FORM_06389fce-a387-55cf-84e2-b1b2d399a037",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010b",
+    "formulation_name": "FTK-CelAc-010b"
+  },
+  {
+    "formulation_id": "MIG_FORM_ceca2b33-6e2c-5fce-aa7f-3acf84fcbba2",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-CelAc-010c",
+    "formulation_name": "FTK-CelAc-010c"
+  },
+  {
+    "formulation_id": "MIG_FORM_dc4711f8-8712-506d-8cee-da87cdcfc1dc",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID was missing; review required.",
+    "formulation_name": "Historical formulation (name missing)"
+  },
+  {
+    "formulation_id": "MIG_FORM_b7476495-0cfe-5eb5-b951-bb53ab0d1c0e",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID was missing; review required.",
+    "formulation_name": "Historical formulation (name missing)"
+  },
+  {
+    "formulation_id": "MIG_FORM_33533b3c-68b3-525b-9562-3129bc61729c",
+    "project_id": "LEGACY_EXCEL",
+    "polymer_concentration": null,
+    "notes": "Migrated historical formulation. Original formula ID was missing; review required.",
+    "formulation_name": "Historical formulation (name missing)"
+  },
+  {
+    "formulation_id": "MIG_FORM_e722f08b-1e3b-5b7a-a690-d820c6555d76",
+    "project_id": "FTK-Example",
+    "polymer_concentration": 10.0,
+    "notes": "Migrated historical formulation. Original formula ID: FTK-Exa_PVA_1",
+    "formulation_name": "FTK-Exa_PVA_1"
+  }
 ]

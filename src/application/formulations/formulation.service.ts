@@ -1,10 +1,8 @@
 import type { Formulation as UiFormulation } from "../../types";
-
 import { formulationRepository } from "../../repositories/formulation.repository";
 import { materialRepository } from "../../repositories/material.repository";
 import { projectRepository } from "../../repositories/project.repository";
 import { solutionCharacterizationRepository } from "../../repositories/characterization.repository";
-
 import {
   createCanonicalFormulation,
   mapCanonicalFormulationToUi,
@@ -12,206 +10,72 @@ import {
 
 export interface FormulationService {
   getFormulations(): Promise<UiFormulation[]>;
-
-  createFormulation(
-    formulation: Omit<UiFormulation, "id">
-  ): Promise<UiFormulation>;
+  createFormulation(formulation: Omit<UiFormulation, "id">): Promise<UiFormulation>;
 }
 
-class FirestoreFormulationService
-  implements FormulationService
-{
-  async getFormulations(): Promise<
-    UiFormulation[]
-  > {
-    const [
-      formulations,
-      materials,
-      characterizations,
-    ] = await Promise.all([
+class FirestoreFormulationService implements FormulationService {
+  async getFormulations(): Promise<UiFormulation[]> {
+    const [formulations, materials, characterizations] = await Promise.all([
       formulationRepository.getAll(),
       materialRepository.getAll(),
       solutionCharacterizationRepository.getAll(),
     ]);
 
-    const materialsById = new Map(
-      materials.map((material) => [
-        material.id,
-        material,
-      ])
+    const materialsById = new Map(materials.map((item) => [item.id, item]));
+    const characterizationsById = new Map(characterizations.map((item) => [item.id, item]));
+    const characterizationsByFormulationId = new Map(
+      [...characterizations]
+        .sort((a, b) => parseDate(a.measuredAt) - parseDate(b.measuredAt))
+        .map((item) => [item.formulationId, item])
     );
-
-    const characterizationsById =
-      new Map(
-        characterizations.map(
-          (characterization) => [
-            characterization.id,
-            characterization,
-          ]
-        )
-      );
-
-    const characterizationsByFormulationId =
-      new Map(
-        characterizations.map(
-          (characterization) => [
-            characterization.formulationId,
-            characterization,
-          ]
-        )
-      );
 
     return formulations
       .map((formulation) =>
-        mapCanonicalFormulationToUi(
-          formulation,
-          {
-            materialsById,
-            characterizationsById,
-            characterizationsByFormulationId,
-          }
-        )
+        mapCanonicalFormulationToUi(formulation, {
+          materialsById,
+          characterizationsById,
+          characterizationsByFormulationId,
+        })
       )
-      .sort((first, second) =>
-        first.polymerName.localeCompare(
-          second.polymerName
-        )
-      );
+      .sort((a, b) => (a.name || a.polymerName).localeCompare(b.name || b.polymerName));
   }
 
-  async createFormulation(
-    input: Omit<UiFormulation, "id">
-  ): Promise<UiFormulation> {
+  async createFormulation(input: Omit<UiFormulation, "id">): Promise<UiFormulation> {
     await validateProject(input.projectId);
+    const existingMaterials = await materialRepository.getAll();
+    const creation = createCanonicalFormulation(input, existingMaterials);
 
-    const existingMaterials =
-      await materialRepository.getAll();
-
-    const creation =
-      createCanonicalFormulation(
-        input,
-        existingMaterials
-      );
-
-    const existingMaterialIds =
-      new Set(
-        existingMaterials.map(
-          (material) => material.id
-        )
-      );
-
-    const materialsToCreate =
-      creation.materials.filter(
-        (material) =>
-          !existingMaterialIds.has(
-            material.id
-          )
-      );
-
-    for (
-      const material of materialsToCreate
-    ) {
-      await materialRepository.save(
-        material
-      );
-    }
-
-    try {
-      await formulationRepository.save(
-        creation.formulation
-      );
-
-      await solutionCharacterizationRepository.save(
-        creation.characterization
-      );
-    } catch (error: unknown) {
-      await rollbackFormulation(
-        creation.formulation.id,
-        creation.characterization.id
-      );
-
-      throw error;
-    }
-
-    const materialsById = new Map(
-      creation.materials.map(
-        (material) => [
-          material.id,
-          material,
-        ]
-      )
-    );
-
-    const characterizationsById =
-      new Map([
-        [
-          creation.characterization.id,
-          creation.characterization,
-        ],
-      ]);
-
-    const characterizationsByFormulationId =
-      new Map([
-        [
-          creation.characterization
-            .formulationId,
-          creation.characterization,
-        ],
-      ]);
-
-    return mapCanonicalFormulationToUi(
-      creation.formulation,
-      {
-        materialsById,
-        characterizationsById,
-        characterizationsByFormulationId,
+    const existingIds = new Set(existingMaterials.map((item) => item.id));
+    for (const material of creation.materials) {
+      if (!existingIds.has(material.id)) {
+        await materialRepository.save(material);
       }
-    );
+    }
+
+    await formulationRepository.save(creation.formulation);
+
+    const allMaterials = [...existingMaterials, ...creation.materials];
+    const materialsById = new Map(allMaterials.map((item) => [item.id, item]));
+
+    return mapCanonicalFormulationToUi(creation.formulation, {
+      materialsById,
+      characterizationsById: new Map(),
+      characterizationsByFormulationId: new Map(),
+    });
   }
 }
 
-async function validateProject(
-  projectId: string
-): Promise<void> {
-  const normalizedProjectId =
-    projectId.trim();
-
-  if (!normalizedProjectId) {
-    throw new Error(
-      "A valid project is required to create a formulation."
-    );
-  }
-
-  const project =
-    await projectRepository.getById(
-      normalizedProjectId
-    );
-
-  if (!project) {
-    throw new Error(
-      `Project "${normalizedProjectId}" does not exist in Firestore.`
-    );
-  }
+async function validateProject(projectId: string): Promise<void> {
+  const id = projectId.trim();
+  if (!id) throw new Error("A valid project is required to create a formulation.");
+  const project = await projectRepository.getById(id);
+  if (!project) throw new Error(`Project "${id}" does not exist in Firestore.`);
 }
 
-async function rollbackFormulation(
-  formulationId: string,
-  characterizationId: string
-): Promise<void> {
-  const rollbackOperations = [
-    formulationRepository.delete(
-      formulationId
-    ),
-
-    solutionCharacterizationRepository.delete(
-      characterizationId
-    ),
-  ];
-
-  await Promise.allSettled(
-    rollbackOperations
-  );
+function parseDate(value: string | undefined): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-export const formulationService: FormulationService =
-  new FirestoreFormulationService();
+export const formulationService: FormulationService = new FirestoreFormulationService();
