@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+
 import {
   ArrowRight,
   CalendarDays,
@@ -14,6 +15,7 @@ import type { Material } from "../core/types/material";
 import type { SolutionCharacterization } from "../core/types/characterization";
 import type { CreateSolutionCharacterizationInput } from "../application/characterizations/characterization.service";
 import type { Language } from "../lib/translations";
+import type { CreateMaterialInput } from "../application/materials/material.service";
 
 interface Props {
   projects: Project[];
@@ -24,6 +26,9 @@ interface Props {
   selectedCharacterizationId: string;
   onSelectFormulation: (id: string) => void;
   onSelectCharacterization: (id: string) => void;
+  onAddMaterial: (
+  input: CreateMaterialInput
+) => Promise<Material>;
   onAddFormulation: (formulation: Omit<Formulation, "id">) => Promise<void>;
   onAddCharacterization: (input: CreateSolutionCharacterizationInput) => Promise<void>;
   onContinue: () => void;
@@ -67,6 +72,7 @@ export default function Formulations({
   onSelectCharacterization,
   onAddFormulation,
   onAddCharacterization,
+  onAddMaterial,
   onContinue,
 }: Props) {
   const activeProject = projects[0] ?? null;
@@ -86,7 +92,27 @@ export default function Formulations({
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+type NewMaterialTarget =
+  | "polymer"
+  | "solvent1"
+  | "solvent2";
 
+const [newMaterialTarget, setNewMaterialTarget] =
+  useState<NewMaterialTarget | null>(null);
+
+const [newMaterial, setNewMaterial] = useState({
+  shortName: "",
+  canonicalName: "",
+  family: "",
+  molecularWeight: "",
+  supplier: "",
+});
+
+const [materialSaving, setMaterialSaving] =
+  useState(false);
+
+const [materialError, setMaterialError] =
+  useState("");
   const projectFormulations = useMemo(
     () => activeProject ? formulations.filter((item) => item.projectId === activeProject.id) : [],
     [formulations, activeProject]
@@ -113,22 +139,38 @@ export default function Formulations({
     .sort((a, b) => parseDate(b.measuredAt) - parseDate(a.measuredAt));
 
  const polymers = useMemo(() => {
-  const seen = new Set<string>();
+  const bestByShortName = new Map<string, Material>();
 
-  return materials
+  const scoreMaterial = (material: Material): number => {
+    let score = 0;
+
+    if (material.polymerFamily?.trim()) score += 10;
+    if (material.molecularWeight?.trim()) score += 5;
+    if (material.supplier?.trim()) score += 2;
+    if (material.articleNumber?.trim()) score += 1;
+
+    return score;
+  };
+
+  materials
     .filter((item) =>
       ["polymer", "biopolymer", "copolymer"].includes(item.category)
     )
-    .filter((item) => {
+    .forEach((item) => {
       const shortName = polymerShortName(item);
+      const current = bestByShortName.get(shortName);
 
-      if (seen.has(shortName)) {
-        return false;
+      if (
+        !current ||
+        scoreMaterial(item) > scoreMaterial(current)
+      ) {
+        bestByShortName.set(shortName, item);
       }
-
-      seen.add(shortName);
-      return true;
     });
+
+  return Array.from(bestByShortName.values()).sort((a, b) =>
+    polymerShortName(a).localeCompare(polymerShortName(b))
+  );
 }, [materials]);
   const solvents = materials.filter((item) => item.category === "solvent");
   const polymer = materials.find((item) => item.id === form.polymerId);
@@ -137,7 +179,88 @@ export default function Formulations({
   console.log("SELECTED POLYMER:", polymer);
   console.log("SELECTED SOLVENT 1:", solvent1);
   console.log("SELECTED SOLVENT 2:", solvent2);
+const createMaterial = async (
+  event: React.FormEvent
+) => {
+  event.preventDefault();
 
+  if (!newMaterialTarget) {
+    return;
+  }
+
+  if (!newMaterial.shortName.trim()) {
+    setMaterialError("Enter a short name.");
+    return;
+  }
+
+  if (!newMaterial.canonicalName.trim()) {
+    setMaterialError("Enter the full material name.");
+    return;
+  }
+
+  const category =
+    newMaterialTarget === "polymer"
+      ? "polymer"
+      : "solvent";
+
+  setMaterialSaving(true);
+  setMaterialError("");
+
+  try {
+    const created = await onAddMaterial({
+      shortName: newMaterial.shortName.trim(),
+      canonicalName:
+        newMaterial.canonicalName.trim(),
+      category,
+      family:
+        newMaterial.family.trim() || undefined,
+      molecularWeight:
+        newMaterial.molecularWeight.trim() ||
+        undefined,
+      supplier:
+        newMaterial.supplier.trim() || undefined,
+    });
+
+    if (newMaterialTarget === "polymer") {
+      setForm((current) => ({
+        ...current,
+        polymerId: created.id,
+      }));
+    }
+
+    if (newMaterialTarget === "solvent1") {
+      setForm((current) => ({
+        ...current,
+        solvent1Id: created.id,
+      }));
+    }
+
+    if (newMaterialTarget === "solvent2") {
+      setForm((current) => ({
+        ...current,
+        solvent2Id: created.id,
+      }));
+    }
+
+    setNewMaterial({
+      shortName: "",
+      canonicalName: "",
+      family: "",
+      molecularWeight: "",
+      supplier: "",
+    });
+
+    setNewMaterialTarget(null);
+  } catch (caught) {
+    setMaterialError(
+      caught instanceof Error
+        ? caught.message
+        : "Unable to create material."
+    );
+  } finally {
+    setMaterialSaving(false);
+  }
+};
   const createFormulation = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!activeProject) {
@@ -306,14 +429,174 @@ export default function Formulations({
               <TextInput label="Formulation Name / ID" value={form.name} onChange={(name) => setForm((s) => ({ ...s, name }))} />
 
               <div className="grid gap-5 md:grid-cols-2">
-                <MaterialSelect label="Polymer" value={form.polymerId} materials={polymers} shortName onChange={(polymerId) => setForm((s) => ({ ...s, polymerId }))} />
-                <NumberInput label="Polymer Concentration" unit="%" value={form.polymerConcentrationPct} onChange={(polymerConcentrationPct) => setForm((s) => ({ ...s, polymerConcentrationPct }))} />
+<div>
+  <MaterialSelect
+    label="Polymer"
+    value={form.polymerId}
+    materials={polymers}
+    shortName
+    onChange={(polymerId) =>
+      setForm((s) => ({
+        ...s,
+        polymerId,
+      }))
+    }
+  />
+
+  <button
+    type="button"
+    onClick={() =>
+      setNewMaterialTarget(
+        newMaterialTarget === "polymer"
+          ? null
+          : "polymer"
+      )
+    }
+    className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700"
+  >
+    + Add new polymer
+  </button>
+</div>                <NumberInput label="Polymer Concentration" unit="%" value={form.polymerConcentrationPct} onChange={(polymerConcentrationPct) => setForm((s) => ({ ...s, polymerConcentrationPct }))} />
               </div>
+              {newMaterialTarget && (
+  <form
+    onSubmit={createMaterial}
+    className="rounded-2xl border border-blue-200 bg-blue-50 p-5"
+  >
+    <div className="flex items-center justify-between">
+      <div>
+        <h3 className="font-bold text-slate-900">
+          {newMaterialTarget === "polymer"
+            ? "Add New Polymer"
+            : "Add New Solvent"}
+        </h3>
+
+        <p className="mt-1 text-xs text-slate-500">
+          Save this material to the shared material database.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          setNewMaterialTarget(null)
+        }
+        className="text-slate-400 hover:text-slate-700"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+
+    <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <TextInput
+        label="Short Name"
+        value={newMaterial.shortName}
+        onChange={(shortName) =>
+          setNewMaterial((current) => ({
+            ...current,
+            shortName,
+          }))
+        }
+      />
+
+      <TextInput
+        label="Full Material Name"
+        value={newMaterial.canonicalName}
+        onChange={(canonicalName) =>
+          setNewMaterial((current) => ({
+            ...current,
+            canonicalName,
+          }))
+        }
+      />
+
+      <TextInput
+        label={
+          newMaterialTarget === "polymer"
+            ? "Polymer Type"
+            : "Solvent Type"
+        }
+        value={newMaterial.family}
+        onChange={(family) =>
+          setNewMaterial((current) => ({
+            ...current,
+            family,
+          }))
+        }
+      />
+
+      {newMaterialTarget === "polymer" && (
+        <TextInput
+          label="Molecular Weight"
+          value={newMaterial.molecularWeight}
+          onChange={(molecularWeight) =>
+            setNewMaterial((current) => ({
+              ...current,
+              molecularWeight,
+            }))
+          }
+        />
+      )}
+
+      <TextInput
+        label="Supplier"
+        value={newMaterial.supplier}
+        onChange={(supplier) =>
+          setNewMaterial((current) => ({
+            ...current,
+            supplier,
+          }))
+        }
+      />
+    </div>
+
+    {materialError && (
+      <div className="mt-4">
+        <ErrorMessage message={materialError} />
+      </div>
+    )}
+
+    <button
+      type="submit"
+      disabled={materialSaving}
+      className="mt-4 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
+    >
+      {materialSaving
+        ? "Saving..."
+        : "Save Material"}
+    </button>
+  </form>
+)}
               {polymer && <MaterialSummary material={polymer} />}
 
               <div className="grid gap-5 md:grid-cols-2">
-                <MaterialSelect label="Solvent 1" value={form.solvent1Id} materials={solvents} onChange={(solvent1Id) => setForm((s) => ({ ...s, solvent1Id }))} />
-                <NumberInput label="Solvent 1 Ratio" unit="%" value={form.solvent1RatioPct} onChange={(solvent1RatioPct) => setForm((s) => ({ ...s, solvent1RatioPct }))} />
+<div>
+  <MaterialSelect
+    label="Solvent 1"
+    value={form.solvent1Id}
+    materials={solvents}
+    onChange={(solvent1Id) =>
+      setForm((s) => ({
+        ...s,
+        solvent1Id,
+      }))
+    }
+  />
+
+  <button
+    type="button"
+    onClick={() =>
+      setNewMaterialTarget(
+        newMaterialTarget === "solvent1"
+          ? null
+          : "solvent1"
+      )
+    }
+    className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700"
+  >
+    + Add new solvent
+  </button>
+</div>                <NumberInput label="Solvent 1 Ratio" unit="%" value={form.solvent1RatioPct} onChange={(solvent1RatioPct) => setForm((s) => ({ ...s, solvent1RatioPct }))} />
               </div>
               {solvent1 && <MaterialSummary material={solvent1} />}
 
@@ -325,7 +608,22 @@ export default function Formulations({
               {form.useSolvent2 && (
                 <>
                   <div className="grid gap-5 md:grid-cols-2">
-                    <MaterialSelect label="Solvent 2" value={form.solvent2Id} materials={solvents} onChange={(solvent2Id) => setForm((s) => ({ ...s, solvent2Id }))} />
+                    <div>
+                      <MaterialSelect label="Solvent 2" value={form.solvent2Id} materials={solvents} onChange={(solvent2Id) => setForm((s) => ({ ...s, solvent2Id }))} />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNewMaterialTarget(
+                            newMaterialTarget === "solvent2"
+                              ? null
+                              : "solvent2"
+                          )
+                        }
+                        className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700"
+                      >
+                        + Add new solvent
+                      </button>
+                    </div>
                     <NumberInput label="Solvent 2 Ratio" unit="%" value={form.solvent2RatioPct} onChange={(solvent2RatioPct) => setForm((s) => ({ ...s, solvent2RatioPct }))} />
                   </div>
                   {solvent2 && <MaterialSummary material={solvent2} />}

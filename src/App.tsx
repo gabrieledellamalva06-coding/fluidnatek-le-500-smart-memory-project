@@ -20,8 +20,7 @@ import { formulationService } from "./application/formulations/formulation.servi
 import { experimentService } from "./application/experiments/experiment.service";
 import { setupService } from "./application/setups/setup.service";
 import { solutionCharacterizationService } from "./application/characterizations/characterization.service";
-import { materialService } from "./application/materials/material.service";
-
+import {materialService,type CreateMaterialInput,} from "./application/materials/material.service";
 const ACTIVE_PROJECT_KEY = "fluidnatek_active_project_id";
 
 function getStoredLanguage(): Language {
@@ -110,7 +109,31 @@ export default function App() {
       throw new Error(message);
     }
   };
+const handleAddMaterial = async (
+  input: CreateMaterialInput
+): Promise<Material> => {
+  setDataError(null);
 
+  try {
+    const created =
+      await materialService.createMaterial(input);
+
+    setMaterials((previous) =>
+      [...previous, created].sort((a, b) =>
+        a.canonicalName.localeCompare(b.canonicalName)
+      )
+    );
+
+    return created;
+  } catch (error) {
+    const message =
+      `Unable to create material: ${getErrorMessage(error)}`;
+
+    setDataError(message);
+
+    throw new Error(message);
+  }
+};
   const handleAddFormulation = async (input: Omit<Formulation, "id">) => {
     setDataError(null);
     try {
@@ -173,7 +196,12 @@ export default function App() {
       case "PROJECTS":
         return <ProjectsWorkspace projects={projects} formulations={formulations} experiments={experiments} activeProject={activeProject} onSelectProject={selectProject} onAddProject={handleAddProject} onContinue={() => setCurrentView("FORMULATIONS_CHARACTERIZATION")} />;
       case "FORMULATIONS_CHARACTERIZATION":
-        return <Formulations projects={activeProject ? [activeProject] : []} materials={materials} formulations={formulations} characterizations={characterizations} selectedFormulationId={selectedFormulationId} selectedCharacterizationId={selectedCharacterizationId} onSelectFormulation={(id) => { setSelectedFormulationId(id); setSelectedCharacterizationId(""); setSelectedSetupId(""); }} onSelectCharacterization={setSelectedCharacterizationId} onAddFormulation={handleAddFormulation} onAddCharacterization={handleAddCharacterization} onContinue={() => setCurrentView("SETUPS")} lang={lang} />;
+        return <Formulations projects={activeProject ? [activeProject] : []
+        } materials={materials} formulations={formulations} characterizations={characterizations} 
+        selectedFormulationId={selectedFormulationId} selectedCharacterizationId={selectedCharacterizationId} 
+        onSelectFormulation={(id) => { setSelectedFormulationId(id); setSelectedCharacterizationId(""); 
+          setSelectedSetupId(""); }} onSelectCharacterization={setSelectedCharacterizationId} onAddFormulation=
+          {handleAddFormulation} onAddCharacterization={handleAddCharacterization} onAddMaterial={handleAddMaterial} onContinue={() => setCurrentView("SETUPS")} lang={lang} />;
       case "SETUPS":
         return <Setups projects={activeProject ? [activeProject] : []} setups={setups} selectedSetupId={selectedSetupId} onSelectSetup={setSelectedSetupId} onAddSetup={handleAddSetup} onContinue={() => setCurrentView("LIVE_TELEMETRY")} />;
       case "LIVE_TELEMETRY":
