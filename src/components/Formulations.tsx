@@ -112,11 +112,31 @@ export default function Formulations({
     .filter((item) => item.formulationId === selectedFormulationId)
     .sort((a, b) => parseDate(b.measuredAt) - parseDate(a.measuredAt));
 
-  const polymers = materials.filter((item) => ["polymer", "biopolymer", "copolymer"].includes(item.category));
+ const polymers = useMemo(() => {
+  const seen = new Set<string>();
+
+  return materials
+    .filter((item) =>
+      ["polymer", "biopolymer", "copolymer"].includes(item.category)
+    )
+    .filter((item) => {
+      const shortName = polymerShortName(item);
+
+      if (seen.has(shortName)) {
+        return false;
+      }
+
+      seen.add(shortName);
+      return true;
+    });
+}, [materials]);
   const solvents = materials.filter((item) => item.category === "solvent");
   const polymer = materials.find((item) => item.id === form.polymerId);
   const solvent1 = materials.find((item) => item.id === form.solvent1Id);
   const solvent2 = materials.find((item) => item.id === form.solvent2Id);
+  console.log("SELECTED POLYMER:", polymer);
+  console.log("SELECTED SOLVENT 1:", solvent1);
+  console.log("SELECTED SOLVENT 2:", solvent2);
 
   const createFormulation = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -286,7 +306,7 @@ export default function Formulations({
               <TextInput label="Formulation Name / ID" value={form.name} onChange={(name) => setForm((s) => ({ ...s, name }))} />
 
               <div className="grid gap-5 md:grid-cols-2">
-                <MaterialSelect label="Polymer" value={form.polymerId} materials={polymers} onChange={(polymerId) => setForm((s) => ({ ...s, polymerId }))} />
+                <MaterialSelect label="Polymer" value={form.polymerId} materials={polymers} shortName onChange={(polymerId) => setForm((s) => ({ ...s, polymerId }))} />
                 <NumberInput label="Polymer Concentration" unit="%" value={form.polymerConcentrationPct} onChange={(polymerConcentrationPct) => setForm((s) => ({ ...s, polymerConcentrationPct }))} />
               </div>
               {polymer && <MaterialSummary material={polymer} />}
@@ -419,22 +439,110 @@ export default function Formulations({
   );
 }
 
-function MaterialSelect({ label, value, materials, onChange }: { label: string; value: string; materials: Material[]; onChange: (value: string) => void }) {
-  return <label className="block"><span className="label">{label}</span><select value={value} onChange={(e) => onChange(e.target.value)} className="input"><option value="">Choose material</option>{materials.map((m) => <option key={m.id} value={m.id}>{m.canonicalName}</option>)}</select></label>;
+function MaterialSelect({
+  label,
+  value,
+  materials,
+  onChange,
+  shortName = false,
+}: {
+  label: string;
+  value: string;
+  materials: Material[];
+  onChange: (value: string) => void;
+  shortName?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="label">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="input">
+        <option value="">Choose material</option>
+        {materials.map((material) => (
+          <option key={material.id} value={material.id}>
+            {shortName ? polymerShortName(material) : material.canonicalName}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function polymerShortName(material: Material): string {
+  const source = [
+    material.polymerFamily,
+    ...material.aliases,
+    ...material.commercialNames,
+    material.canonicalName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (source.includes("polycaprolactone") || source.includes("pcl")) return "PCL";
+  if (source.includes("polyethylene oxide") || source.includes("peo") || source.includes("polyox")) return "PEO";
+  if (source.includes("polyvinyl alcohol") || source.includes("pva")) return "PVA";
+  if (source.includes("polyacrylonitrile") || source.includes("pan")) return "PAN";
+  if (source.includes("cellulose acetate") || source.includes("celac")) return "CA";
+  if (source.includes("polyvinylpyrrolidone") || source.includes("pvp")) return "PVP";
+  if (source.includes("polyvinylidene fluoride") || source.includes("pvdf")) return "PVDF";
+  if (source.includes("polylactic acid") || source.includes("pla")) return "PLA";
+  if (source.includes("plga")) return "PLGA";
+  if (source.includes("thermoplastic polyurethane") || source.includes("tpu")) return "TPU";
+  if (source.includes("polyurethane") || source.includes("pu")) return "PU";
+  if (source.includes("polystyrene") || source.includes("ps")) return "PS";
+  if (source.includes("pmma")) return "PMMA";
+  if (source.includes("pco")) return "PCO";
+
+  return material.polymerFamily?.trim() || material.canonicalName;
 }
 function TextInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="block"><span className="label">{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} className="input" /></label>; }
 function NumberInput({ label, unit, value, onChange }: { label: string; unit: string; value: number; onChange: (value: number) => void }) { return <label className="block"><span className="label">{label}</span><div className="relative"><input type="number" step="0.01" value={value} onChange={(e) => onChange(Number(e.target.value))} className="input pr-16" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">{unit}</span></div></label>; }
 function MaterialSummary({ material }: { material: Material }) {
+  const isPolymer = ["polymer", "biopolymer", "copolymer"].includes(
+    material.category
+  );
+
+  const type = isPolymer
+    ? material.polymerFamily
+    : material.solventFamily;
+
   const rows = [
-    ["Category", material.category],
-    ["Polymer family", material.polymerFamily],
-    ["Solvent family", material.solventFamily],
-    ["Molecular weight", material.molecularWeight],
-    ["Supplier", material.supplier],
-    ["Article number", material.articleNumber],
-    ["Batch", material.batchNumber],
-  ].filter(([,v]) => clean(v));
-  return rows.length ? <div className="flex flex-wrap gap-2 rounded-2xl bg-slate-50 p-3">{rows.map(([k,v]) => <span key={String(k)} className="rounded-lg bg-white px-3 py-2 text-xs"><b>{k}:</b> {v}</span>)}</div> : null;
+    [
+      isPolymer ? "Polymer Type" : "Solvent Type",
+      type,
+    ],
+    [
+      "Molecular Weight",
+      material.molecularWeight,
+    ],
+    [
+      "Supplier",
+      material.supplier,
+    ],
+  ].filter(([, value]) => clean(value));
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 lg:grid-cols-3">
+      {rows.map(([label, value]) => (
+        <div
+          key={String(label)}
+          className="rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            {label}
+          </p>
+
+          <p className="mt-1 text-sm font-bold text-slate-900">
+            {value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
 }
 function Info({ label, value }: { label: string; value: string }) { return value ? <div className="rounded-xl bg-slate-50 px-4 py-3"><p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-sm font-semibold text-slate-800">{value}</p></div> : null; }
 function ErrorMessage({ message }: { message: string }) { return <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{message}</div>; }

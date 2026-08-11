@@ -188,6 +188,8 @@ export function mapLegacyMaterial(
 ): Material {
   const now = migrationTimestamp();
 
+  const shortName = source.short_name?.trim();
+
   return {
     id: source.material_id,
 
@@ -199,7 +201,7 @@ export function mapLegacyMaterial(
       source.material_type
     ),
 
-    aliases: [],
+    aliases: shortName ? [shortName] : [],
 
     manufacturers: [],
 
@@ -214,8 +216,23 @@ export function mapLegacyMaterial(
     molecularWeight:
       source.molecular_weight || undefined,
 
+    polymerFamily:
+      source.polymer_family?.trim() || undefined,
+
+    solventFamily:
+      source.solvent_family?.trim() || undefined,
+
     supplier:
       source.supplier || undefined,
+
+    articleNumber:
+      source.article_number &&
+      source.article_number !== "0.0"
+        ? source.article_number
+        : undefined,
+
+    batchNumber:
+      source.batch_number || undefined,
 
     description:
       source.notes || undefined,

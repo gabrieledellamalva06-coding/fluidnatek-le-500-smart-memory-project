@@ -15,6 +15,9 @@ export default function HistoricalExperiments({
 }: HistoricalExperimentsProps) {
   const [search, setSearch] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [polymer, setPolymer] = useState("");
+  const [solvent, setSolvent] = useState("");
+  const [machine, setMachine] = useState("");
   const [grade, setGrade] = useState("");
   const [selectedExperimentId, setSelectedExperimentId] = useState("");
 
@@ -28,6 +31,32 @@ export default function HistoricalExperiments({
     [formulations]
   );
 
+  const polymerOptions = useMemo(() => {
+    return uniqueSorted(
+      experiments
+        .map((experiment) => formulationById.get(experiment.formulationId))
+        .map((formulation) => shortPolymerName(formulation?.polymerName))
+        .filter((value): value is string => Boolean(value))
+    );
+  }, [experiments, formulationById]);
+
+  const solventOptions = useMemo(() => {
+    return uniqueSorted(
+      experiments
+        .map((experiment) => formulationById.get(experiment.formulationId)?.solvent)
+        .map(cleanText)
+        .filter((value): value is string => Boolean(value))
+    );
+  }, [experiments, formulationById]);
+
+  const machineOptions = useMemo(() => {
+    return uniqueSorted(
+      experiments
+        .map((experiment) => cleanText(experiment.machineModel))
+        .filter((value): value is string => Boolean(value))
+    );
+  }, [experiments]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
 
@@ -36,7 +65,14 @@ export default function HistoricalExperiments({
       const formulation = formulationById.get(experiment.formulationId);
       const project = projectById.get(canonicalProjectId);
 
+      const experimentPolymer = shortPolymerName(formulation?.polymerName);
+      const experimentSolvent = cleanText(formulation?.solvent);
+      const experimentMachine = cleanText(experiment.machineModel);
+
       if (projectId && canonicalProjectId !== projectId) return false;
+      if (polymer && experimentPolymer !== polymer) return false;
+      if (solvent && experimentSolvent !== solvent) return false;
+      if (machine && experimentMachine !== machine) return false;
       if (grade && String(experiment.jetStabilityGrade) !== grade) return false;
 
       if (!q) return true;
@@ -57,7 +93,17 @@ export default function HistoricalExperiments({
 
       return haystack.includes(q);
     });
-  }, [experiments, formulationById, grade, projectById, projectId, search]);
+  }, [
+    experiments,
+    formulationById,
+    grade,
+    machine,
+    polymer,
+    projectById,
+    projectId,
+    search,
+    solvent,
+  ]);
 
   const selected =
     experiments.find((experiment) => experiment.id === selectedExperimentId) ?? null;
@@ -83,8 +129,8 @@ export default function HistoricalExperiments({
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_180px]">
-            <div className="relative">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="relative md:col-span-2 xl:col-span-3">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 value={search}
@@ -94,42 +140,55 @@ export default function HistoricalExperiments({
               />
             </div>
 
-            <div className="relative">
-              <select
-                value={projectId}
-                onChange={(event) => setProjectId(event.target.value)}
-                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-800 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="">All projects</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            </div>
+            <FilterSelect
+              value={projectId}
+              onChange={setProjectId}
+              placeholder="All projects"
+              options={projects.map((project) => ({
+                value: project.id,
+                label: project.name,
+              }))}
+            />
 
-            <div className="relative">
-              <select
-                value={grade}
-                onChange={(event) => setGrade(event.target.value)}
-                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-800 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="">All grades</option>
-                <option value="1">Grade 1</option>
-                <option value="2">Grade 2</option>
-                <option value="3">Grade 3</option>
-                <option value="4">Grade 4</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            </div>
+            <FilterSelect
+              value={polymer}
+              onChange={setPolymer}
+              placeholder="All polymers"
+              options={polymerOptions.map((value) => ({ value, label: value }))}
+            />
+
+            <FilterSelect
+              value={solvent}
+              onChange={setSolvent}
+              placeholder="All solvents"
+              options={solventOptions.map((value) => ({ value, label: value }))}
+            />
+
+            <FilterSelect
+              value={machine}
+              onChange={setMachine}
+              placeholder="All machines"
+              options={machineOptions.map((value) => ({ value, label: value }))}
+            />
+
+            <FilterSelect
+              value={grade}
+              onChange={setGrade}
+              placeholder="All grades"
+              options={[
+                { value: "1", label: "Grade 1" },
+                { value: "2", label: "Grade 2" },
+                { value: "3", label: "Grade 3" },
+                { value: "4", label: "Grade 4" },
+              ]}
+            />
           </div>
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-            <div className="grid grid-cols-[minmax(180px,1.3fr)_minmax(130px,.8fr)_minmax(220px,1.5fr)_120px_90px] gap-3 bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="grid grid-cols-[minmax(170px,1.2fr)_minmax(120px,.8fr)_90px_minmax(180px,1.3fr)_110px_80px] gap-3 bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               <span>Run</span>
               <span>Project</span>
+              <span>Polymer</span>
               <span>Formulation</span>
               <span>Machine</span>
               <span>Grade</span>
@@ -146,12 +205,15 @@ export default function HistoricalExperiments({
                     key={experiment.id}
                     type="button"
                     onClick={() => setSelectedExperimentId(experiment.id)}
-                    className="grid w-full grid-cols-[minmax(180px,1.3fr)_minmax(130px,.8fr)_minmax(220px,1.5fr)_120px_90px] gap-3 border-t border-slate-100 px-4 py-3 text-left text-xs transition first:border-t-0 hover:bg-blue-50"
+                    className="grid w-full grid-cols-[minmax(170px,1.2fr)_minmax(120px,.8fr)_90px_minmax(180px,1.3fr)_110px_80px] gap-3 border-t border-slate-100 px-4 py-3 text-left text-xs transition first:border-t-0 hover:bg-blue-50"
                   >
                     <span className="truncate font-semibold text-slate-800">
                       {experiment.operationIdentifier || experiment.id}
                     </span>
                     <span className="truncate text-slate-500">{project?.name || "—"}</span>
+                    <span className="truncate font-bold text-blue-700">
+                      {shortPolymerName(formulation?.polymerName) || "—"}
+                    </span>
                     <span className="truncate text-slate-600">
                       {formulation?.name || formulation?.polymerName || experiment.formulationId}
                     </span>
@@ -187,6 +249,60 @@ export default function HistoricalExperiments({
       </div>
     </main>
   );
+}
+
+function FilterSelect({
+  value,
+  onChange,
+  placeholder,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-800 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={`${placeholder}-${option.value}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+    </div>
+  );
+}
+
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+}
+
+function shortPolymerName(value: string | undefined): string {
+  const text = cleanText(value);
+  if (!text) return "";
+
+  const lower = text.toLowerCase();
+
+  if (lower.includes("polycaprolactone") || lower.includes("pcl")) return "PCL";
+  if (lower.includes("polyethylene oxide") || lower.includes("peo") || lower.includes("polyox")) return "PEO";
+  if (lower.includes("polyvinyl alcohol") || lower.includes("pva")) return "PVA";
+  if (lower.includes("polyacrylonitrile") || lower.includes("pan")) return "PAN";
+  if (lower.includes("cellulose acetate") || lower.includes("celac")) return "CA";
+  if (lower.includes("polyvinylpyrrolidone") || lower.includes("pvp")) return "PVP";
+  if (lower.includes("polyvinylidene fluoride") || lower.includes("pvdf")) return "PVDF";
+  if (lower.includes("polylactic acid") || lower.includes("pla")) return "PLA";
+  if (lower.includes("plga")) return "PLGA";
+  if (lower.includes("pco")) return "PCO";
+
+  return text;
 }
 
 function ExperimentDetails({
