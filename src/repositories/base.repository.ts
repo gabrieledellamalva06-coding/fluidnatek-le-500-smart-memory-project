@@ -14,17 +14,15 @@ export class BaseRepository<
 
   async getAll(): Promise<TEntity[]> {
     const localRecords = await localPersistenceService.getCollection<TEntity>(this.path);
-    // Historical data remains readable while the runtime adapter is local-first.
-    // A future desktop/database adapter can replace this fallback without changing
-    // application services or UI components.
     try {
       const historicalRecords = await firestoreService.getCollection<TEntity>(this.path);
       const merged = new Map<string, TEntity>();
       for (const record of historicalRecords) merged.set(record.id, record);
       for (const record of localRecords) merged.set(record.id, record);
       return [...merged.values()];
-    } catch {
-      return localRecords;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Unknown Firestore error";
+      throw new Error(`Firestore read failed for ${this.path}. Local cache contains ${localRecords.length} record(s), but it was not used as a silent fallback. ${reason}`);
     }
   }
 
@@ -33,11 +31,7 @@ export class BaseRepository<
   ): Promise<TEntity | null> {
     const localRecord = await localPersistenceService.getDocument<TEntity>(this.path, id);
     if (localRecord) return localRecord;
-    try {
-      return await firestoreService.getDocument<TEntity>(this.path, id);
-    } catch {
-      return null;
-    }
+    return firestoreService.getDocument<TEntity>(this.path, id);
   }
 
   async create(

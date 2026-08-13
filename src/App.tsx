@@ -86,17 +86,14 @@ export default function App() {
           experimentService.getExperiments(),
         ]);
         if (cancelled) return;
-        const useSeedProjects = loadedProjects.length === 0;
-        const useSeedFormulations = loadedFormulations.length === 0;
-        const useSeedExperiments = loadedExperiments.length === 0;
-        setProjects(useSeedProjects ? SEED_PROJECTS : loadedProjects);
+        setProjects(loadedProjects.length === 0 ? SEED_PROJECTS : loadedProjects);
         setMaterials(loadedMaterials);
-        setFormulations(useSeedFormulations ? SEED_FORMULATIONS : loadedFormulations);
+        setFormulations(loadedFormulations.length === 0 ? SEED_FORMULATIONS : loadedFormulations);
         setCharacterizations(loadedCharacterizations);
         setSetups(loadedSetups);
-        setExperiments(useSeedExperiments ? SEED_EXPERIMENTS : loadedExperiments);
+        setExperiments(loadedExperiments.length === 0 ? SEED_EXPERIMENTS : loadedExperiments);
       } catch (error) {
-        if (!cancelled) setDataError(`Unable to load local application data: ${getErrorMessage(error)}`);
+        if (!cancelled) setDataError(`Unable to load shared Firestore data. ${getErrorMessage(error)}`);
       } finally {
         if (!cancelled) setIsDataLoading(false);
       }
