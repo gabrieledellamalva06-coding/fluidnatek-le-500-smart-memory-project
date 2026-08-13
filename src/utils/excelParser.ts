@@ -51,32 +51,23 @@ function parseFirstNumber(val: any, defaultVal: number = NaN): number {
   return m ? parseFloat(m[0]) : defaultVal;
 }
 
-const r1 = (n: number) => parseFloat(n.toFixed(1));
-const r2 = (n: number) => parseFloat(n.toFixed(2));
-const r3 = (n: number) => parseFloat(n.toFixed(3));
-
 const cellStr = (v: any) => (v === undefined || v === null ? "" : String(v).trim());
 const norm = (s: string) => s.trim().toUpperCase();
 
 // Curva sintetizzata ATTORNO ai parametri reali della run: i valori scalari
 // (voltaggio/portata/temp/umidità) sono reali, la fluttuazione è illustrativa.
-function synthTelemetryAround(v: number, f: number, t: number, h: number, dist: number): TelemetryRecord[] {
-  const pts: TelemetryRecord[] = [];
-  for (let i = 0; i < 24; i++) {
-    pts.push({
-      timestampSec: i * 5,
-      voltageKv: r2(v + Math.sin(i * 0.4) * 0.15 + (Math.random() - 0.5) * 0.05),
-      flowRateMlH: r3(f + Math.cos(i * 0.4) * (f * 0.02) + (Math.random() - 0.5) * 0.005),
-      temperatureC: r1(t + Math.sin(i * 0.1) * 0.15),
-      humidityPct: r1(h + Math.cos(i * 0.1) * 0.3),
-      distanceMm: dist,
-    });
-  }
-  return pts;
-}
-
-function generateSampleTelemetry(): TelemetryRecord[] {
-  return synthTelemetryAround(16.5, 1.0, 22.5, 38.0, 150).map(p => ({ ...p }));
+function createMeasuredSnapshot(
+  voltageKv: number,
+  collectorVoltageKv: number,
+  flowRateMlH: number,
+  temperatureC: number,
+  humidityPct: number,
+  distanceMm: number
+): TelemetryRecord[] {
+  if (![voltageKv, flowRateMlH, temperatureC, humidityPct, distanceMm].every(Number.isFinite)) return [];
+  return [{ timestampSec: 0, voltageKv,
+    collectorVoltageKv: Number.isFinite(collectorVoltageKv) ? collectorVoltageKv : undefined,
+    flowRateMlH, temperatureC, humidityPct, distanceMm }];
 }
 
 // ---------------------------------------------------------------------------
@@ -211,17 +202,15 @@ function buildProcessRuns(
     const setupNum = col.setup !== undefined ? cellStr(d[col.setup]) : "";
     const setupRec = setupNum ? setup[norm(setupNum)] : undefined;
 
-    let voltageKv = isNaN(vNum) ? NaN : vNum;
-    if (isNaN(voltageKv) && col.voltageNeg !== undefined) voltageKv = Math.abs(parseFirstNumber(d[col.voltageNeg], NaN));
-    if (isNaN(voltageKv)) voltageKv = 16.5;
-    const flowRateMlH = isNaN(fNum) ? 1.0 : fNum;
-    const temperatureC = col.temp !== undefined ? cleanAndParseFloat(d[col.temp], 22) : 22;
-    const humidityPct = col.humidity !== undefined ? cleanAndParseFloat(d[col.humidity], 40) : 40;
+    const voltageKv = vNum;
+    const collectorVoltageKv = col.voltageNeg !== undefined ? parseFirstNumber(d[col.voltageNeg], NaN) : NaN;
+    const flowRateMlH = fNum;
+    const temperatureC = col.temp !== undefined ? cleanAndParseFloat(d[col.temp], NaN) : NaN;
+    const humidityPct = col.humidity !== undefined ? cleanAndParseFloat(d[col.humidity], NaN) : NaN;
     let distanceMm = col.distance !== undefined ? cleanAndParseFloat(d[col.distance], NaN) : NaN;
     if (isNaN(distanceMm) && col.dz !== undefined) distanceMm = cleanAndParseFloat(d[col.dz], NaN);
-    if (isNaN(distanceMm)) distanceMm = 150;
-    const gradeRaw = col.grade !== undefined ? cleanAndParseFloat(d[col.grade], 3) : 3;
-    const jetStabilityGrade = Math.max(1, Math.min(5, Math.round(gradeRaw || 3)));
+    const gradeRaw = col.grade !== undefined ? cleanAndParseFloat(d[col.grade], NaN) : NaN;
+    const jetStabilityGrade = Number.isFinite(gradeRaw) && gradeRaw >= 1 && gradeRaw <= 4 ? Math.round(gradeRaw) : 0;
     const comments = col.comments !== undefined ? cellStr(d[col.comments]) : "";
 
     // Metadati: TUTTE le colonne della riga + proprietà + composizione (per la ricerca).
@@ -249,7 +238,7 @@ function buildProcessRuns(
       sourceFile: fileName,
       operatorComments: comments,
       metadata,
-      telemetryData: synthTelemetryAround(voltageKv, flowRateMlH, temperatureC, humidityPct, distanceMm),
+      telemetryData: createMeasuredSnapshot(voltageKv, collectorVoltageKv, flowRateMlH, temperatureC, humidityPct, distanceMm),
       polymerName,
       solventName,
       discoveredParameters: Object.keys(metadata),
@@ -443,10 +432,6 @@ const operationIdentifier =
   fileName.replace(/\.(xlsx|xls|xlsm)$/i, "");
 
 const telemetrySynthesized = telemetry.length === 0;
-
-if (telemetrySynthesized) {
-  telemetry = generateSampleTelemetry();
-}
 
 for (const key of Object.keys(metadata)) {
   detectParameter(key);

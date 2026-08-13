@@ -1,0 +1,2543 @@
+=== FLUIDNATEK WORKFLOW REFACTOR SOURCE ===
+
+
+========================================
+FILE: .\src\App.tsx
+========================================
+
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./components/Dashboard";
+import Formulations from "./components/Formulations";
+import RunConfig from "./components/RunConfig";
+import ExcelImport from "./components/ExcelImport";
+import ParameterLearningPanel from "./components/ParameterLearningPanel";
+
+import type {
+  Experiment,
+  Formulation,
+  Project,
+} from "./types";
+
+import type { ParsedExcelResult } from "./utils/excelParser";
+import { registerMaterial } from "./utils/materialRegistry";
+import type { Language } from "./lib/translations";
+
+import { projectService } from "./application/projects/project.service";
+import { formulationService } from "./application/formulations/formulation.service";
+import { experimentService } from "./application/experiments/experiment.service";
+
+import type {
+  CreateExperimentInput,
+} from "./application/experiments/experiment.mapper";
+
+type MainView =
+  | "DASHBOARD"
+  | "FORMULATIONS"
+  | "RUN_CONFIG"
+  | "EXCEL_IMPORT";
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Si è verificato un errore imprevisto.";
+}
+
+function getStoredLanguage(): Language {
+  const savedLanguage =
+    localStorage.getItem("fluidnatek_lang");
+
+  if (
+    savedLanguage === "it" ||
+    savedLanguage === "en" ||
+    savedLanguage === "es"
+  ) {
+    return savedLanguage;
+  }
+
+  return "it";
+}
+
+export default function App() {
+  const [currentView, setCurrentView] =
+    useState<MainView>("DASHBOARD");
+
+  const [lang, setLang] =
+    useState<Language>(getStoredLanguage);
+
+  /*
+   * Firestore-backed entities.
+   */
+  const [projects, setProjects] =
+    useState<Project[]>([]);
+
+  const [formulations, setFormulations] =
+    useState<Formulation[]>([]);
+
+  const [experiments, setExperiments] =
+    useState<Experiment[]>([]);
+
+  /*
+   * UI-only state.
+   *
+   * The selected experiment ID may remain in localStorage because it is
+   * only a presentation preference, not industrial domain data.
+   */
+  const [selectedExpId, setSelectedExpId] =
+    useState<string>(
+      () =>
+        localStorage.getItem(
+          "fluidnatek_selected_exp_id"
+        ) ?? ""
+    );
+
+  const [isDataLoading, setIsDataLoading] =
+    useState(true);
+
+  const [dataError, setDataError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadFirestoreData(): Promise<void> {
+      setIsDataLoading(true);
+      setDataError(null);
+
+      try {
+        const [
+          loadedProjects,
+          loadedFormulations,
+          loadedExperiments,
+        ] = await Promise.all([
+          projectService.getProjects(),
+          formulationService.getFormulations(),
+          experimentService.getExperiments(),
+        ]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setProjects(loadedProjects);
+        setFormulations(loadedFormulations);
+        setExperiments(loadedExperiments);
+
+        setSelectedExpId(
+          (currentSelectedExperimentId) => {
+            const selectedExperimentExists =
+              loadedExperiments.some(
+                (experiment) =>
+                  experiment.id ===
+                  currentSelectedExperimentId
+              );
+
+            if (selectedExperimentExists) {
+              return currentSelectedExperimentId;
+            }
+
+            return loadedExperiments[0]?.id ?? "";
+          }
+        );
+      } catch (error: unknown) {
+        if (!isCancelled) {
+          setDataError(
+            `Impossibile caricare i dati da Firestore: ${getErrorMessage(
+              error
+            )}`
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsDataLoading(false);
+        }
+      }
+    }
+
+    void loadFirestoreData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "fluidnatek_lang",
+      lang
+    );
+  }, [lang]);
+
+  useEffect(() => {
+    if (selectedExpId) {
+      localStorage.setItem(
+        "fluidnatek_selected_exp_id",
+        selectedExpId
+      );
+
+      return;
+    }
+
+    localStorage.removeItem(
+      "fluidnatek_selected_exp_id"
+    );
+  }, [selectedExpId]);
+
+  const selectedExp = useMemo(() => {
+    return (
+      experiments.find(
+        (experiment) =>
+          experiment.id === selectedExpId
+      ) ??
+      experiments[0] ??
+      null
+    );
+  }, [experiments, selectedExpId]);
+
+  const handleAddProject = async (
+    project: Omit<Project, "id" | "createdAt">
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdProject =
+        await projectService.createProject(
+          project
+        );
+
+      setProjects((previousProjects) => [
+        createdProject,
+        ...previousProjects,
+      ]);
+    } catch (error: unknown) {
+      setDataError(
+        `Impossibile creare il progetto: ${getErrorMessage(
+          error
+        )}`
+      );
+    }
+  };
+
+  const handleAddFormulation = async (
+    formulation: Omit<Formulation, "id">
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdFormulation =
+        await formulationService.createFormulation(
+          formulation
+        );
+
+      registerMaterial(
+        "polymer",
+        createdFormulation.polymerName,
+        createdFormulation.polymerName,
+        1
+      );
+
+      registerMaterial(
+        "solvent",
+        createdFormulation.solvent,
+        createdFormulation.solvent,
+        1
+      );
+
+      setFormulations(
+        (previousFormulations) => [
+          createdFormulation,
+          ...previousFormulations,
+        ]
+      );
+    } catch (error: unknown) {
+      setDataError(
+        `Impossibile creare la formulazione: ${getErrorMessage(
+          error
+        )}`
+      );
+    }
+  };
+
+  const handleAddExperiment = async (
+    input: CreateExperimentInput
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdExperiment =
+        await experimentService.createExperiment(
+          input
+        );
+
+      const formulation = formulations.find(
+        (item) =>
+          item.id === input.formulationId
+      );
+
+      if (formulation) {
+        registerMaterial(
+          "polymer",
+          formulation.polymerName,
+          formulation.polymerName,
+          1
+        );
+
+        registerMaterial(
+          "solvent",
+          formulation.solvent,
+          formulation.solvent,
+          1
+        );
+      }
+
+      setExperiments(
+        (previousExperiments) => [
+          createdExperiment,
+          ...previousExperiments,
+        ]
+      );
+
+      setSelectedExpId(
+        createdExperiment.id
+      );
+
+      setCurrentView("DASHBOARD");
+    } catch (error: unknown) {
+      const message =
+        `Impossibile registrare l'esperimento: ${getErrorMessage(
+          error
+        )}`;
+
+      setDataError(message);
+
+      throw new Error(message);
+    }
+  };
+
+  const handleImportExperiments = (
+    parsedList: ParsedExcelResult[],
+    targetProjectId: string
+  ): void => {
+    setDataError(
+      "L'importazione Excel è temporaneamente bloccata mentre colleghiamo la pipeline canonica a Firestore. Nessun dato è stato importato."
+    );
+
+    console.info(
+      "Pending canonical Excel import:",
+      {
+        parsedList,
+        targetProjectId,
+      }
+    );
+  };
+
+  const handleDeleteExperiment = (
+    experimentId: string
+  ): void => {
+    const experiment =
+      experiments.find(
+        (item) => item.id === experimentId
+      );
+
+    setDataError(
+      `L'esperimento "${
+        experiment?.operationIdentifier ??
+        experimentId
+      }" non è stato eliminato. La cancellazione sarà abilitata tramite un'operazione Firestore controllata.`
+    );
+  };
+
+  const handleUpdateExperiment = (
+    updatedExperiment: Experiment
+  ): void => {
+    setDataError(
+      `L'esperimento "${updatedExperiment.operationIdentifier}" non è stato modificato. L'aggiornamento sarà abilitato tramite il servizio applicativo canonico.`
+    );
+  };
+
+  const handleDeleteProject = (
+    projectId: string
+  ): void => {
+    const project = projects.find(
+      (item) => item.id === projectId
+    );
+
+    setDataError(
+      `Il progetto "${
+        project?.name ?? projectId
+      }" non è stato eliminato. La cancellazione sarà abilitata dopo la migrazione completa delle entità dipendenti.`
+    );
+  };
+
+  const handleDeleteFormulation = (
+    formulationId: string
+  ): void => {
+    const formulation =
+      formulations.find(
+        (item) =>
+          item.id === formulationId
+      );
+
+    setDataError(
+      `La formulazione "${
+        formulation?.polymerName ??
+        formulationId
+      }" non è stata eliminata. La cancellazione sarà abilitata dopo l'implementazione delle verifiche referenziali.`
+    );
+  };
+
+  const renderMainView =
+    (): React.ReactNode => {
+      switch (currentView) {
+        case "DASHBOARD":
+          return (
+            <div className="flex flex-col gap-6 overflow-auto p-6">
+              <Dashboard
+                projects={projects}
+                formulations={formulations}
+                experiments={experiments}
+                selectedExp={selectedExp}
+                onSelectExp={(experiment) =>
+                  setSelectedExpId(
+                    experiment.id
+                  )
+                }
+                onDeleteExp={
+                  handleDeleteExperiment
+                }
+                onUpdateExp={
+                  handleUpdateExperiment
+                }
+                lang={lang}
+              />
+
+              <ParameterLearningPanel />
+            </div>
+          );
+
+        case "FORMULATIONS":
+          return (
+            <Formulations
+              projects={projects}
+              formulations={formulations}
+              onAddProject={handleAddProject}
+              onAddFormulation={
+                handleAddFormulation
+              }
+              onDeleteProject={
+                handleDeleteProject
+              }
+              onDeleteFormulation={
+                handleDeleteFormulation
+              }
+              lang={lang}
+            />
+          );
+
+        case "RUN_CONFIG":
+          return (
+            <RunConfig
+              projects={projects}
+              formulations={formulations}
+              experiments={experiments}
+              onAddExperiment={
+                handleAddExperiment
+              }
+              lang={lang}
+            />
+          );
+
+        case "EXCEL_IMPORT":
+          return (
+            <ExcelImport
+              projects={projects}
+              formulations={formulations}
+              onImportExperiment={
+                handleImportExperiments
+              }
+              lang={lang}
+            />
+          );
+
+        default:
+          return (
+            <div className="flex flex-1 items-center justify-center bg-[#0a0a0b] text-white">
+              Sezione non trovata.
+            </div>
+          );
+      }
+    };
+
+  return (
+    <div
+      id="fluidnatek-app-container"
+      className="flex h-screen overflow-hidden bg-[#0a0a0b] font-sans antialiased"
+    >
+      <Sidebar
+        currentView={currentView}
+        onViewChange={(view) =>
+          setCurrentView(
+            view as MainView
+          )
+        }
+        projectsCount={projects.length}
+        experimentsCount={
+          experiments.length
+        }
+        lang={lang}
+        onLanguageChange={setLang}
+      />
+
+      <div
+        id="main-content-layout"
+        className="relative flex h-full min-w-0 flex-1 flex-col"
+      >
+        {isDataLoading && (
+          <div className="border-b border-white/10 bg-white/5 px-6 py-3 text-sm text-white/70">
+            Caricamento dati da
+            Firestore…
+          </div>
+        )}
+
+        {dataError && (
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-4 border-b border-red-500/30 bg-red-500/10 px-6 py-3 text-sm text-red-200"
+          >
+            <span>{dataError}</span>
+
+            <button
+              type="button"
+              className="shrink-0 rounded-md border border-red-400/30 px-3 py-1 text-xs font-medium transition hover:bg-red-400/10"
+              onClick={() =>
+                setDataError(null)
+              }
+            >
+              Chiudi
+            </button>
+          </div>
+        )}
+
+        {renderMainView()}
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: .\src\components\Sidebar.tsx
+========================================
+
+import {
+  Activity,
+  Beaker,
+  FileSpreadsheet,
+  Globe,
+  Layers,
+  LayoutDashboard,
+  Settings,
+} from "lucide-react";
+import { motion } from "motion/react";
+
+import FluidnatekLogo from "./FluidnatekLogo";
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
+
+interface SidebarProps {
+  currentView: string;
+  onViewChange: (view: string) => void;
+  projectsCount: number;
+  experimentsCount: number;
+  lang: Language;
+  onLanguageChange: (lang: Language) => void;
+}
+
+export default function Sidebar({
+  currentView,
+  onViewChange,
+  projectsCount,
+  experimentsCount,
+  lang,
+  onLanguageChange,
+}: SidebarProps) {
+  const t = TRANSLATIONS[lang];
+
+  const menuItems = [
+    { id: "DASHBOARD", label: t.dashboard, icon: LayoutDashboard, badge: experimentsCount > 0 ? String(experimentsCount) : undefined },
+    { id: "FORMULATIONS", label: t.formulations, icon: Beaker, badge: projectsCount > 0 ? String(projectsCount) : undefined },
+    { id: "RUN_CONFIG", label: t.runConfig, icon: Activity, badge: "AI" },
+    { id: "EXCEL_IMPORT", label: t.excelImport, icon: FileSpreadsheet },
+  ];
+
+  return (
+    <aside id="app-sidebar" className="flex h-screen w-[228px] shrink-0 select-none flex-col border-r border-white/[0.07] bg-[#0b0d11] text-zinc-100">
+      <div className="border-b border-white/[0.06] px-4 py-4">
+        <FluidnatekLogo variant="horizontal" className="h-8" />
+        <div className="mt-3 flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-1.5">
+          <span className="font-mono text-[8px] font-semibold uppercase tracking-[0.18em] text-zinc-600">{t.enclosureModel}</span>
+          <span className="font-mono text-[9px] font-semibold text-cyan-300">{t.activeChamber}</span>
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-zinc-600">Control system</p>
+        <div className="space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+
+            return (
+              <motion.button
+                key={item.id}
+                id={`sidebar-nav-${item.id.toLowerCase()}`}
+                onClick={() => onViewChange(item.id)}
+                whileTap={{ scale: 0.985 }}
+                className={`relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-colors ${isActive ? "bg-cyan-400/[0.09] text-cyan-200" : "text-zinc-500 hover:bg-white/[0.035] hover:text-zinc-200"}`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="active-sidebar-item"
+                    className="absolute inset-0 rounded-xl border border-cyan-400/20"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+
+                <span className="relative flex min-w-0 items-center gap-2.5">
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-cyan-300" : "text-zinc-600"}`} />
+                  <span className="truncate text-[12px] font-medium">{item.label}</span>
+                </span>
+
+                {item.badge && (
+                  <span className={`relative rounded-md px-1.5 py-0.5 font-mono text-[9px] font-semibold ${isActive ? "bg-cyan-300/10 text-cyan-200" : "bg-white/[0.04] text-zinc-600"}`}>{item.badge}</span>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div className="border-t border-white/[0.06] px-4 py-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+            <Globe className="h-3.5 w-3.5 text-cyan-400" />
+            <span>{t.chooseLanguage}</span>
+          </div>
+          <span className="font-mono text-[8px] uppercase tracking-widest text-zinc-600">{lang}</span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.025] p-1">
+          {(["it", "en", "es"] as Language[]).map((language) => {
+            const isActive = lang === language;
+            return (
+              <button
+                key={language}
+                id={`lang-btn-${language}`}
+                onClick={() => onLanguageChange(language)}
+                className={`rounded-md py-1 text-[10px] font-semibold transition-colors ${isActive ? "bg-cyan-400 text-[#071012]" : "text-zinc-600 hover:bg-white/[0.04] hover:text-zinc-300"}`}
+              >
+                {language.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mx-3 mb-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+        <div className="flex items-start gap-2">
+          <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-300" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold text-zinc-300">Platform status</p>
+            <div className="mt-2 space-y-1 font-mono text-[8px] text-zinc-600">
+              <div className="flex justify-between gap-2"><span>In-Situ Node</span><span className="text-emerald-400">ONLINE</span></div>
+              <div className="flex justify-between gap-2"><span>HV electrode</span><span>Fluidnatek-HV</span></div>
+              <div className="flex justify-between gap-2"><span>Software</span><span>v3.0.0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2.5 text-[9px] text-zinc-700">
+        <span className="flex items-center gap-1"><Settings className="h-3 w-3" />Config</span>
+        <span>Bioinicia · 2026</span>
+      </footer>
+    </aside>
+  );
+}
+
+
+========================================
+FILE: .\src\components\Formulations.tsx
+========================================
+
+import React, { useState } from "react";
+import { FolderPlus, Beaker, Layers, Plus, AlertCircle, Trash2, Tag } from "lucide-react";
+import { Project, Formulation } from "../types";
+import { AVAILABLE_POLYMERS, AVAILABLE_SOLVENTS } from "../seedData";
+import { TRANSLATIONS, Language } from "../lib/translations";
+import MaterialAutocomplete from "./MaterialAutocomplete";
+
+interface FormulationsProps {
+  projects: Project[];
+  formulations: Formulation[];
+  onAddProject: (p: Omit<Project, "id" | "createdAt">) => void;
+  onAddFormulation: (f: Omit<Formulation, "id">) => void;
+  onDeleteProject?: (id: string) => void;
+  onDeleteFormulation?: (id: string) => void;
+  lang: Language;
+}
+
+export default function Formulations({
+  projects,
+  formulations,
+  onAddProject,
+  onAddFormulation,
+  onDeleteProject,
+  onDeleteFormulation,
+  lang
+}: FormulationsProps) {
+  const t = TRANSLATIONS[lang];
+
+  // Project Form State
+  const [newProjName, setNewProjName] = useState("");
+  const [newProjDesc, setNewProjDesc] = useState("");
+  const [projectError, setProjectError] = useState("");
+
+  // Formulation Form State
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedPolymer, setSelectedPolymer] = useState(AVAILABLE_POLYMERS[0]);
+  const [selectedSolvent, setSelectedSolvent] = useState(AVAILABLE_SOLVENTS[0]);
+
+  // Custom manual insertion overrides
+  const [customPolymer, setCustomPolymer] = useState("");
+  const [customSolvent, setCustomSolvent] = useState("");
+
+  const [solidsContent, setSolidsContent] = useState<number>(12.0);
+  const [viscosity, setViscosity] = useState<number>(350);
+  const [conductivity, setConductivity] = useState<number>(5.5);
+  const [density, setDensity] = useState<number>(1.05);
+  const [formulationError, setFormulationError] = useState("");
+
+  const handleCreateProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProjectError("");
+
+    if (!newProjName.trim()) {
+      setProjectError(t.projectErrorRequired);
+      return;
+    }
+
+    if (projects.some((p) => p.name.toLowerCase() === newProjName.trim().toLowerCase())) {
+      setProjectError(t.projectErrorDuplicate);
+      return;
+    }
+
+    onAddProject({
+      name: newProjName.trim(),
+      description: newProjDesc.trim()
+    });
+
+    setNewProjName("");
+    setNewProjDesc("");
+  };
+
+  const handleCreateFormulation = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormulationError("");
+
+    if (!selectedProjectId) {
+      setFormulationError(lang === "it"
+        ? "Seleziona un progetto valido prima dell'invio."
+        : lang === "es"
+          ? "Seleccione un proyecto válido antes del envío."
+          : "Select a valid project before submitting.");
+      return;
+    }
+
+    // Determine final material values (either selected from list or custom typed)
+    const finalPolymer = selectedPolymer === "CUSTOM" ? customPolymer.trim() : selectedPolymer;
+    const finalSolvent = selectedSolvent === "CUSTOM" ? customSolvent.trim() : selectedSolvent;
+
+    if (!finalPolymer) {
+      setFormulationError(lang === "it"
+        ? "Inserisci il nome del polimero personalizzato."
+        : lang === "es"
+          ? "Introduzca el nombre del polímero personalizado."
+          : "Please enter the custom polymer name.");
+      return;
+    }
+
+    if (!finalSolvent) {
+      setFormulationError(lang === "it"
+        ? "Inserisci il nome del solvente personalizzato."
+        : lang === "es"
+          ? "Introduzca el nombre del solvente personalizado."
+          : "Please enter the custom solvent name.");
+      return;
+    }
+
+    onAddFormulation({
+      projectId: selectedProjectId,
+      polymerName: finalPolymer,
+      solvent: finalSolvent,
+      solidsContentPct: solidsContent,
+      viscosityMpas: viscosity,
+      conductivityUsCm: conductivity,
+      densityGcm3: density,
+
+      materialBatchIds: []
+    });
+
+    // Reset formulation params
+    setCustomPolymer("");
+    setCustomSolvent("");
+    setSelectedPolymer(AVAILABLE_POLYMERS[0]);
+    setSelectedSolvent(AVAILABLE_SOLVENTS[0]);
+    setSolidsContent(12.0);
+    setViscosity(350);
+    setConductivity(5.5);
+    setDensity(1.05);
+  };
+
+  return (
+    <div id="formulations-view" className="flex-1 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5] flex flex-col space-y-8 select-none">
+
+      {/* Title Header */}
+      <div className="flex items-center gap-3">
+        <Beaker className="w-8 h-8 text-teal-400" />
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">{t.formTitle}</h2>
+          <p className="text-xs text-zinc-400">{t.formSubtitle}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        {/* Creation Forms Column */}
+        <div className="lg:col-span-5 flex flex-col space-y-6">
+
+          {/* Create Project Card */}
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5 shadow-lg">
+            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center gap-2">
+              <FolderPlus className="w-4.5 h-4.5 text-teal-400" />
+              {t.newProjectTitle}
+            </h3>
+
+            <form onSubmit={handleCreateProject} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                  {t.projectCode}
+                </label>
+                <input
+                  id="project-code-input"
+                  type="text"
+                  placeholder={t.projectCodePlaceholder}
+                  value={newProjName}
+                  onChange={(e) => setNewProjName(e.target.value)}
+                  className="w-full bg-[#0a0a0b] text-[#f4f4f5] placeholder-zinc-600 text-sm px-3.5 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                  {t.projectDesc}
+                </label>
+                <textarea
+                  id="project-desc-input"
+                  rows={2}
+                  placeholder={t.projectDescPlaceholder}
+                  value={newProjDesc}
+                  onChange={(e) => setNewProjDesc(e.target.value)}
+                  className="w-full bg-[#0a0a0b] text-[#f4f4f5] placeholder-zinc-600 text-sm px-3.5 py-2 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 transition resize-none"
+                />
+              </div>
+
+              {projectError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{projectError}</span>
+                </div>
+              )}
+
+              <button
+                id="save-project-btn"
+                type="submit"
+                className="w-full bg-teal-500 hover:bg-teal-400 text-black text-sm font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                {t.saveProject}
+              </button>
+            </form>
+          </div>
+
+          {/* Create Formulation Card */}
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5 shadow-lg">
+            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center gap-2">
+              <Beaker className="w-4.5 h-4.5 text-teal-400" />
+              {t.newFormulationTitle}
+            </h3>
+
+            <div className="p-3 bg-teal-500/5 border border-teal-500/15 text-teal-400/90 rounded-xl text-xs flex items-start gap-2.5 mb-4">
+              <AlertCircle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
+              <span>
+                <strong>{t.integrityRuleTitle}</strong> {t.integrityRuleBody}
+              </span>
+            </div>
+
+            <form onSubmit={handleCreateFormulation} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                  {t.associateToProject}
+                </label>
+                <select
+                  id="association-project-select"
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="w-full bg-[#0a0a0b] text-[#f4f4f5] text-sm px-3.5 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 cursor-pointer"
+                >
+                  <option value="" className="text-zinc-600">{t.selectProjectPlaceholder}</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-[#18181b]">{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                    {t.polymerLabel}
+                  </label>
+                  <MaterialAutocomplete
+                    type="polymer"
+                    value={selectedPolymer}
+                    onChange={setSelectedPolymer}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                    {t.solventLabel}
+                  </label>
+                  <MaterialAutocomplete
+                    type="solvent"
+                    value={selectedSolvent}
+                    onChange={setSelectedSolvent}
+                  />
+                </div>
+              </div>
+
+              
+
+              
+                
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                    {t.solidsContentPct}
+                  </label>
+                  <input
+                    id="solids-input-box"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={solidsContent}
+                    onChange={(e) => setSolidsContent(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                    {t.viscosityMpas}
+                  </label>
+                  <input
+                    id="viscosity-input-box"
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={viscosity}
+                    onChange={(e) => setViscosity(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                    {t.conductivityUsCm}
+                  </label>
+                  <input
+                    id="conductivity-input-box"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={conductivity}
+                    onChange={(e) => setConductivity(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                    {t.densityGcm3}
+                  </label>
+                  <input
+                    id="density-input-box"
+                    type="number"
+                    step="0.01"
+                    min="0.1"
+                    max="5"
+                    value={density}
+                    onChange={(e) => setDensity(parseFloat(e.target.value) || 0.1)}
+                    className="w-full bg-[#0a0a0b] text-[#f4f4f5] font-mono text-sm px-3 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400"
+                  />
+                </div>
+              </div>
+
+              {formulationError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{formulationError}</span>
+                </div>
+              )}
+
+              <button
+                id="save-formulation-btn"
+                type="submit"
+                className="w-full bg-teal-500 hover:bg-teal-400 text-black text-sm font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                {t.registerFormulaButton}
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        {/* Database View Columns */}
+        <div className="lg:col-span-7 flex flex-col space-y-6">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-6 min-h-[600px] flex flex-col">
+            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 mb-6 flex items-center gap-2">
+              <Layers className="w-4.5 h-4.5 text-teal-400" />
+              {t.activeRecipesTitle}
+            </h3>
+
+            {projects.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 py-16">
+                <Tag className="w-12 h-12 text-zinc-700 mb-3" />
+                <p className="text-sm">{t.noProjectsMessage}</p>
+                <p className="text-xs text-zinc-600 mt-1">{t.createProjectPrompt}</p>
+              </div>
+            ) : (
+              <div className="space-y-6 overflow-y-auto flex-1 pr-1 max-h-[700px]">
+                {projects.map((proj) => {
+                  const projectFormulations = formulations.filter((f) => f.projectId === proj.id);
+                  return (
+                    <div key={proj.id} id={`project-accordion-${proj.id}`} className="bg-[#0a0a0b]/80 rounded-xl border border-[#27272a] overflow-hidden">
+                      {/* Project Header section */}
+                      <div className="p-4 bg-[#0a0a0b] border-b border-[#27272a]/80 flex justify-between items-start gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded font-bold uppercase">
+                            {lang === "it" ? "Progetto" : lang === "es" ? "Proyecto" : "Project"}
+                          </span>
+                          <h4 className="text-sm font-bold text-white mt-1">{proj.name}</h4>
+                          {proj.description && (
+                            <p className="text-xs text-zinc-400 leading-relaxed">{proj.description}</p>
+                          )}
+                        </div>
+                        {onDeleteProject && (
+                          <button
+                            onClick={() => onDeleteProject(proj.id)}
+                            className="text-zinc-600 hover:text-red-400 p-1.5 rounded-lg hover:bg-[#18181b] transition cursor-pointer"
+                            title="Rimuovi progetto"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Associated Formulations */}
+                      <div className="p-4 space-y-3">
+                        <h5 className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">
+                          {t.registeredFormulations} ({projectFormulations.length})
+                        </h5>
+
+                        {projectFormulations.length === 0 ? (
+                          <p className="text-xs text-zinc-600 italic py-2">
+                            {t.noFormulationsMessage}
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {projectFormulations.map((form) => (
+                              <div
+                                key={form.id}
+                                id={`form-badge-${form.id}`}
+                                className="bg-[#18181b] border border-[#27272a]/80 p-3.5 rounded-xl space-y-2.5 relative group"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div className="space-y-0.5">
+                                    <div className="text-xs font-bold text-zinc-100">{form.polymerName}</div>
+                                    <div className="text-[10px] text-zinc-400 font-medium">{t.solventLabel} {form.solvent}</div>
+                                  </div>
+                                  {onDeleteFormulation && (
+                                    <button
+                                      onClick={() => onDeleteFormulation(form.id)}
+                                      className="text-zinc-600 hover:text-red-400 p-1 rounded hover:bg-[#0a0a0b] transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                                      title="Rimuovi formula"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px] font-mono text-zinc-400 bg-[#0a0a0b]/60 p-2 rounded-lg border border-[#27272a]/40">
+                                  <div>
+                                    <span className="text-zinc-600 block">{t.solidsShort}:</span>
+                                    <span className="text-teal-400 font-bold">{form.solidsContentPct}%</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-600 block">{t.viscosityShort}:</span>
+                                    <span className="text-white text-[9px]">{form.viscosityMpas} mPa·s</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-600 block">{t.conductivityShort}:</span>
+                                    <span className="text-white text-[9px]">{form.conductivityUsCm} µS</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-600 block">{t.densityShort}:</span>
+                                    <span className="text-white text-[9px]">{form.densityGcm3} g/cm³</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+
+========================================
+FILE: .\src\components\RunConfig.tsx
+========================================
+
+import React, { useState } from "react";
+import {
+  Activity,
+  Sliders,
+  Sparkles,
+  Loader,
+  Check,
+  AlertTriangle,
+  HelpCircle,
+  Thermometer,
+  CloudLightning,
+  Play,
+} from "lucide-react";
+
+import type {
+  Project,
+  Formulation,
+  Experiment,
+  AISuggestion,
+} from "../types";
+
+import type {
+  CreateExperimentInput,
+} from "../application/experiments/experiment.mapper";
+
+import type {
+  ProcessabilityGrade,
+} from "../core/types/processRecord";
+
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
+
+import MemorySearchPanel from "../features/memory/MemorySearchPanel";
+
+type InjectorType =
+  | "Single Emitter"
+  | "Coaxial"
+  | "Multi-emitter (x4)"
+  | "Multi-needle (x8)";
+
+type CollectorType =
+  | "Flat Plate"
+  | "Rotating Drum"
+  | "Mandrel"
+  | "Y-axis Stage";
+
+interface RunConfigProps {
+  projects: Project[];
+
+  formulations: Formulation[];
+
+  experiments: Experiment[];
+
+  onAddExperiment: (
+    input: CreateExperimentInput
+  ) => Promise<void>;
+
+  lang: Language;
+}
+
+export default function RunConfig({
+  projects,
+  formulations,
+  experiments,
+  onAddExperiment,
+  lang,
+}: RunConfigProps) {
+  const t = TRANSLATIONS[lang];
+
+  const [selectedFormulationId, setSelectedFormulationId] =
+    useState("");
+
+  const [runName, setRunName] =
+    useState("");
+
+  const [injectorType, setInjectorType] =
+    useState<InjectorType>("Single Emitter");
+
+  const [collectorType, setCollectorType] =
+    useState<CollectorType>("Flat Plate");
+
+  const [distanceMm, setDistanceMm] =
+    useState<number>(150);
+
+  const [voltageKv, setVoltageKv] =
+    useState<number>(15);
+
+  const [flowRateMlH, setFlowRateMlH] =
+    useState<number>(1);
+
+  const [jetStability, setJetStability] =
+    useState<ProcessabilityGrade>(4);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [saveError, setSaveError] =
+    useState("");
+
+  const [operatorComments, setOperatorComments] =
+    useState("");
+
+  const [aiPolymer, setAiPolymer] =
+    useState("");
+
+  const [aiSolvent, setAiSolvent] =
+    useState("");
+
+  const [aiViscosity, setAiViscosity] =
+    useState<number>(350);
+
+  const [aiConductivity, setAiConductivity] =
+    useState<number>(5.5);
+
+  const [aiSolids, setAiSolids] =
+    useState<number>(12);
+
+  const [isAiLoading, setIsAiLoading] =
+    useState(false);
+
+  const [aiSuggestion, setAiSuggestion] =
+    useState<AISuggestion | null>(null);
+
+  const [aiError, setAiError] =
+    useState("");
+
+  const handleApplyFormulationParams = (
+    formulationId: string
+  ): void => {
+    setSelectedFormulationId(formulationId);
+    setAiSuggestion(null);
+    setAiError("");
+
+    const formulation = formulations.find(
+      (item) => item.id === formulationId
+    );
+
+    if (!formulation) {
+      setAiPolymer("");
+      setAiSolvent("");
+      return;
+    }
+
+    setAiPolymer(formulation.polymerName);
+    setAiSolvent(formulation.solvent);
+    setAiViscosity(formulation.viscosityMpas);
+    setAiConductivity(formulation.conductivityUsCm);
+    setAiSolids(formulation.solidsContentPct);
+
+    const polymerCode = formulation.polymerName
+      .split(" ")[0]
+      .toUpperCase();
+
+    const randomRunNumber =
+      Math.floor(Math.random() * 900) + 100;
+
+    setRunName(
+      `RUN-${polymerCode}-${randomRunNumber}`
+    );
+  };
+
+  const triggerAISuggestion =
+    async (): Promise<void> => {
+      if (!aiPolymer) {
+        setAiError(t.selectFormulationWarning);
+        return;
+      }
+
+      setIsAiLoading(true);
+      setAiError("");
+      setAiSuggestion(null);
+
+      const historicalRuns = experiments
+        .filter((experiment) => {
+          const formulation = formulations.find(
+            (item) =>
+              item.id === experiment.formulationId
+          );
+
+          return (
+            formulation !== undefined &&
+            formulation.polymerName
+              .toLowerCase()
+              .includes(aiPolymer.toLowerCase())
+          );
+        })
+        .slice(0, 3)
+        .map((experiment) => ({
+          operationIdentifier:
+            experiment.operationIdentifier,
+
+          injector:
+            experiment.injectorType,
+
+          collector:
+            experiment.collectorType,
+
+          distanceMm:
+            experiment.distanceMm,
+
+          stabilityGrade:
+            experiment.jetStabilityGrade,
+
+          comments:
+            experiment.operatorComments,
+        }));
+
+      try {
+        const response = await fetch(
+          "/api/suggest",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              polymerName: aiPolymer,
+              solvent: aiSolvent,
+              solidsContentPct: aiSolids,
+              viscosityMpas: aiViscosity,
+              conductivityUsCm: aiConductivity,
+              historicalRuns,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            lang === "it"
+              ? "Errore di risposta del server backend"
+              : lang === "es"
+                ? "Error de respuesta del servidor backend"
+                : "Backend server error response"
+          );
+        }
+
+        const data: AISuggestion =
+          await response.json();
+
+        setAiSuggestion(data);
+      } catch (error: unknown) {
+        setAiError(
+          error instanceof Error
+            ? error.message
+            : "Error contacting AI service."
+        );
+      } finally {
+        setIsAiLoading(false);
+      }
+    };
+
+  const applyAISuggestedParams = (): void => {
+    if (!aiSuggestion) {
+      return;
+    }
+
+    setVoltageKv(aiSuggestion.voltageKv);
+    setFlowRateMlH(
+      aiSuggestion.flowRateMlH
+    );
+    setDistanceMm(aiSuggestion.distanceMm);
+  };
+
+  const handleSaveConfig = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    if (
+      !selectedFormulationId ||
+      !runName.trim() ||
+      isSaving
+    ) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      await onAddExperiment({
+        formulationId:
+          selectedFormulationId,
+
+        operationIdentifier:
+          runName.trim(),
+
+        machineModel:
+          "Fluidnatek LE-500",
+
+        injectorType,
+
+        collectorType,
+
+        voltageKv,
+
+        flowRateMlH,
+
+        distanceMm,
+
+        jetStabilityGrade:
+          jetStability,
+
+        operatorComments:
+          operatorComments.trim() ||
+          (
+            lang === "it"
+              ? "Prova registrata con successo"
+              : lang === "es"
+                ? "Prueba registrada correctamente"
+                : "Run recorded successfully"
+          ),
+
+        sourceFile:
+          "Manual Input",
+      });
+
+      setRunName("");
+      setOperatorComments("");
+    } catch (error: unknown) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : lang === "it"
+            ? "Impossibile registrare l'esperimento."
+            : lang === "es"
+              ? "No se pudo registrar el experimento."
+              : "Unable to save the experiment."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      id="runconfig-view"
+      className="flex-1 select-none space-y-8 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5]"
+    >
+      <div className="flex items-center gap-3">
+        <Activity className="h-8 w-8 text-teal-400" />
+
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">
+            {t.runConfigTitle}
+          </h2>
+
+          <p className="text-xs text-zinc-400">
+            {t.runConfigSubtitle}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="flex flex-col space-y-6 rounded-2xl border border-[#27272a] bg-[#18181b] p-6 shadow-xl lg:col-span-7">
+          <div className="flex items-center gap-2">
+            <Sliders className="h-5 w-5 text-teal-400" />
+
+            <h3 className="text-md font-bold text-white">
+              {t.hwConfigSectionTitle}
+            </h3>
+          </div>
+
+          <form
+            onSubmit={handleSaveConfig}
+            className="space-y-6"
+          >
+            <div className="space-y-3 rounded-xl border border-[#27272a]/80 bg-[#0a0a0b]/70 p-4">
+              <label className="block text-xs font-bold uppercase tracking-widest text-teal-400">
+                {t.step1RecipeSelection}
+              </label>
+
+              <select
+                id="run-formulation-select"
+                value={selectedFormulationId}
+                onChange={(event) => {
+                  handleApplyFormulationParams(
+                    event.target.value
+                  );
+                }}
+                className="w-full cursor-pointer rounded-lg border border-[#27272a] bg-[#18181b] px-3 py-2.5 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+              >
+                <option
+                  value=""
+                  className="text-zinc-500"
+                >
+                  {t.selectRecipePlaceholder}
+                </option>
+
+                {formulations.map(
+                  (formulation) => (
+                    <option
+                      key={formulation.id}
+                      value={formulation.id}
+                      className="bg-[#18181b]"
+                    >
+                      {formulation.polymerName}
+                      {" | "}
+                      {formulation.solvent}
+                      {" ("}
+                      {formulation.solidsContentPct}
+                      {"% "}
+                      {lang === "it"
+                        ? "solidi"
+                        : lang === "es"
+                          ? "sólidos"
+                          : "solids"}
+                      {")"}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            {selectedFormulationId ? (
+              <div className="animate-fadeIn space-y-5">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.runIdentifier}
+                    </label>
+
+                    <input
+                      id="run-name-input"
+                      type="text"
+                      placeholder={
+                        t.runIdPlaceholder
+                      }
+                      value={runName}
+                      onChange={(event) => {
+                        setRunName(
+                          event.target.value
+                        );
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.injectorLabel}
+                    </label>
+
+                    <select
+                      id="injector-select"
+                      value={injectorType}
+                      onChange={(event) => {
+                        const value =
+                          event.target.value;
+
+                        if (
+                          value ===
+                            "Single Emitter" ||
+                          value === "Coaxial" ||
+                          value ===
+                            "Multi-emitter (x4)" ||
+                          value ===
+                            "Multi-needle (x8)"
+                        ) {
+                          setInjectorType(value);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    >
+                      <option
+                        value="Single Emitter"
+                        className="bg-[#18181b]"
+                      >
+                        Single Emitter (
+                        {lang === "it"
+                          ? "Singolo ago"
+                          : lang === "es"
+                            ? "Aguja única"
+                            : "Single needle"}
+                        )
+                      </option>
+
+                      <option
+                        value="Coaxial"
+                        className="bg-[#18181b]"
+                      >
+                        Coaxial (
+                        {lang === "it"
+                          ? "Coassiale nucleo-guscio"
+                          : lang === "es"
+                            ? "Coaxial núcleo-funda"
+                            : "Coaxial core-shell"}
+                        )
+                      </option>
+
+                      <option
+                        value="Multi-emitter (x4)"
+                        className="bg-[#18181b]"
+                      >
+                        Multi-emitter (
+                        {lang === "it"
+                          ? "x4 Ugelli"
+                          : lang === "es"
+                            ? "x4 boquillas"
+                            : "x4 emitters"}
+                        )
+                      </option>
+
+                      <option
+                        value="Multi-needle (x8)"
+                        className="bg-[#18181b]"
+                      >
+                        Multi-needle (
+                        {lang === "it"
+                          ? "x8 Aghi paralleli"
+                          : lang === "es"
+                            ? "x8 agujas paralelas"
+                            : "x8 parallel needles"}
+                        )
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.collectorLabel}
+                    </label>
+
+                    <select
+                      id="collector-select"
+                      value={collectorType}
+                      onChange={(event) => {
+                        const value =
+                          event.target.value;
+
+                        if (
+                          value ===
+                            "Flat Plate" ||
+                          value ===
+                            "Rotating Drum" ||
+                          value === "Mandrel" ||
+                          value ===
+                            "Y-axis Stage"
+                        ) {
+                          setCollectorType(value);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    >
+                      <option
+                        value="Flat Plate"
+                        className="bg-[#18181b]"
+                      >
+                        Flat Plate (
+                        {lang === "it"
+                          ? "Piastra fissa"
+                          : lang === "es"
+                            ? "Placa plana fija"
+                            : "Fixed flat plate"}
+                        )
+                      </option>
+
+                      <option
+                        value="Rotating Drum"
+                        className="bg-[#18181b]"
+                      >
+                        Rotating Drum (
+                        {lang === "it"
+                          ? "Tamburo rotante veloce"
+                          : lang === "es"
+                            ? "Tambor giratorio rápido"
+                            : "Fast rotating drum"}
+                        )
+                      </option>
+
+                      <option
+                        value="Mandrel"
+                        className="bg-[#18181b]"
+                      >
+                        Mandrel (
+                        {lang === "it"
+                          ? "Mandrino rotante per tubolari"
+                          : lang === "es"
+                            ? "Mandril giratorio para tubulares"
+                            : "Rotating mandrel for tubes"}
+                        )
+                      </option>
+
+                      <option
+                        value="Y-axis Stage"
+                        className="bg-[#18181b]"
+                      >
+                        Y-axis Stage (
+                        {lang === "it"
+                          ? "Asse motorizzato XY"
+                          : lang === "es"
+                            ? "Eje motorizado XY"
+                            : "Motorized XY stage"}
+                        )
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                        {t.needleToCollectorDistance}
+                      </label>
+
+                      <span className="font-mono text-xs font-bold text-teal-400">
+                        {distanceMm} mm
+                      </span>
+                    </div>
+
+                    <input
+                      id="distance-slider"
+                      type="range"
+                      min="50"
+                      max="300"
+                      step="5"
+                      value={distanceMm}
+                      onChange={(event) => {
+                        setDistanceMm(
+                          Number.parseInt(
+                            event.target.value,
+                            10
+                          )
+                        );
+                      }}
+                      className="h-2 w-full cursor-pointer rounded-lg bg-[#0a0a0b] accent-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 rounded-xl border border-[#27272a]/60 bg-[#0a0a0b]/40 p-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.targetVoltage}
+                    </label>
+
+                    <input
+                      id="run-voltage-input"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={voltageKv}
+                      onChange={(event) => {
+                        setVoltageKv(
+                          Number.parseFloat(
+                            event.target.value
+                          ) || 0
+                        );
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.targetFlow}
+                    </label>
+
+                    <input
+                      id="run-flow-input"
+                      type="number"
+                      step="0.05"
+                      min="0"
+                      value={flowRateMlH}
+                      onChange={(event) => {
+                        setFlowRateMlH(
+                          Number.parseFloat(
+                            event.target.value
+                          ) || 0
+                        );
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    {t.processabilityRating}
+                  </label>
+
+                  <div className="grid grid-cols-5 gap-2">
+                    {(
+                      [1, 2, 3, 4, 5] as const
+                    ).map((grade) => {
+                      const labelsIt = [
+                        "Gocciolamento",
+                        "Instabile",
+                        "Accettabile",
+                        "Stabile",
+                        "Taylor Cone Eccellente",
+                      ];
+
+                      const labelsEs = [
+                        "Goteo",
+                        "Inestable",
+                        "Aceptable",
+                        "Estable",
+                        "Cono Taylor Excelente",
+                      ];
+
+                      const labelsEn = [
+                        "Dripping",
+                        "Unstable",
+                        "Acceptable",
+                        "Stable",
+                        "Excellent Taylor Cone",
+                      ];
+
+                      const labels =
+                        lang === "it"
+                          ? labelsIt
+                          : lang === "es"
+                            ? labelsEs
+                            : labelsEn;
+
+                      const isSelected =
+                        jetStability === grade;
+
+                      return (
+                        <button
+                          key={grade}
+                          id={`stability-btn-${grade}`}
+                          type="button"
+                          onClick={() => {
+                            setJetStability(
+                              grade
+                            );
+                          }}
+                          className={`cursor-pointer rounded-xl border p-2 text-xs font-semibold transition ${
+                            isSelected
+                              ? "border-teal-500 bg-teal-500/10 text-teal-400 shadow-md shadow-teal-950/20"
+                              : "border-[#27272a] bg-[#0a0a0b] text-zinc-400 hover:border-zinc-700"
+                          }`}
+                        >
+                          <div className="text-sm">
+                            {grade} ★
+                          </div>
+
+                          <div className="mt-0.5 text-[9px] font-normal leading-tight text-zinc-500">
+                            {labels[grade - 1]}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    {t.operatorNotesLabel}
+                  </label>
+
+                  <textarea
+                    id="run-comments-textarea"
+                    rows={2}
+                    placeholder={
+                      lang === "it"
+                        ? "Annota la morfologia visiva al microscopio..."
+                        : lang === "es"
+                          ? "Anotar la morfología visual al microscopio..."
+                          : "Write down the visual morphology under microscope..."
+                    }
+                    value={operatorComments}
+                    onChange={(event) => {
+                      setOperatorComments(
+                        event.target.value
+                      );
+                    }}
+                    className="w-full resize-none rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3.5 py-2.5 text-sm text-[#f4f4f5] placeholder-zinc-600 focus:border-teal-400 focus:outline-none"
+                  />
+                </div>
+
+                {saveError && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400"
+                  >
+                    {saveError}
+                  </div>
+                )}
+
+                <button
+                  id="submit-run-btn"
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 font-extrabold text-black shadow-lg transition hover:bg-teal-400 hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+
+                      {lang === "it"
+                        ? "Registrazione in corso..."
+                        : lang === "es"
+                          ? "Registrando..."
+                          : "Saving..."}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-current" />
+                      {t.saveAndStartButton}
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[#27272a] bg-[#0a0a0b]/40 py-20 text-center text-zinc-500">
+                {t.selectFormulationWarning}
+              </div>
+            )}
+          </form>
+        </div>
+
+        <div className="flex flex-col lg:col-span-5">
+          <div className="flex h-full min-h-[600px] flex-col space-y-6 rounded-2xl border border-[#27272a] bg-[#18181b] p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-teal-400" />
+
+                <h3 className="text-md font-bold text-white">
+                  {t.smartMemoryTitle}
+                </h3>
+              </div>
+
+              <span className="rounded-full border border-teal-500/20 bg-teal-500/15 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-teal-400">
+                Co-Pilot
+              </span>
+            </div>
+
+            <p className="text-xs leading-relaxed text-zinc-400">
+              {t.smartMemorySub}
+            </p>
+
+            <div className="space-y-4 rounded-xl border border-[#27272a] bg-[#0a0a0b] p-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-teal-400">
+                {t.chemicalParamsHeader}
+              </h4>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between border-b border-[#27272a]/50 pb-1">
+                  <span className="text-zinc-400">
+                    {t.targetPolymerLabel}
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    {aiPolymer ||
+                      (
+                        lang === "it"
+                          ? "Nessuno (Seleziona formula)"
+                          : lang === "es"
+                            ? "Ninguno (Selecciona fórmula)"
+                            : "None (Select recipe)"
+                      )}
+                  </span>
+                </div>
+
+                <div className="flex justify-between border-b border-[#27272a]/50 pb-1">
+                  <span className="text-zinc-400">
+                    {t.solventLabel}
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    {aiSolvent || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">
+                    {t.solidsPercentageLabel}
+                  </span>
+
+                  <span className="font-mono text-white">
+                    {aiPolymer
+                      ? `${aiSolids}%`
+                      : "N/A"}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                id="generate-prediction-btn"
+                type="button"
+                disabled={
+                  !aiPolymer ||
+                  isAiLoading
+                }
+                onClick={() => {
+                  void triggerAISuggestion();
+                }}
+                className="mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-teal-500/10 bg-[#18181b] px-4 py-2.5 text-xs font-bold text-teal-400 transition hover:border-teal-500/20 hover:bg-[#27272a] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isAiLoading ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin text-teal-400" />
+
+                    <span>
+                      {lang === "it"
+                        ? "Generazione in corso..."
+                        : lang === "es"
+                          ? "Generando..."
+                          : "Generating..."}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>
+                      {t.calculateParamsButton}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {aiError && (
+              <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{aiError}</span>
+              </div>
+            )}
+
+            {aiSuggestion ? (
+              <div className="animate-fadeIn flex flex-1 flex-col space-y-4 rounded-xl border border-teal-500/30 bg-[#0a0a0b] p-4">
+                <div className="flex items-center justify-between border-b border-[#27272a] pb-2">
+                  <h4 className="flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Check className="h-4 w-4 text-teal-400" />
+                    {t.aiReportHeader}
+                  </h4>
+
+                  <button
+                    id="apply-ai-report-btn"
+                    type="button"
+                    onClick={applyAISuggestedParams}
+                    className="cursor-pointer rounded bg-teal-500 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-black transition hover:bg-teal-400"
+                  >
+                    {t.applyButton}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      ⚡ ALTA TENSIONE
+                    </span>
+
+                    <span className="font-mono text-sm font-bold text-teal-400">
+                      {aiSuggestion.voltageKv} kV
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      💧 PORTATA POMPA
+                    </span>
+
+                    <span className="font-mono text-sm font-bold text-teal-400">
+                      {aiSuggestion.flowRateMlH} mL/h
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      📏 DISTANZA EMETTITORE
+                    </span>
+
+                    <span className="font-mono text-sm font-bold text-white">
+                      {aiSuggestion.distanceMm} mm
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      🌡️ CLIMA CAMERA
+                    </span>
+
+                    <span className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-white">
+                      <Thermometer className="h-3 w-3 text-red-400" />
+                      {aiSuggestion.temperatureC}°C
+
+                      <CloudLightning className="h-3 w-3 text-teal-400" />
+                      {aiSuggestion.humidityPct}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    {t.scientificReasoning}
+                  </span>
+
+                  <p className="h-24 overflow-y-auto rounded-lg border border-[#27272a] bg-[#18181b] p-2.5 text-xs leading-relaxed text-zinc-300">
+                    {aiSuggestion.reasoning}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    {t.inSituGuidelines}
+                  </span>
+
+                  <ul className="space-y-1 text-[11px] text-zinc-400">
+                    {aiSuggestion.tips.map(
+                      (tip, index) => (
+                        <li
+                          key={`${tip}-${index}`}
+                          className="flex items-start gap-1.5"
+                        >
+                          <span className="font-bold text-teal-400">
+                            •
+                          </span>
+
+                          <span>{tip}</span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              !isAiLoading && (
+                <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#27272a] bg-[#0a0a0b]/40 py-12 text-zinc-600">
+                  <HelpCircle className="mb-2 h-10 w-10 text-zinc-800" />
+
+                  <p className="text-xs">
+                    {lang === "it"
+                      ? "Nessun report generato."
+                      : lang === "es"
+                        ? "Ningún reporte generado."
+                        : "No report generated."}
+                  </p>
+
+                  <p className="text-[10px] text-zinc-700">
+                    {lang === "it"
+                      ? "Seleziona una formula e calcola i parametri."
+                      : lang === "es"
+                        ? "Seleccione una fórmula y calcule los parámetros."
+                        : "Select a recipe and calculate parameters."}
+                  </p>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      <MemorySearchPanel
+        projects={projects}
+        formulations={formulations}
+        experiments={experiments}
+        formulationId={selectedFormulationId}
+        voltageKv={voltageKv}
+        flowRateMlH={flowRateMlH}
+        distanceMm={distanceMm}
+        onApplyRecommendation={(parameters) => {
+          setVoltageKv(parameters.voltageKv);
+          setFlowRateMlH(
+            parameters.flowRateMlH
+          );
+          setDistanceMm(
+            parameters.distanceMm
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+
+========================================
+FILE: .\src\hooks\useAppData.ts
+========================================
+
+import { useState, useMemo } from "react";
+
+import {
+  Project,
+  Formulation,
+  Experiment,
+} from "../types";
+
+import {
+  SEED_PROJECTS,
+  SEED_FORMULATIONS,
+  SEED_EXPERIMENTS,
+} from "../seedData";
+
+export function useAppData() {
+
+  const [projects, setProjects] = useState<Project[]>(SEED_PROJECTS);
+
+  const [formulations, setFormulations] =
+    useState<Formulation[]>(SEED_FORMULATIONS);
+
+  const [experiments, setExperiments] =
+    useState<Experiment[]>(SEED_EXPERIMENTS);
+
+  const [selectedExpId, setSelectedExpId] =
+    useState(SEED_EXPERIMENTS[0]?.id ?? "");
+
+  const selectedExperiment = useMemo(() => {
+    return (
+      experiments.find(e => e.id === selectedExpId) ??
+      null
+    );
+  }, [experiments, selectedExpId]);
+
+  return {
+
+    projects,
+    setProjects,
+
+    formulations,
+    setFormulations,
+
+    experiments,
+    setExperiments,
+
+    selectedExpId,
+    setSelectedExpId,
+
+    selectedExperiment,
+
+  };
+
+}
+
+
+========================================
+FILE: .\src\types.ts
+========================================
+
+// Tipi allineati alle forme realmente usate da App.tsx / seedData.ts / componenti.
+// Enterprise Domain Model v2
+// Compatibile con l'architettura attuale e pronto per Firestore.
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  country: string;
+  contact?: string;
+}
+
+export interface RawMaterial {
+  id: string;
+  supplierId: string;
+
+  name: string;
+  category: string;
+
+  manufacturer?: string;
+
+  datasheet?: string;
+}
+
+export interface MaterialBatch {
+  id: string;
+
+  materialId: string;
+
+  batchNumber: string;
+
+  receivedDate: string;
+
+  expiryDate?: string;
+
+  notes?: string;
+}
+
+export interface Formulation {
+  id: string;
+  projectId: string;
+
+  polymerName: string;
+  solvent: string;
+
+  solidsContentPct: number;
+  viscosityMpas: number;
+  conductivityUsCm: number;
+  densityGcm3: number;
+
+  materialBatchIds: string[];
+}
+
+export interface TelemetryRecord {
+  id?: string;
+  experimentId?: string;
+
+  timestampSec: number;
+
+  voltageKv: number;
+  flowRateMlH: number;
+
+  temperatureC: number;
+  humidityPct: number;
+
+  distanceMm: number;
+}
+
+export interface Experiment {
+  id: string;
+
+  formulationId: string;
+
+  operationIdentifier: string;
+
+  machineModel: string;
+
+  injectorType: string;
+  collectorType: string;
+
+  distanceMm: number;
+
+  jetStabilityGrade: number;
+
+  operatorComments: string;
+
+  sourceFile: string;
+
+  ingestedAt: string;
+
+  telemetryData: TelemetryRecord[];
+
+  metadata?: Record<string, string>;
+}
+
+// ==========================================
+// AI
+// ==========================================
+
+export interface AISuggestion {
+  polymerName: string;
+  solvent: string;
+
+  voltageKv: number;
+  flowRateMlH: number;
+  distanceMm: number;
+
+  temperatureC: number;
+  humidityPct: number;
+
+  tips: string[];
+
+  reasoning: string;
+}
+
+export interface TelemetryAnalysis {
+  suggestion: string;
+  reasoning: string;
+  code?: string;
+}
+
+// ==========================================
+// ENTERPRISE DOMAIN MODEL (v2)
+// ==========================================
+
+export interface Company {
+  id: string;
+  name: string;
+  country?: string;
+  createdAt: string;
+}
+
+export type UserRole =
+  | "admin"
+  | "technician"
+  | "operator";
+
+export interface User {
+  id: string;
+
+  companyId: string;
+
+  firstName: string;
+  lastName: string;
+
+  email: string;
+
+  role: UserRole;
+
+  createdAt: string;
+}
+
+export interface Characterization {
+  id: string;
+
+  formulationId: string;
+
+  viscosityMpas: number;
+
+  conductivityUsCm: number;
+
+  densityGcm3: number;
+
+  surfaceTensionMnM?: number;
+
+  ph?: number;
+
+  measuredAt: string;
+
+  notes?: string;
+}
+
+export interface ProcessSetup {
+  id: string;
+
+  projectId: string;
+
+  machineModel: string;
+
+  injectorType: string;
+
+  collectorType: string;
+
+  needleGauge?: string;
+
+  needleCount?: number;
+
+  voltageKv: number;
+
+  flowRateMlH: number;
+
+  distanceMm: number;
+
+  temperatureC: number;
+
+  humidityPct: number;
+
+  createdAt: string;
+}
+
+export type ExperimentalRunStatus =
+  | "draft"
+  | "running"
+  | "completed"
+  | "failed";
+
+export interface ExperimentalRun {
+  id: string;
+
+  projectId: string;
+
+  formulationId: string;
+
+  characterizationId: string;
+
+  setupId: string;
+
+  operatorId?: string;
+
+  runNumber: string;
+
+  status: ExperimentalRunStatus;
+
+  startedAt: string;
+
+  finishedAt?: string;
+
+  notes?: string;
+}
+
+export interface AIAnalysis {
+  id: string;
+
+  runId: string;
+
+  summary: string;
+
+  recommendations: string[];
+
+  confidence: number;
+
+  createdAt: string;
+}
+
+export interface Report {
+  id: string;
+
+  runId: string;
+
+  title: string;
+
+  createdAt: string;
+
+  pdfUrl?: string;
+}

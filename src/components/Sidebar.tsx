@@ -3,13 +3,12 @@ import {
   Database,
   FlaskConical,
   FolderKanban,
-  Globe,
-  Settings,
+  PanelLeftClose,
+  PanelLeftOpen,
   SlidersHorizontal,
 } from "lucide-react";
 import { motion } from "motion/react";
 import FluidnatekLogo from "./FluidnatekLogo";
-import type { Language } from "../lib/translations";
 
 export type MainView =
   | "PROJECTS"
@@ -24,8 +23,8 @@ interface SidebarProps {
   onViewChange: (view: MainView) => void;
   projectsCount: number;
   experimentsCount: number;
-  lang: Language;
-  onLanguageChange: (lang: Language) => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   activeProjectSelected?: boolean;
   formulationSelected?: boolean;
   setupSelected?: boolean;
@@ -44,8 +43,8 @@ export default function Sidebar({
   onViewChange,
   projectsCount,
   experimentsCount,
-  lang,
-  onLanguageChange,
+  collapsed,
+  onToggleCollapsed,
 }: SidebarProps) {
   const workflowItems: MenuItem[] = [
     {
@@ -119,26 +118,17 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="flex h-screen w-[290px] shrink-0 select-none flex-col border-r border-slate-200 bg-white text-slate-900">
+    <aside className={`relative flex h-screen shrink-0 select-none flex-col border-r border-slate-200 bg-white text-slate-900 transition-all duration-200 ${collapsed ? "w-[72px]" : "w-[290px]"}`}>
       <header className="border-b border-slate-200 px-5 py-5">
-        <FluidnatekLogo variant="horizontal" className="h-8" />
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">System</span>
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> ONLINE
-            </span>
-          </div>
-          <p className="mt-1 text-xs font-semibold text-slate-700">Fluidnatek LE-500</p>
-        </div>
+        {collapsed ? <FluidnatekLogo variant="symbol" className="h-10" lightMode /> : <FluidnatekLogo variant="horizontal" className="h-12" lightMode />}
       </header>
 
       <nav className="flex-1 overflow-y-auto px-3 py-5">
-        <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Experiment Workflow</p>
+        {!collapsed && <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Experiment Workflow</p>}
         <div className="space-y-1.5">{workflowItems.map(renderItem)}</div>
 
         <div className="mt-7">
-          <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Data & History</p>
+          {!collapsed && <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Data & History</p>}
           <div className="space-y-1.5">
             {renderItem({
               id: "HISTORICAL_EXPERIMENTS",
@@ -157,32 +147,10 @@ export default function Sidebar({
         </div>
       </nav>
 
-      <div className="border-t border-slate-200 px-4 py-4">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-            <Globe className="h-3.5 w-3.5 text-blue-500" /> Language
-          </div>
-          <span className="font-mono text-[9px] font-bold uppercase text-slate-400">{lang}</span>
-        </div>
-        <div className="grid grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
-          {(["it", "en", "es"] as const).map((language) => (
-            <button
-              key={language}
-              type="button"
-              onClick={() => onLanguageChange(language)}
-              className={`rounded-lg py-1.5 text-[10px] font-bold transition ${
-                lang === language ? "bg-white text-blue-700 shadow-sm" : "text-slate-400 hover:text-slate-700"
-              }`}
-            >
-              {language.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <footer className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-[9px] text-slate-400">
-        <span className="flex items-center gap-1"><Settings className="h-3 w-3" /> Platform settings</span>
-        <span>v3.3</span>
+      <footer className="border-t border-slate-200 px-3 py-3">
+        <button type="button" onClick={onToggleCollapsed} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-600 hover:bg-slate-100">
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
       </footer>
     </aside>
   );

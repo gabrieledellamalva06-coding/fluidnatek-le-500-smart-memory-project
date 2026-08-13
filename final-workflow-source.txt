@@ -1,0 +1,4343 @@
+=== FINAL WORKFLOW SOURCE ===
+
+
+========================================
+FILE: .\src\App.tsx
+========================================
+
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  AlertTriangle,
+  FolderKanban,
+  Plus,
+  SlidersHorizontal,
+} from "lucide-react";
+
+import Sidebar, {
+  type MainView,
+} from "./components/Sidebar";
+
+import Formulations from "./components/Formulations";
+import Setups from "./components/Setups";
+import RunConfig from "./components/RunConfig";
+import ExcelImport from "./components/ExcelImport";
+
+import type {
+  Experiment,
+  Formulation,
+  Project,
+} from "./types";
+
+import type { ParsedExcelResult } from "./utils/excelParser";
+import { registerMaterial } from "./utils/materialRegistry";
+import type { Language } from "./lib/translations";
+
+import { projectService } from "./application/projects/project.service";
+import { formulationService } from "./application/formulations/formulation.service";
+import { experimentService } from "./application/experiments/experiment.service";
+
+import type {
+  CreateExperimentInput,
+} from "./application/experiments/experiment.mapper";
+
+import type {
+  SolutionCharacterization,
+} from "./core/types/characterization";
+
+import type {
+  ExperimentalSetup,
+} from "./core/types/setup";
+
+import {
+  setupService,
+  type CreateSetupInput,
+} from "./application/setups/setup.service";
+
+import {
+  solutionCharacterizationService,
+  type CreateSolutionCharacterizationInput,
+} from "./application/characterizations/characterization.service";
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Si è verificato un errore imprevisto.";
+}
+
+function getStoredLanguage(): Language {
+  const savedLanguage =
+    localStorage.getItem("fluidnatek_lang");
+
+  if (
+    savedLanguage === "it" ||
+    savedLanguage === "en" ||
+    savedLanguage === "es"
+  ) {
+    return savedLanguage;
+  }
+
+  return "it";
+}
+
+export default function App() {
+  const [currentView, setCurrentView] =
+    useState<MainView>("PROJECTS");
+
+  const [lang, setLang] =
+    useState<Language>(getStoredLanguage);
+
+  const [projects, setProjects] =
+    useState<Project[]>([]);
+
+  const [formulations, setFormulations] =
+    useState<Formulation[]>([]);
+
+    const [characterizations, setCharacterizations] =
+    useState<SolutionCharacterization[]>([]);
+
+    const [setups, setSetups] =
+    useState<ExperimentalSetup[]>([]);
+
+  const [experiments, setExperiments] =
+    useState<Experiment[]>([]);
+
+  const [isDataLoading, setIsDataLoading] =
+    useState(true);
+
+  const [dataError, setDataError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadFirestoreData(): Promise<void> {
+      setIsDataLoading(true);
+      setDataError(null);
+
+      try {
+        const [
+  loadedProjects,
+  loadedFormulations,
+  loadedCharacterizations,
+  loadedSetups,
+  loadedExperiments,
+] = await Promise.all([
+  projectService.getProjects(),
+  formulationService.getFormulations(),
+  solutionCharacterizationService.getCharacterizations(),
+  setupService.getSetups(),
+  experimentService.getExperiments(),
+]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setProjects(loadedProjects);
+        setFormulations(loadedFormulations);
+        setCharacterizations(
+          loadedCharacterizations
+        );
+        setSetups(loadedSetups);
+        setExperiments(loadedExperiments);
+      } catch (error: unknown) {
+        if (!isCancelled) {
+          setDataError(
+            `Impossibile caricare i dati da Firestore: ${getErrorMessage(
+              error
+            )}`
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsDataLoading(false);
+        }
+      }
+    }
+
+    void loadFirestoreData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "fluidnatek_lang",
+      lang
+    );
+  }, [lang]);
+
+  const activeProject = useMemo(
+    () => projects[0] ?? null,
+    [projects]
+  );
+
+  const handleAddProject = async (
+    project: Omit<Project, "id" | "createdAt">
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdProject =
+        await projectService.createProject(
+          project
+        );
+
+      setProjects((previousProjects) => [
+        createdProject,
+        ...previousProjects,
+      ]);
+    } catch (error: unknown) {
+      setDataError(
+        `Impossibile creare il progetto: ${getErrorMessage(
+          error
+        )}`
+      );
+    }
+  };
+
+  const handleAddFormulation = async (
+    formulation: Omit<Formulation, "id">
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdFormulation =
+        await formulationService.createFormulation(
+          formulation
+        );
+
+      registerMaterial(
+        "polymer",
+        createdFormulation.polymerName,
+        createdFormulation.polymerName,
+        1
+      );
+
+      registerMaterial(
+        "solvent",
+        createdFormulation.solvent,
+        createdFormulation.solvent,
+        1
+      );
+
+      setFormulations(
+        (previousFormulations) => [
+          createdFormulation,
+          ...previousFormulations,
+        ]
+      );
+    } catch (error: unknown) {
+      setDataError(
+        `Impossibile creare la formulazione: ${getErrorMessage(
+          error
+        )}`
+      );
+    }
+  };
+
+  const handleAddCharacterization = async (
+    input: CreateSolutionCharacterizationInput
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdCharacterization =
+        await solutionCharacterizationService.createCharacterization(
+          input
+        );
+
+      setCharacterizations(
+        (previousCharacterizations) => [
+          createdCharacterization,
+          ...previousCharacterizations,
+        ]
+      );
+    } catch (error: unknown) {
+      const message =
+        `Impossibile creare la caratterizzazione: ${getErrorMessage(
+          error
+        )}`;
+
+      setDataError(message);
+
+      throw new Error(message);
+    }
+  };
+
+  
+  const handleAddExperiment = async (
+    input: CreateExperimentInput
+  ): Promise<void> => {
+    setDataError(null);
+
+    try {
+      const createdExperiment =
+        await experimentService.createExperiment(
+          input
+        );
+
+      setExperiments(
+        (previousExperiments) => [
+          createdExperiment,
+          ...previousExperiments,
+        ]
+      );
+    } catch (error: unknown) {
+      const message =
+        `Impossibile registrare l'esperimento: ${getErrorMessage(
+          error
+        )}`;
+
+      setDataError(message);
+      throw new Error(message);
+    }
+  };
+
+  const handleImportExperiments = (
+    parsedList: ParsedExcelResult[],
+    targetProjectId: string
+  ): void => {
+    console.info(
+      "Pending canonical Excel import:",
+      {
+        parsedList,
+        targetProjectId,
+      }
+    );
+
+    setDataError(
+      "L'importazione è temporaneamente in modalità revisione. Nessun dato è stato scritto."
+    );
+  };
+
+  const handleDeleteProject = (
+    projectId: string
+  ): void => {
+    const project = projects.find(
+      (item) => item.id === projectId
+    );
+
+    setDataError(
+      `Il progetto "${
+        project?.name ?? projectId
+      }" non è stato eliminato: sono necessarie verifiche referenziali.`
+    );
+  };
+
+  const handleDeleteFormulation = (
+    formulationId: string
+  ): void => {
+    const formulation =
+      formulations.find(
+        (item) =>
+          item.id === formulationId
+      );
+
+    setDataError(
+      `La formulazione "${
+        formulation?.polymerName ??
+        formulationId
+      }" non è stata eliminata: sono necessarie verifiche referenziali.`
+    );
+  };
+
+  const renderMainView =
+    (): React.ReactNode => {
+      switch (currentView) {
+        case "DATABASE_MANAGEMENT":
+          return (
+            <ExcelImport
+              projects={projects}
+              formulations={formulations}
+              onImportExperiment={
+                handleImportExperiments
+              }
+              lang={lang}
+            />
+          );
+
+        case "PROJECTS":
+          return (
+            <ProjectsWorkspace
+              projects={projects}
+              formulations={formulations}
+              experiments={experiments}
+              activeProject={activeProject}
+              onAddProject={handleAddProject}
+            />
+          );
+
+        case "FORMULATIONS_CHARACTERIZATION":
+          return (
+            <Formulations
+              projects={projects}
+              formulations={formulations}
+              characterizations={
+                characterizations
+              }
+              onAddFormulation={
+                handleAddFormulation
+              }
+              onAddCharacterization={
+                handleAddCharacterization
+              }
+              lang={lang}
+            />
+          );
+
+        case "SETUPS":
+          return <SetupsWorkspace />;
+
+        case "LIVE_TELEMETRY":
+          return (
+            <RunConfig
+              projects={projects}
+              formulations={formulations}
+              experiments={experiments}
+              onAddExperiment={
+                handleAddExperiment
+              }
+              lang={lang}
+            />
+          );
+      }
+    };
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-100 font-sans antialiased">
+      <Sidebar
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        projectsCount={projects.length}
+        experimentsCount={
+          experiments.length
+        }
+        lang={lang}
+        onLanguageChange={setLang}
+      />
+
+      <div className="relative flex h-full min-w-0 flex-1 flex-col">
+        {isDataLoading && (
+          <div className="border-b border-blue-100 bg-blue-50 px-6 py-3 text-sm text-blue-700">
+            Caricamento dati da Firestore…
+          </div>
+        )}
+
+        {dataError && (
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-4 border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700"
+          >
+            <span>{dataError}</span>
+
+            <button
+              type="button"
+              className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1 text-xs font-semibold"
+              onClick={() =>
+                setDataError(null)
+              }
+            >
+              Chiudi
+            </button>
+          </div>
+        )}
+
+        {renderMainView()}
+      </div>
+    </div>
+  );
+}
+
+interface ProjectsWorkspaceProps {
+  projects: Project[];
+  formulations: Formulation[];
+  experiments: Experiment[];
+  activeProject: Project | null;
+
+  onAddProject: (
+    project: Omit<Project, "id" | "createdAt">
+  ) => Promise<void>;
+}
+
+function ProjectsWorkspace({
+  projects,
+  formulations,
+  experiments,
+  activeProject,
+  onAddProject,
+}: ProjectsWorkspaceProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] =
+    useState("");
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    const normalizedName = name.trim();
+
+    if (!normalizedName) {
+      setError(
+        "Inserisci un codice o nome progetto."
+      );
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      await onAddProject({
+        name: normalizedName,
+        description: description.trim(),
+      });
+
+      setName("");
+      setDescription("");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <main className="flex-1 overflow-y-auto bg-slate-100 p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        <header>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+            Workflow step 1
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+            Projects
+          </h1>
+
+          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            Crea o seleziona il progetto che definisce
+            il contesto della sessione sperimentale.
+          </p>
+        </header>
+
+        {activeProject && (
+          <section className="mt-6 rounded-3xl border border-blue-200 bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white shadow-lg shadow-blue-200">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-100">
+              Active project
+            </p>
+
+            <h2 className="mt-2 text-2xl font-bold">
+              {activeProject.name}
+            </h2>
+
+            <p className="mt-1 text-sm text-blue-50">
+              {activeProject.description ||
+                "Nessuna descrizione disponibile."}
+            </p>
+          </section>
+        )}
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+                <Plus className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-slate-950">
+                  New project
+                </h2>
+
+                <p className="text-xs text-slate-500">
+                  Crea un nuovo contesto sperimentale.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="mt-6 space-y-4"
+            >
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Project code
+                </span>
+
+                <input
+                  value={name}
+                  onChange={(event) =>
+                    setName(event.target.value)
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Description
+                </span>
+
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(event) =>
+                    setDescription(
+                      event.target.value
+                    )
+                  }
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              {error && (
+                <div className="flex gap-2 rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSaving
+                  ? "Saving..."
+                  : "Create project"}
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-slate-100 p-3 text-slate-600">
+                <FolderKanban className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-slate-950">
+                  Project database
+                </h2>
+
+                <p className="text-xs text-slate-500">
+                  {projects.length} registered projects
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {projects.map((project) => {
+                const formulationCount =
+                  formulations.filter(
+                    (item) =>
+                      item.projectId === project.id
+                  ).length;
+
+                const experimentCount =
+                  experiments.filter(
+                    (experiment) =>
+                      formulations.some(
+                        (formulation) =>
+                          formulation.id ===
+                            experiment.formulationId &&
+                          formulation.projectId ===
+                            project.id
+                      )
+                  ).length;
+
+                return (
+                  <article
+                    key={project.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-slate-900">
+                          {project.name}
+                        </h3>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {project.description ||
+                            "No description"}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <ProjectMetric
+                          label="Formulations"
+                          value={formulationCount}
+                        />
+
+                        <ProjectMetric
+                          label="Runs"
+                          value={experimentCount}
+                        />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {projects.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400">
+                  No projects registered.
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+interface ProjectMetricProps {
+  label: string;
+  value: number;
+}
+
+function ProjectMetric({
+  label,
+  value,
+}: ProjectMetricProps) {
+  return (
+    <div className="min-w-20 rounded-xl bg-white px-3 py-2 text-center shadow-sm">
+      <p className="text-lg font-bold text-slate-900">
+        {value}
+      </p>
+
+      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function SetupsWorkspace() {
+  return (
+    <main className="flex-1 overflow-y-auto bg-slate-100 p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+          Workflow step 4
+        </p>
+
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+          Setups
+        </h1>
+
+        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+          Configurazioni riutilizzabili di macchina,
+          iniettore, collettore e hardware.
+        </p>
+
+        <section className="mt-8 flex min-h-96 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="rounded-3xl bg-blue-50 p-5 text-blue-600">
+            <SlidersHorizontal className="h-9 w-9" />
+          </div>
+
+          <h2 className="mt-5 text-lg font-bold text-slate-900">
+            Setup management
+          </h2>
+
+          <p className="mt-2 max-w-md text-sm text-slate-500">
+            La schermata verrà collegata al repository
+            Firestore già esistente nel prossimo modulo.
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+
+========================================
+FILE: .\src\components\RunConfig.tsx
+========================================
+
+import React, { useState } from "react";
+import {
+  Activity,
+  Sliders,
+  Sparkles,
+  Loader,
+  Check,
+  AlertTriangle,
+  HelpCircle,
+  Thermometer,
+  CloudLightning,
+  Play,
+} from "lucide-react";
+
+import type {
+  Project,
+  Formulation,
+  Experiment,
+  AISuggestion,
+} from "../types";
+
+import type {
+  CreateExperimentInput,
+} from "../application/experiments/experiment.mapper";
+
+import type {
+  ProcessabilityGrade,
+} from "../core/types/processRecord";
+
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
+
+import MemorySearchPanel from "../features/memory/MemorySearchPanel";
+
+type InjectorType =
+  | "Single Emitter"
+  | "Coaxial"
+  | "Multi-emitter (x4)"
+  | "Multi-needle (x8)";
+
+type CollectorType =
+  | "Flat Plate"
+  | "Rotating Drum"
+  | "Mandrel"
+  | "Y-axis Stage";
+
+interface RunConfigProps {
+  projects: Project[];
+
+  formulations: Formulation[];
+
+  experiments: Experiment[];
+
+  onAddExperiment: (
+    input: CreateExperimentInput
+  ) => Promise<void>;
+
+  lang: Language;
+}
+
+export default function RunConfig({
+  projects,
+  formulations,
+  experiments,
+  onAddExperiment,
+  lang,
+}: RunConfigProps) {
+  const t = TRANSLATIONS[lang];
+
+  const [selectedFormulationId, setSelectedFormulationId] =
+    useState("");
+
+  const [runName, setRunName] =
+    useState("");
+
+  const [injectorType, setInjectorType] =
+    useState<InjectorType>("Single Emitter");
+
+  const [collectorType, setCollectorType] =
+    useState<CollectorType>("Flat Plate");
+
+  const [distanceMm, setDistanceMm] =
+    useState<number>(150);
+
+  const [voltageKv, setVoltageKv] =
+    useState<number>(15);
+
+  const [flowRateMlH, setFlowRateMlH] =
+    useState<number>(1);
+
+  const [jetStability, setJetStability] =
+    useState<ProcessabilityGrade>(4);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [saveError, setSaveError] =
+    useState("");
+
+  const [operatorComments, setOperatorComments] =
+    useState("");
+
+  const [aiPolymer, setAiPolymer] =
+    useState("");
+
+  const [aiSolvent, setAiSolvent] =
+    useState("");
+
+  const [aiViscosity, setAiViscosity] =
+    useState<number>(350);
+
+  const [aiConductivity, setAiConductivity] =
+    useState<number>(5.5);
+
+  const [aiSolids, setAiSolids] =
+    useState<number>(12);
+
+  const [isAiLoading, setIsAiLoading] =
+    useState(false);
+
+  const [aiSuggestion, setAiSuggestion] =
+    useState<AISuggestion | null>(null);
+
+  const [aiError, setAiError] =
+    useState("");
+
+  const handleApplyFormulationParams = (
+    formulationId: string
+  ): void => {
+    setSelectedFormulationId(formulationId);
+    setAiSuggestion(null);
+    setAiError("");
+
+    const formulation = formulations.find(
+      (item) => item.id === formulationId
+    );
+
+    if (!formulation) {
+      setAiPolymer("");
+      setAiSolvent("");
+      return;
+    }
+
+    setAiPolymer(formulation.polymerName);
+    setAiSolvent(formulation.solvent);
+    setAiViscosity(formulation.viscosityMpas);
+    setAiConductivity(formulation.conductivityUsCm);
+    setAiSolids(formulation.solidsContentPct);
+
+    const polymerCode = formulation.polymerName
+      .split(" ")[0]
+      .toUpperCase();
+
+    const randomRunNumber =
+      Math.floor(Math.random() * 900) + 100;
+
+    setRunName(
+      `RUN-${polymerCode}-${randomRunNumber}`
+    );
+  };
+
+  const triggerAISuggestion =
+    async (): Promise<void> => {
+      if (!aiPolymer) {
+        setAiError(t.selectFormulationWarning);
+        return;
+      }
+
+      setIsAiLoading(true);
+      setAiError("");
+      setAiSuggestion(null);
+
+      const historicalRuns = experiments
+        .filter((experiment) => {
+          const formulation = formulations.find(
+            (item) =>
+              item.id === experiment.formulationId
+          );
+
+          return (
+            formulation !== undefined &&
+            formulation.polymerName
+              .toLowerCase()
+              .includes(aiPolymer.toLowerCase())
+          );
+        })
+        .slice(0, 3)
+        .map((experiment) => ({
+          operationIdentifier:
+            experiment.operationIdentifier,
+
+          injector:
+            experiment.injectorType,
+
+          collector:
+            experiment.collectorType,
+
+          distanceMm:
+            experiment.distanceMm,
+
+          stabilityGrade:
+            experiment.jetStabilityGrade,
+
+          comments:
+            experiment.operatorComments,
+        }));
+
+      try {
+        const response = await fetch(
+          "/api/suggest",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              polymerName: aiPolymer,
+              solvent: aiSolvent,
+              solidsContentPct: aiSolids,
+              viscosityMpas: aiViscosity,
+              conductivityUsCm: aiConductivity,
+              historicalRuns,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            lang === "it"
+              ? "Errore di risposta del server backend"
+              : lang === "es"
+                ? "Error de respuesta del servidor backend"
+                : "Backend server error response"
+          );
+        }
+
+        const data: AISuggestion =
+          await response.json();
+
+        setAiSuggestion(data);
+      } catch (error: unknown) {
+        setAiError(
+          error instanceof Error
+            ? error.message
+            : "Error contacting AI service."
+        );
+      } finally {
+        setIsAiLoading(false);
+      }
+    };
+
+  const applyAISuggestedParams = (): void => {
+    if (!aiSuggestion) {
+      return;
+    }
+
+    setVoltageKv(aiSuggestion.voltageKv);
+    setFlowRateMlH(
+      aiSuggestion.flowRateMlH
+    );
+    setDistanceMm(aiSuggestion.distanceMm);
+  };
+
+  const handleSaveConfig = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    if (
+      !selectedFormulationId ||
+      !runName.trim() ||
+      isSaving
+    ) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      await onAddExperiment({
+        formulationId:
+          selectedFormulationId,
+
+        operationIdentifier:
+          runName.trim(),
+
+        machineModel:
+          "Fluidnatek LE-500",
+
+        injectorType,
+
+        collectorType,
+
+        voltageKv,
+
+        flowRateMlH,
+
+        distanceMm,
+
+        jetStabilityGrade:
+          jetStability,
+
+        operatorComments:
+          operatorComments.trim() ||
+          (
+            lang === "it"
+              ? "Prova registrata con successo"
+              : lang === "es"
+                ? "Prueba registrada correctamente"
+                : "Run recorded successfully"
+          ),
+
+        sourceFile:
+          "Manual Input",
+      });
+
+      setRunName("");
+      setOperatorComments("");
+    } catch (error: unknown) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : lang === "it"
+            ? "Impossibile registrare l'esperimento."
+            : lang === "es"
+              ? "No se pudo registrar el experimento."
+              : "Unable to save the experiment."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      id="runconfig-view"
+      className="flex-1 select-none space-y-8 overflow-y-auto bg-[#0a0a0b] p-8 text-[#f4f4f5]"
+    >
+      <div className="flex items-center gap-3">
+        <Activity className="h-8 w-8 text-teal-400" />
+
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">
+            {t.runConfigTitle}
+          </h2>
+
+          <p className="text-xs text-zinc-400">
+            {t.runConfigSubtitle}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="flex flex-col space-y-6 rounded-2xl border border-[#27272a] bg-[#18181b] p-6 shadow-xl lg:col-span-7">
+          <div className="flex items-center gap-2">
+            <Sliders className="h-5 w-5 text-teal-400" />
+
+            <h3 className="text-md font-bold text-white">
+              {t.hwConfigSectionTitle}
+            </h3>
+          </div>
+
+          <form
+            onSubmit={handleSaveConfig}
+            className="space-y-6"
+          >
+            <div className="space-y-3 rounded-xl border border-[#27272a]/80 bg-[#0a0a0b]/70 p-4">
+              <label className="block text-xs font-bold uppercase tracking-widest text-teal-400">
+                {t.step1RecipeSelection}
+              </label>
+
+              <select
+                id="run-formulation-select"
+                value={selectedFormulationId}
+                onChange={(event) => {
+                  handleApplyFormulationParams(
+                    event.target.value
+                  );
+                }}
+                className="w-full cursor-pointer rounded-lg border border-[#27272a] bg-[#18181b] px-3 py-2.5 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+              >
+                <option
+                  value=""
+                  className="text-zinc-500"
+                >
+                  {t.selectRecipePlaceholder}
+                </option>
+
+                {formulations.map(
+                  (formulation) => (
+                    <option
+                      key={formulation.id}
+                      value={formulation.id}
+                      className="bg-[#18181b]"
+                    >
+                      {formulation.polymerName}
+                      {" | "}
+                      {formulation.solvent}
+                      {" ("}
+                      {formulation.solidsContentPct}
+                      {"% "}
+                      {lang === "it"
+                        ? "solidi"
+                        : lang === "es"
+                          ? "sólidos"
+                          : "solids"}
+                      {")"}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            {selectedFormulationId ? (
+              <div className="animate-fadeIn space-y-5">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.runIdentifier}
+                    </label>
+
+                    <input
+                      id="run-name-input"
+                      type="text"
+                      placeholder={
+                        t.runIdPlaceholder
+                      }
+                      value={runName}
+                      onChange={(event) => {
+                        setRunName(
+                          event.target.value
+                        );
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.injectorLabel}
+                    </label>
+
+                    <select
+                      id="injector-select"
+                      value={injectorType}
+                      onChange={(event) => {
+                        const value =
+                          event.target.value;
+
+                        if (
+                          value ===
+                            "Single Emitter" ||
+                          value === "Coaxial" ||
+                          value ===
+                            "Multi-emitter (x4)" ||
+                          value ===
+                            "Multi-needle (x8)"
+                        ) {
+                          setInjectorType(value);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    >
+                      <option
+                        value="Single Emitter"
+                        className="bg-[#18181b]"
+                      >
+                        Single Emitter (
+                        {lang === "it"
+                          ? "Singolo ago"
+                          : lang === "es"
+                            ? "Aguja única"
+                            : "Single needle"}
+                        )
+                      </option>
+
+                      <option
+                        value="Coaxial"
+                        className="bg-[#18181b]"
+                      >
+                        Coaxial (
+                        {lang === "it"
+                          ? "Coassiale nucleo-guscio"
+                          : lang === "es"
+                            ? "Coaxial núcleo-funda"
+                            : "Coaxial core-shell"}
+                        )
+                      </option>
+
+                      <option
+                        value="Multi-emitter (x4)"
+                        className="bg-[#18181b]"
+                      >
+                        Multi-emitter (
+                        {lang === "it"
+                          ? "x4 Ugelli"
+                          : lang === "es"
+                            ? "x4 boquillas"
+                            : "x4 emitters"}
+                        )
+                      </option>
+
+                      <option
+                        value="Multi-needle (x8)"
+                        className="bg-[#18181b]"
+                      >
+                        Multi-needle (
+                        {lang === "it"
+                          ? "x8 Aghi paralleli"
+                          : lang === "es"
+                            ? "x8 agujas paralelas"
+                            : "x8 parallel needles"}
+                        )
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.collectorLabel}
+                    </label>
+
+                    <select
+                      id="collector-select"
+                      value={collectorType}
+                      onChange={(event) => {
+                        const value =
+                          event.target.value;
+
+                        if (
+                          value ===
+                            "Flat Plate" ||
+                          value ===
+                            "Rotating Drum" ||
+                          value === "Mandrel" ||
+                          value ===
+                            "Y-axis Stage"
+                        ) {
+                          setCollectorType(value);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    >
+                      <option
+                        value="Flat Plate"
+                        className="bg-[#18181b]"
+                      >
+                        Flat Plate (
+                        {lang === "it"
+                          ? "Piastra fissa"
+                          : lang === "es"
+                            ? "Placa plana fija"
+                            : "Fixed flat plate"}
+                        )
+                      </option>
+
+                      <option
+                        value="Rotating Drum"
+                        className="bg-[#18181b]"
+                      >
+                        Rotating Drum (
+                        {lang === "it"
+                          ? "Tamburo rotante veloce"
+                          : lang === "es"
+                            ? "Tambor giratorio rápido"
+                            : "Fast rotating drum"}
+                        )
+                      </option>
+
+                      <option
+                        value="Mandrel"
+                        className="bg-[#18181b]"
+                      >
+                        Mandrel (
+                        {lang === "it"
+                          ? "Mandrino rotante per tubolari"
+                          : lang === "es"
+                            ? "Mandril giratorio para tubulares"
+                            : "Rotating mandrel for tubes"}
+                        )
+                      </option>
+
+                      <option
+                        value="Y-axis Stage"
+                        className="bg-[#18181b]"
+                      >
+                        Y-axis Stage (
+                        {lang === "it"
+                          ? "Asse motorizzato XY"
+                          : lang === "es"
+                            ? "Eje motorizado XY"
+                            : "Motorized XY stage"}
+                        )
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                        {t.needleToCollectorDistance}
+                      </label>
+
+                      <span className="font-mono text-xs font-bold text-teal-400">
+                        {distanceMm} mm
+                      </span>
+                    </div>
+
+                    <input
+                      id="distance-slider"
+                      type="range"
+                      min="50"
+                      max="300"
+                      step="5"
+                      value={distanceMm}
+                      onChange={(event) => {
+                        setDistanceMm(
+                          Number.parseInt(
+                            event.target.value,
+                            10
+                          )
+                        );
+                      }}
+                      className="h-2 w-full cursor-pointer rounded-lg bg-[#0a0a0b] accent-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 rounded-xl border border-[#27272a]/60 bg-[#0a0a0b]/40 p-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.targetVoltage}
+                    </label>
+
+                    <input
+                      id="run-voltage-input"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={voltageKv}
+                      onChange={(event) => {
+                        setVoltageKv(
+                          Number.parseFloat(
+                            event.target.value
+                          ) || 0
+                        );
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      {t.targetFlow}
+                    </label>
+
+                    <input
+                      id="run-flow-input"
+                      type="number"
+                      step="0.05"
+                      min="0"
+                      value={flowRateMlH}
+                      onChange={(event) => {
+                        setFlowRateMlH(
+                          Number.parseFloat(
+                            event.target.value
+                          ) || 0
+                        );
+                      }}
+                      className="w-full rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3 py-2 font-mono text-sm text-[#f4f4f5] focus:border-teal-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    {t.processabilityRating}
+                  </label>
+
+                  <div className="grid grid-cols-5 gap-2">
+                    {(
+                      [1, 2, 3, 4, 5] as const
+                    ).map((grade) => {
+                      const labelsIt = [
+                        "Gocciolamento",
+                        "Instabile",
+                        "Accettabile",
+                        "Stabile",
+                        "Taylor Cone Eccellente",
+                      ];
+
+                      const labelsEs = [
+                        "Goteo",
+                        "Inestable",
+                        "Aceptable",
+                        "Estable",
+                        "Cono Taylor Excelente",
+                      ];
+
+                      const labelsEn = [
+                        "Dripping",
+                        "Unstable",
+                        "Acceptable",
+                        "Stable",
+                        "Excellent Taylor Cone",
+                      ];
+
+                      const labels =
+                        lang === "it"
+                          ? labelsIt
+                          : lang === "es"
+                            ? labelsEs
+                            : labelsEn;
+
+                      const isSelected =
+                        jetStability === grade;
+
+                      return (
+                        <button
+                          key={grade}
+                          id={`stability-btn-${grade}`}
+                          type="button"
+                          onClick={() => {
+                            setJetStability(
+                              grade
+                            );
+                          }}
+                          className={`cursor-pointer rounded-xl border p-2 text-xs font-semibold transition ${
+                            isSelected
+                              ? "border-teal-500 bg-teal-500/10 text-teal-400 shadow-md shadow-teal-950/20"
+                              : "border-[#27272a] bg-[#0a0a0b] text-zinc-400 hover:border-zinc-700"
+                          }`}
+                        >
+                          <div className="text-sm">
+                            {grade} ★
+                          </div>
+
+                          <div className="mt-0.5 text-[9px] font-normal leading-tight text-zinc-500">
+                            {labels[grade - 1]}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    {t.operatorNotesLabel}
+                  </label>
+
+                  <textarea
+                    id="run-comments-textarea"
+                    rows={2}
+                    placeholder={
+                      lang === "it"
+                        ? "Annota la morfologia visiva al microscopio..."
+                        : lang === "es"
+                          ? "Anotar la morfología visual al microscopio..."
+                          : "Write down the visual morphology under microscope..."
+                    }
+                    value={operatorComments}
+                    onChange={(event) => {
+                      setOperatorComments(
+                        event.target.value
+                      );
+                    }}
+                    className="w-full resize-none rounded-xl border border-[#27272a] bg-[#0a0a0b] px-3.5 py-2.5 text-sm text-[#f4f4f5] placeholder-zinc-600 focus:border-teal-400 focus:outline-none"
+                  />
+                </div>
+
+                {saveError && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400"
+                  >
+                    {saveError}
+                  </div>
+                )}
+
+                <button
+                  id="submit-run-btn"
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 font-extrabold text-black shadow-lg transition hover:bg-teal-400 hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+
+                      {lang === "it"
+                        ? "Registrazione in corso..."
+                        : lang === "es"
+                          ? "Registrando..."
+                          : "Saving..."}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-current" />
+                      {t.saveAndStartButton}
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[#27272a] bg-[#0a0a0b]/40 py-20 text-center text-zinc-500">
+                {t.selectFormulationWarning}
+              </div>
+            )}
+          </form>
+        </div>
+
+        <div className="flex flex-col lg:col-span-5">
+          <div className="flex h-full min-h-[600px] flex-col space-y-6 rounded-2xl border border-[#27272a] bg-[#18181b] p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-teal-400" />
+
+                <h3 className="text-md font-bold text-white">
+                  {t.smartMemoryTitle}
+                </h3>
+              </div>
+
+              <span className="rounded-full border border-teal-500/20 bg-teal-500/15 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-teal-400">
+                Co-Pilot
+              </span>
+            </div>
+
+            <p className="text-xs leading-relaxed text-zinc-400">
+              {t.smartMemorySub}
+            </p>
+
+            <div className="space-y-4 rounded-xl border border-[#27272a] bg-[#0a0a0b] p-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-teal-400">
+                {t.chemicalParamsHeader}
+              </h4>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between border-b border-[#27272a]/50 pb-1">
+                  <span className="text-zinc-400">
+                    {t.targetPolymerLabel}
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    {aiPolymer ||
+                      (
+                        lang === "it"
+                          ? "Nessuno (Seleziona formula)"
+                          : lang === "es"
+                            ? "Ninguno (Selecciona fórmula)"
+                            : "None (Select recipe)"
+                      )}
+                  </span>
+                </div>
+
+                <div className="flex justify-between border-b border-[#27272a]/50 pb-1">
+                  <span className="text-zinc-400">
+                    {t.solventLabel}
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    {aiSolvent || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">
+                    {t.solidsPercentageLabel}
+                  </span>
+
+                  <span className="font-mono text-white">
+                    {aiPolymer
+                      ? `${aiSolids}%`
+                      : "N/A"}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                id="generate-prediction-btn"
+                type="button"
+                disabled={
+                  !aiPolymer ||
+                  isAiLoading
+                }
+                onClick={() => {
+                  void triggerAISuggestion();
+                }}
+                className="mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-teal-500/10 bg-[#18181b] px-4 py-2.5 text-xs font-bold text-teal-400 transition hover:border-teal-500/20 hover:bg-[#27272a] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isAiLoading ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin text-teal-400" />
+
+                    <span>
+                      {lang === "it"
+                        ? "Generazione in corso..."
+                        : lang === "es"
+                          ? "Generando..."
+                          : "Generating..."}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>
+                      {t.calculateParamsButton}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {aiError && (
+              <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{aiError}</span>
+              </div>
+            )}
+
+            {aiSuggestion ? (
+              <div className="animate-fadeIn flex flex-1 flex-col space-y-4 rounded-xl border border-teal-500/30 bg-[#0a0a0b] p-4">
+                <div className="flex items-center justify-between border-b border-[#27272a] pb-2">
+                  <h4 className="flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Check className="h-4 w-4 text-teal-400" />
+                    {t.aiReportHeader}
+                  </h4>
+
+                  <button
+                    id="apply-ai-report-btn"
+                    type="button"
+                    onClick={applyAISuggestedParams}
+                    className="cursor-pointer rounded bg-teal-500 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-black transition hover:bg-teal-400"
+                  >
+                    {t.applyButton}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      ⚡ ALTA TENSIONE
+                    </span>
+
+                    <span className="font-mono text-sm font-bold text-teal-400">
+                      {aiSuggestion.voltageKv} kV
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      💧 PORTATA POMPA
+                    </span>
+
+                    <span className="font-mono text-sm font-bold text-teal-400">
+                      {aiSuggestion.flowRateMlH} mL/h
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      📏 DISTANZA EMETTITORE
+                    </span>
+
+                    <span className="font-mono text-sm font-bold text-white">
+                      {aiSuggestion.distanceMm} mm
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-[#27272a] bg-[#18181b] p-2.5">
+                    <span className="block font-mono text-[10px] text-zinc-500">
+                      🌡️ CLIMA CAMERA
+                    </span>
+
+                    <span className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-white">
+                      <Thermometer className="h-3 w-3 text-red-400" />
+                      {aiSuggestion.temperatureC}°C
+
+                      <CloudLightning className="h-3 w-3 text-teal-400" />
+                      {aiSuggestion.humidityPct}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    {t.scientificReasoning}
+                  </span>
+
+                  <p className="h-24 overflow-y-auto rounded-lg border border-[#27272a] bg-[#18181b] p-2.5 text-xs leading-relaxed text-zinc-300">
+                    {aiSuggestion.reasoning}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    {t.inSituGuidelines}
+                  </span>
+
+                  <ul className="space-y-1 text-[11px] text-zinc-400">
+                    {aiSuggestion.tips.map(
+                      (tip, index) => (
+                        <li
+                          key={`${tip}-${index}`}
+                          className="flex items-start gap-1.5"
+                        >
+                          <span className="font-bold text-teal-400">
+                            •
+                          </span>
+
+                          <span>{tip}</span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              !isAiLoading && (
+                <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#27272a] bg-[#0a0a0b]/40 py-12 text-zinc-600">
+                  <HelpCircle className="mb-2 h-10 w-10 text-zinc-800" />
+
+                  <p className="text-xs">
+                    {lang === "it"
+                      ? "Nessun report generato."
+                      : lang === "es"
+                        ? "Ningún reporte generado."
+                        : "No report generated."}
+                  </p>
+
+                  <p className="text-[10px] text-zinc-700">
+                    {lang === "it"
+                      ? "Seleziona una formula e calcola i parametri."
+                      : lang === "es"
+                        ? "Seleccione una fórmula y calcule los parámetros."
+                        : "Select a recipe and calculate parameters."}
+                  </p>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      <MemorySearchPanel
+        projects={projects}
+        formulations={formulations}
+        experiments={experiments}
+        formulationId={selectedFormulationId}
+        voltageKv={voltageKv}
+        flowRateMlH={flowRateMlH}
+        distanceMm={distanceMm}
+        onApplyRecommendation={(parameters) => {
+          setVoltageKv(parameters.voltageKv);
+          setFlowRateMlH(
+            parameters.flowRateMlH
+          );
+          setDistanceMm(
+            parameters.distanceMm
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+
+========================================
+FILE: .\src\components\Dashboard.tsx
+========================================
+
+import React, { useState, useMemo } from "react";
+import { motion } from "motion/react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip
+} from "recharts";
+import {
+  Search,
+  Zap,
+  Droplet,
+  Thermometer,
+  CloudLightning,
+  AlertCircle,
+  FileSpreadsheet,
+  Gauge,
+  CheckCircle,
+  Clock,
+  Filter,
+  Eye,
+  Trash2,
+  Edit2,
+  Printer
+} from "lucide-react";
+import { Experiment, Formulation, Project } from "../types";
+import { TRANSLATIONS, Language } from "../lib/translations";
+import ExperimentEditor from "./ExperimentEditor";
+import { AIOptimizationWidget } from "./AIOptimizationWidget";
+import { AIInsights } from "./AIInsights";
+import Fuse from "fuse.js";
+import {
+  getExperimentsForFormulation,
+  getAverageVoltage,
+  getAverageFlowRate
+} from "../utils/knowledgeEngine";
+
+interface DashboardProps {
+  projects: Project[];
+  formulations: Formulation[];
+  experiments: Experiment[];
+  selectedExp: Experiment | null;
+  onSelectExp: (exp: Experiment) => void;
+  onDeleteExp?: (id: string) => void;
+  onUpdateExp: (exp: Experiment) => void;
+  lang: Language;
+}
+
+
+function formatRunLabel(
+  experiment: Experiment,
+  formulation?: Formulation,
+  project?: Project
+): string {
+  const rawIdentifier = experiment.operationIdentifier.trim();
+
+  if (!/^\d+$/.test(rawIdentifier)) {
+    return rawIdentifier;
+  }
+
+  const runNumber = rawIdentifier.padStart(2, "0");
+  const projectLabel = project?.name?.trim();
+  const formulationLabel = formulation?.polymerName?.trim();
+
+  if (projectLabel) {
+    return `${projectLabel} · Run ${runNumber}`;
+  }
+
+  if (formulationLabel) {
+    return `${formulationLabel} · Run ${runNumber}`;
+  }
+
+  return `Historical Run ${runNumber}`;
+}
+
+export default function Dashboard({
+  projects,
+  formulations,
+  experiments,
+  selectedExp,
+  onSelectExp,
+  onDeleteExp,
+  onUpdateExp,
+  lang
+}: DashboardProps) {
+  const t = TRANSLATIONS[lang];
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [polymerFilter, setPolymerFilter] = useState("ALL");
+  const [stabilityFilter, setStabilityFilter] = useState("ALL");
+  const [editingExp, setEditingExp] = useState<Experiment | null>(null);
+  const [selectedExpIds, setSelectedExpIds] = useState<Set<string>>(new Set());
+
+  // Toggle selection
+  const toggleSelection = (id: string) => {
+    const next = new Set(selectedExpIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedExpIds(next);
+  };
+
+  // Get formulation for an experiment
+  const getExpFormulation = (exp: Experiment): Formulation | undefined => {
+    return formulations.find((f) => f.id === exp.formulationId);
+  };
+
+  // Get project for a formulation
+  const getFormProject = (form: Formulation): Project | undefined => {
+    return projects.find((p) => p.id === form.projectId);
+  };
+
+  // Formulazione della run attiva, memoizzata: reference stabile finché non
+  // cambia l'esperimento selezionato → evita che il widget AI rilanci
+  // chiamate a Gemini (429) ad ogni render.
+  const activeFormulation = useMemo(
+    () => (selectedExp ? formulations.find((f) => f.id === selectedExp.formulationId) ?? null : null),
+    [selectedExp, formulations]
+  );
+
+  const formulationExperiments = useMemo(() => {
+  if (!activeFormulation) return [];
+
+  return getExperimentsForFormulation(
+    activeFormulation.id,
+    experiments
+  );
+}, [activeFormulation, experiments]);
+
+const averageVoltage = useMemo(
+  () => getAverageVoltage(formulationExperiments),
+  [formulationExperiments]
+);
+
+const averageFlowRate = useMemo(
+  () => getAverageFlowRate(formulationExperiments),
+  [formulationExperiments]
+);
+
+  // Extract all unique polymer names for filter dropdown
+  const uniquePolymers = useMemo(() => {
+    const polys = new Set<string>();
+    formulations.forEach((f) => {
+      if (f.polymerName) polys.add(f.polymerName);
+    });
+    return Array.from(polys);
+  }, [formulations]);
+
+  // Filter experiments based on search and filters
+  const filteredExperiments = useMemo(() => {
+    let baseList = experiments;
+    
+    // Apply fuzzy search if searchTerm exists
+    if (searchTerm.trim() !== "") {
+      const fuse = new Fuse(experiments, {
+        keys: [
+          "operationIdentifier",
+          "operatorComments",
+          // We can't directly search nested objects in the same way, so we might need a derived list
+        ],
+        threshold: 0.3
+      });
+      baseList = fuse.search(searchTerm).map(result => result.item);
+    }
+
+    return baseList.filter((exp) => {
+      const form = getExpFormulation(exp);
+      const proj = form ? getFormProject(form) : undefined;
+      
+      // We already filtered by operationIdentifier/comments via Fuse
+      // Now filter by polymers, projects, etc. if needed
+      
+      const matchesPolymer =
+        polymerFilter === "ALL" || (form && form.polymerName === polymerFilter);
+
+      const matchesStability =
+        stabilityFilter === "ALL" || exp.jetStabilityGrade === parseInt(stabilityFilter);
+
+      return matchesPolymer && matchesStability;
+    });
+  }, [experiments, searchTerm, polymerFilter, stabilityFilter, formulations, projects]);
+
+  // Computed live averages for active run
+  const activeStats = useMemo(() => {
+    if (!selectedExp || selectedExp.telemetryData.length === 0) return null;
+    const data = selectedExp.telemetryData;
+    const avgVoltage = data.reduce((acc, r) => acc + r.voltageKv, 0) / data.length;
+    const avgFlow = data.reduce((acc, r) => acc + r.flowRateMlH, 0) / data.length;
+    const avgTemp = data.reduce((acc, r) => acc + r.temperatureC, 0) / data.length;
+    const avgHum = data.reduce((acc, r) => acc + r.humidityPct, 0) / data.length;
+    const maxVoltage = Math.max(...data.map(r => r.voltageKv));
+    const minFlow = Math.min(...data.map(r => r.flowRateMlH));
+
+    return {
+      avgVoltage: parseFloat(avgVoltage.toFixed(1)),
+      avgFlow: parseFloat(avgFlow.toFixed(3)),
+      avgTemp: parseFloat(avgTemp.toFixed(1)),
+      avgHum: parseFloat(avgHum.toFixed(1)),
+      maxVoltage: parseFloat(maxVoltage.toFixed(1)),
+      minFlow: parseFloat(minFlow.toFixed(3))
+    };
+  }, [selectedExp]);
+
+  // Is environment optimal?
+  const envStatus = useMemo(() => {
+    if (!selectedExp || !activeStats) return { optimal: true, message: t.monitored };
+    const form = getExpFormulation(selectedExp);
+    if (!form) return { optimal: true, message: t.monitored };
+
+    const polymer = form.polymerName.toLowerCase();
+    const temp = activeStats.avgTemp;
+    const hum = activeStats.avgHum;
+
+    if (polymer.includes("nylon")) {
+      if (hum > 40) {
+        return {
+          optimal: false,
+          message: lang === "it"
+            ? "Umidità critica per Nylon-6 (>40% RH). Rischio di micro-gocce!"
+            : lang === "es"
+            ? "¡Humedad crítica para Nylon-6 (>40% RH). Riesgo de microgotas!"
+            : "Critical humidity for Nylon-6 (>40% RH). Risk of micro-droplets!"
+        };
+      }
+    } else if (polymer.includes("pvdf")) {
+      if (hum > 35) {
+        return {
+          optimal: false,
+          message: lang === "it"
+            ? "Umidità elevata per PVDF. Può influire sulla polarizzazione piezoelettrica beta."
+            : lang === "es"
+            ? "Humedad elevada para PVDF. Puede influir en la polarización piezoeléctrica beta."
+            : "High humidity for PVDF. May affect piezoelectric beta polarization."
+        };
+      }
+    } else if (polymer.includes("pcl")) {
+      if (temp > 25) {
+        return {
+          optimal: false,
+          message: lang === "it"
+            ? "Temperatura eccessiva per PCL (Fusione ~60°C). Rischio di incollaggio termico!"
+            : lang === "es"
+            ? "¡Temperatura excesiva para PCL (Fusión ~60°C). Riesgo de unión térmica!"
+            : "Excessive temperature for PCL (Melting ~60°C). Risk of thermal bonding!"
+        };
+      }
+    }
+
+    // Default general check
+    if (temp < 18 || temp > 28) {
+      return { optimal: false, message: t.nonOptimalEnv };
+    }
+    if (hum < 20 || hum > 55) {
+      return { optimal: true, message: t.nonOptimalEnv };
+    }
+
+    return { optimal: true, message: t.optimalEnv };
+  }, [selectedExp, activeStats, formulations, lang, t]);
+
+  return (
+    <div id="dashboard-view" className="fnk-app-surface flex-1 overflow-y-auto px-5 py-4 text-[#f4f4f5] flex flex-col gap-4 select-none">
+      
+      {/* Search and Filters Header bar */}
+      <div className="fnk-panel px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 shrink-0">
+          <Gauge className="w-6 h-6 text-teal-400" />
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-white">{t.dbTitle}</h2>
+            <p className="text-xs text-zinc-400">{t.dbSubtitle}</p>
+          </div>
+        </div>
+
+        {/* Realtime Search Bar */}
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3.5 top-3 w-4 h-4 text-zinc-500" />
+          <input
+            id="search-experiments-bar"
+            type="text"
+            placeholder={t.searchPlaceholder}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-[#0a0a0b] text-[#f4f4f5] placeholder-zinc-600 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-teal-400 transition"
+          />
+        </div>
+
+        {/* Dropdowns Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-[#0a0a0b] px-3 py-1.5 rounded-xl border border-[#27272a]">
+            <Filter className="w-3.5 h-3.5 text-teal-400" />
+            <span className="text-xs text-zinc-400">{t.filterPolymer}</span>
+            <select
+              id="filter-polymer-select"
+              value={polymerFilter}
+              onChange={(e) => setPolymerFilter(e.target.value)}
+              className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none"
+            >
+              <option value="ALL" className="bg-[#18181b] text-white">{t.allPolymers}</option>
+              {uniquePolymers.map((p) => (
+                <option key={p} value={p} className="bg-[#18181b] text-white">{p}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-[#0a0a0b] px-3 py-1.5 rounded-xl border border-[#27272a]">
+            <Clock className="w-3.5 h-3.5 text-teal-400" />
+            <span className="text-xs text-zinc-400">{t.filterStability}</span>
+            <select
+              id="filter-stability-select"
+              value={stabilityFilter}
+              onChange={(e) => setStabilityFilter(e.target.value)}
+              className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none"
+            >
+              <option value="ALL" className="bg-[#18181b] text-white">{t.allStabilities}</option>
+              <option value="5" className="bg-[#18181b] text-white">5 - {lang === "it" ? "Perfetto" : lang === "es" ? "Perfecto" : "Perfect"}</option>
+              <option value="4" className="bg-[#18181b] text-white">4 - {lang === "it" ? "Stabile" : lang === "es" ? "Estable" : "Stable"}</option>
+              <option value="3" className="bg-[#18181b] text-white">3 - {lang === "it" ? "Accettabile" : lang === "es" ? "Aceptable" : "Acceptable"}</option>
+              <option value="2" className="bg-[#18181b] text-white">2 - {lang === "it" ? "Instabile" : lang === "es" ? "Inestable" : "Unstable"}</option>
+              <option value="1" className="bg-[#18181b] text-white">1 - {lang === "it" ? "Molto instabile" : lang === "es" ? "Muy inestable" : "Highly unstable"}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid View */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,2.2fr)] gap-4">
+
+        {activeFormulation && (
+  <div className="lg:col-span-2 fnk-panel px-4 py-3">
+
+    <div className="flex items-center gap-2 mb-4">
+      <Zap className="w-5 h-5 text-teal-400" />
+      <h3 className="text-sm font-bold uppercase tracking-wider text-teal-400">
+        Smart Knowledge
+      </h3>
+    </div>
+
+    <div className="grid grid-cols-4 gap-4">
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Polymer
+        </div>
+        <div className="text-white font-semibold">
+          {activeFormulation.polymerName}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Experiments
+        </div>
+        <div className="text-white font-semibold">
+          {formulationExperiments.length}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Avg Voltage
+        </div>
+        <div className="text-teal-400 font-bold">
+          {averageVoltage?.toFixed(2) ?? "--"} kV
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs text-zinc-500">
+          Avg Flow
+        </div>
+        <div className="text-teal-400 font-bold">
+          {averageFlowRate?.toFixed(2) ?? "--"} mL/h
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+)}
+        
+        {/* Left Column: Experiments list */}
+        <div className="fnk-panel min-h-[520px] max-h-[calc(100vh-150px)] p-3 flex flex-col gap-3 overflow-hidden">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-bold tracking-wider uppercase text-zinc-400 flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4 text-teal-400" />
+              {t.filteredExperiments} ({filteredExperiments.length})
+            </h3>
+            {selectedExpIds.size > 0 && (
+              <button
+                onClick={async () => {
+                  const { exportToPDF } = await import("../utils/pdfExport");
+                  const exps = experiments.filter(e => selectedExpIds.has(e.id));
+                  exportToPDF(exps);
+                }}
+                className="text-xs bg-teal-500/10 text-teal-400 px-2 py-1 rounded-lg flex items-center gap-1 hover:bg-teal-500/20"
+              >
+                <Printer className="w-3 h-3" /> PDF
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+            {filteredExperiments.length === 0 ? (
+              <div className="text-center py-10 text-zinc-500 text-sm">
+                {t.noExperiments}
+              </div>
+            ) : (
+              filteredExperiments.map((exp) => {
+                const form = getExpFormulation(exp);
+                const isSelected = selectedExp?.id === exp.id;
+                const isChecked = selectedExpIds.has(exp.id);
+                return (
+                  <div
+                    key={exp.id}
+                    id={`exp-card-${exp.id}`}
+                    onClick={() => onSelectExp(exp)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer group flex justify-between items-start ${
+                      isSelected
+                        ? "bg-teal-500/10 border-teal-500/30 shadow-md shadow-black/20"
+                        : "bg-[#0a0a0b]/40 border-[#27272a] hover:border-zinc-700"
+                    }`}
+                  >
+                    <input 
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelection(exp.id);
+                      }}
+                      className="mr-3 accent-teal-500 mt-1"
+                    />
+                    <div className="space-y-1.5 flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded">
+                          {formatRunLabel(exp, form, form ? getFormProject(form) : undefined)}
+                        </span>
+                        {exp.sourceFile !== "Manual Input" && (
+                          <span className="text-[10px] text-teal-400 flex items-center gap-1 font-mono">
+                            <CheckCircle className="w-2.5 h-2.5" /> XLS
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm font-semibold text-white truncate">
+                        {form ? form.polymerName : "Polimero non definito"}
+                      </div>
+                      <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                        <span className="bg-zinc-800/60 px-1.5 py-0.5 rounded truncate">
+                          {form ? form.solvent : "Solvente non definito"}
+                        </span>
+                        <span className="shrink-0 text-zinc-600">•</span>
+                        <span>{t.filterStability} {exp.jetStabilityGrade}/5</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 line-clamp-1 italic">
+                        {exp.operatorComments}
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-col items-end justify-between h-full space-y-3">
+                      <div className="flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingExp(exp);
+                          }}
+                          className="text-zinc-600 hover:text-teal-400 p-1 rounded-lg hover:bg-[#27272a] transition"
+                          title="Modifica run"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onDeleteExp) onDeleteExp(exp.id);
+                          }}
+                          className="text-zinc-600 hover:text-red-400 p-1 rounded-lg hover:bg-[#27272a] transition"
+                          title="Elimina run"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <Eye className="w-4 h-4 text-zinc-500 group-hover:text-teal-400 transition" />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right Columns: Telemetry and Details */}
+        <div className="flex min-w-0 flex-col gap-4">
+          {selectedExp && activeStats ? (
+            <>
+              {/* Telemetry KPIs Card */}
+              <div className="fnk-panel p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                  <div>
+                    <span className="text-xs font-mono text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded font-bold">
+                      {t.activeRun}: {formatRunLabel(selectedExp, activeFormulation ?? undefined, activeFormulation ? getFormProject(activeFormulation) : undefined)}
+                    </span>
+                    <h3 className="text-lg font-bold text-white mt-1.5 font-sans">
+                      {getExpFormulation(selectedExp)?.polymerName} ({getExpFormulation(selectedExp)?.solidsContentPct}% solids)
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-zinc-400 mr-2">{lang === "it" ? "Jet:" : lang === "es" ? "Chorro:" : "Jet:"}</span>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <span
+                        key={s}
+                        className={`text-base ${
+                          s <= selectedExp.jetStabilityGrade ? "text-teal-400" : "text-zinc-700"
+                        }`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                    <span className="text-xs font-mono font-bold bg-[#0a0a0b] text-zinc-300 px-2 py-0.5 rounded-md ml-1 border border-[#27272a]">
+                      {selectedExp.jetStabilityGrade}/5
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4 Metrics grid */}
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
+                    <Zap className="w-8 h-8 text-amber-500 bg-amber-500/10 p-1.5 rounded-lg shrink-0" />
+                    <div>
+                      <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.avgVoltage}</p>
+                      <p className="text-xl font-bold font-mono text-white">{activeStats.avgVoltage} kV</p>
+                      <p className="text-[10px] text-zinc-500">Max: {activeStats.maxVoltage} kV</p>
+                    </div>
+                  </div>
+
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
+                    <Droplet className="w-8 h-8 text-blue-400 bg-blue-500/10 p-1.5 rounded-lg shrink-0" />
+                    <div>
+                      <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.avgFlow}</p>
+                      <p className="text-xl font-bold font-mono text-white">{activeStats.avgFlow} mL/h</p>
+                      <p className="text-[10px] text-zinc-500">Min: {activeStats.minFlow} mL/h</p>
+                    </div>
+                  </div>
+
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
+                    <Thermometer className="w-8 h-8 text-red-400 bg-red-400/10 p-1.5 rounded-lg shrink-0" />
+                    <div>
+                      <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.tempLabel}</p>
+                      <p className="text-xl font-bold font-mono text-white">{activeStats.avgTemp} °C</p>
+                      <p className="text-[10px] text-zinc-500">{t.tempOptimal}</p>
+                    </div>
+                  </div>
+
+                  <div className="fnk-metric-card p-3 flex items-center gap-2.5">
+                    <CloudLightning className="w-8 h-8 text-teal-400 bg-teal-400/10 p-1.5 rounded-lg shrink-0" />
+                    <div>
+                      <p className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">{t.humidityLabel}</p>
+                      <p className="text-xl font-bold font-mono text-white">{activeStats.avgHum} %</p>
+                      <p className="text-[10px] text-zinc-500">{t.humidityOptimal}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Climatic Warning Banner */}
+                <div className={`mt-4 p-3 rounded-xl border flex items-center gap-3 ${
+                  envStatus.optimal
+                    ? "bg-teal-500/5 border-teal-500/20 text-teal-400"
+                    : "bg-amber-500/5 border-amber-500/20 text-amber-400"
+                }`}>
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <span className="text-xs font-medium">{envStatus.message}</span>
+                </div>
+                <div className="mt-6 space-y-6">
+                    <AIOptimizationWidget
+                      currentFormulation={activeFormulation}
+                      projectId={activeFormulation?.projectId || ""}
+                      lang={lang}
+                    />
+                    <AIInsights telemetryData={selectedExp.telemetryData} lang={lang} />
+                  </div>
+              </div>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {/* Voltage Chart */}
+                <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5">
+                  <h4 className="text-xs font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center justify-between">
+                    <span>{t.voltageProfile}</span>
+                    <span className="text-[10px] font-mono font-semibold text-teal-400">{t.monitored}</span>
+                  </h4>
+                  <div className="h-52 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={selectedExp.telemetryData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="voltageGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.15}/>
+                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                        <XAxis dataKey="timestampSec" stroke="#71717a" fontSize={10} unit="s" />
+                        <YAxis stroke="#71717a" fontSize={10} domain={['auto', 'auto']} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "#0d0d0f", border: "1px solid #27272a", borderRadius: "8px" }}
+                          labelStyle={{ color: "#a1a1aa", fontSize: "11px" }}
+                          itemStyle={{ color: "#f59e0b", fontSize: "12px" }}
+                          formatter={(value) => [`${value} kV`, "Tensione"]}
+                        />
+                        <Area type="monotone" dataKey="voltageKv" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#voltageGradient)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Flow Rate Chart */}
+                <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-5">
+                  <h4 className="text-xs font-bold tracking-wider uppercase text-zinc-400 mb-4 flex items-center justify-between">
+                    <span>{t.flowStability}</span>
+                    <span className="text-[10px] font-mono font-semibold text-teal-400">{t.feedSensor}</span>
+                  </h4>
+                  <div className="h-52 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={selectedExp.telemetryData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                        <XAxis dataKey="timestampSec" stroke="#71717a" fontSize={10} unit="s" />
+                        <YAxis stroke="#71717a" fontSize={10} domain={['auto', 'auto']} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "#0d0d0f", border: "1px solid #27272a", borderRadius: "8px" }}
+                          labelStyle={{ color: "#a1a1aa", fontSize: "11px" }}
+                          itemStyle={{ color: "#38bdf8", fontSize: "12px" }}
+                          formatter={(value) => [`${value} mL/h`, "Portata"]}
+                        />
+                        <Line type="monotone" dataKey="flowRateMlH" stroke="#38bdf8" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hardware Details & Operator Comments */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{t.hwConfig}</p>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between border-b border-[#27272a] pb-1">
+                      <span className="text-zinc-400">{t.device}</span>
+                      <span className="text-white font-mono">{selectedExp.machineModel}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-[#27272a] pb-1">
+                      <span className="text-zinc-400">{t.injectorType}</span>
+                      <span className="text-white font-semibold">{selectedExp.injectorType}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-400">{t.collector}</span>
+                      <span className="text-white font-semibold">{selectedExp.collectorType}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{t.processMetadata}</p>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between border-b border-[#27272a] pb-1">
+                      <span className="text-zinc-400">{t.emitterDistance}</span>
+                      <span className="text-white font-mono">{selectedExp.distanceMm} mm</span>
+                    </div>
+                    <div className="flex justify-between border-b border-[#27272a] pb-1">
+                      <span className="text-zinc-400">{t.dataSource}</span>
+                      <span className="text-teal-400 truncate max-w-[140px]" title={selectedExp.sourceFile}>{selectedExp.sourceFile}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-400">{t.importedOn}</span>
+                      <span className="text-white font-mono">{new Date(selectedExp.ingestedAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{t.operatorNotes}</p>
+                  <div className="bg-[#0a0a0b] p-3 rounded-xl border border-[#27272a] h-24 overflow-y-auto text-xs text-zinc-300 italic leading-relaxed">
+                    "{selectedExp.operatorComments}"
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="bg-[#18181b] border border-[#27272a] rounded-3xl p-16 text-center text-zinc-400 flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-[#0a0a0b] flex items-center justify-center border border-[#27272a] text-teal-400">
+                <Gauge className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-bold text-white">{t.noRunSelectedTitle}</h3>
+              <p className="text-sm text-zinc-500 max-w-sm">
+                {t.noRunSelectedBody}
+              </p>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {editingExp && (
+        <ExperimentEditor
+          experiment={editingExp}
+          onSave={(exp) => {
+            onUpdateExp(exp);
+            setEditingExp(null);
+          }}
+          onClose={() => setEditingExp(null)}
+          lang={lang}
+        />
+      )}
+    </div>
+  );
+}
+
+
+========================================
+FILE: .\src\components\AIOptimizationWidget.tsx
+========================================
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  AlertTriangle,
+  Bot,
+  Check,
+  ChevronDown,
+  Copy,
+  Droplet,
+  Loader2,
+  RotateCw,
+  Ruler,
+  Send,
+  Sparkles,
+  Zap,
+} from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+} from "motion/react";
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../lib/firebase";
+import type {
+  AISuggestion,
+  Formulation,
+} from "../types";
+import {
+  TRANSLATIONS,
+  type Language,
+} from "../lib/translations";
+
+interface AIOptimizationWidgetProps {
+  currentFormulation:
+    | Formulation
+    | null;
+  projectId: string;
+  lang: Language;
+}
+
+interface ChatMessage {
+  sender: "user" | "ai";
+  text: string;
+}
+
+interface ApiErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+interface ChatPayload {
+  response?: string;
+  error?: string;
+  code?: string;
+}
+
+type HistoricalRun =
+  Record<string, unknown>;
+
+const QUICK_ACTIONS = [
+  "Explain the main process risk",
+  "Compare voltage and flow balance",
+  "Suggest the next controlled test",
+] as const;
+
+export function AIOptimizationWidget({
+  currentFormulation,
+  projectId,
+  lang,
+}: AIOptimizationWidgetProps) {
+  const t = TRANSLATIONS[lang];
+
+  const [
+    optimization,
+    setOptimization,
+  ] = useState<AISuggestion | null>(
+    null
+  );
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [messages, setMessages] =
+    useState<ChatMessage[]>([]);
+
+  const [input, setInput] =
+    useState("");
+
+  const [chatLoading, setChatLoading] =
+    useState(false);
+
+  const [chatOpen, setChatOpen] =
+    useState(false);
+
+  const [copiedIndex, setCopiedIndex] =
+    useState<number | null>(null);
+
+  const chatEndRef =
+    useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!currentFormulation?.id) {
+      setOptimization(null);
+      return;
+    }
+
+    void handleOptimize();
+  }, [currentFormulation?.id]);
+
+  useEffect(() => {
+    if (chatOpen) {
+      chatEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [
+    messages,
+    chatLoading,
+    chatOpen,
+  ]);
+
+  async function handleCopy(
+    text: string,
+    index: number
+  ): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(
+        text
+      );
+
+      setCopiedIndex(index);
+
+      window.setTimeout(() => {
+        setCopiedIndex((current) =>
+          current === index
+            ? null
+            : current
+        );
+      }, 1_500);
+    } catch {
+      // Clipboard access can fail in an insecure context.
+    }
+  }
+
+  async function loadHistoricalRuns(): Promise<
+    HistoricalRun[]
+  > {
+    if (!projectId) {
+      return [];
+    }
+
+    try {
+      const experimentReference =
+        collection(
+          db,
+          "projects",
+          projectId,
+          "experiments"
+        );
+
+      const snapshot =
+        await getDocs(
+          experimentReference
+        );
+
+      return snapshot.docs.map(
+        (documentSnapshot) =>
+          documentSnapshot.data()
+      );
+    } catch (caughtError: unknown) {
+      console.warn(
+        "Historical run lookup unavailable; AI recommendation will continue without legacy context.",
+        caughtError
+      );
+
+      return [];
+    }
+  }
+
+  async function handleOptimize(): Promise<void> {
+    if (!currentFormulation) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const historicalRuns =
+        await loadHistoricalRuns();
+
+      const response = await fetch(
+        "/api/suggest",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            ...currentFormulation,
+            historicalRuns,
+            lang,
+          }),
+        }
+      );
+
+      const payload =
+        (await response
+          .json()
+          .catch(
+            (): ApiErrorPayload | null =>
+              null
+          )) as
+          | AISuggestion
+          | ApiErrorPayload
+          | null;
+
+      if (
+        !response.ok ||
+        !payload ||
+        "error" in payload
+      ) {
+        const errorPayload =
+          payload &&
+          "error" in payload
+            ? payload
+            : null;
+
+        if (
+          response.status === 429 ||
+          errorPayload?.code ===
+            "QUOTA_EXCEEDED"
+        ) {
+          throw new Error(
+            t.aiQuotaError
+          );
+        }
+
+        throw new Error(
+          errorPayload?.error ??
+            t.aiOptError
+        );
+      }
+
+      if (
+        "polymerName" in payload &&
+        "solvent" in payload &&
+        "voltageKv" in payload &&
+        "flowRateMlH" in payload &&
+        "distanceMm" in payload &&
+        "temperatureC" in payload &&
+        "humidityPct" in payload &&
+        "tips" in payload &&
+        "reasoning" in payload
+      ) {
+        setOptimization(payload);
+        return;
+      }
+
+      throw new Error(t.aiOptError);
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : t.aiOptError
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleChat(
+    explicitMessage?: string
+  ): Promise<void> {
+    const message =
+      (
+        explicitMessage ??
+        input
+      ).trim();
+
+    if (!message || chatLoading) {
+      return;
+    }
+
+    const nextHistory: ChatMessage[] = [
+      ...messages,
+      {
+        sender: "user",
+        text: message,
+      },
+    ];
+
+    setMessages(nextHistory);
+    setInput("");
+    setChatLoading(true);
+    setChatOpen(true);
+
+    try {
+      const response = await fetch(
+        "/api/ai/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            message,
+            history: messages,
+            lang,
+          }),
+        }
+      );
+
+      const payload =
+        (await response
+          .json()
+          .catch(
+            (): ChatPayload | null =>
+              null
+          )) as ChatPayload | null;
+
+      if (
+        !response.ok ||
+        !payload ||
+        payload.error ||
+        !payload.response
+      ) {
+        const messageText =
+          response.status === 429 ||
+          payload?.code ===
+            "QUOTA_EXCEEDED"
+            ? t.aiQuotaError
+            : payload?.error ??
+              t.aiChatError;
+
+        throw new Error(messageText);
+      }
+
+      setMessages((current) => [
+        ...current,
+        {
+          sender: "ai",
+          text: payload.response ?? "",
+        },
+      ]);
+    } catch (caughtError: unknown) {
+      const messageText =
+        caughtError instanceof Error
+          ? caughtError.message
+          : t.aiChatError;
+
+      setMessages((current) => [
+        ...current,
+        {
+          sender: "ai",
+          text: `⚠ ${messageText}`,
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1015]">
+      <header className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/[0.08]">
+            <Sparkles className="h-4 w-4 text-cyan-300" />
+          </span>
+
+          <div className="min-w-0">
+            <h2 className="truncate text-[12px] font-semibold text-zinc-100">
+              {t.aiOptTitle}
+            </h2>
+
+            <p className="mt-0.5 text-[10px] text-zinc-600">
+              Gemini-powered process guidance
+            </p>
+          </div>
+        </div>
+
+        <span className="rounded-md border border-cyan-400/15 bg-cyan-400/[0.06] px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-300">
+          Co-pilot
+        </span>
+      </header>
+
+      <div className="p-3">
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-3 gap-2"
+            >
+              {[0, 1, 2].map(
+                (index) => (
+                  <div
+                    key={index}
+                    className="h-14 animate-pulse rounded-xl border border-white/[0.05] bg-white/[0.025]"
+                  />
+                )
+              )}
+            </motion.div>
+          ) : error ? (
+            <motion.div
+              key="error"
+              initial={{
+                opacity: 0,
+                y: 6,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.05] p-3"
+            >
+              <div className="flex items-start gap-2 text-[11px] text-red-300">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  void handleOptimize()
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-red-400/20 bg-red-400/[0.08] px-2.5 py-1.5 text-[10px] font-semibold text-red-200 transition-colors hover:bg-red-400/[0.13]"
+              >
+                <RotateCw className="h-3 w-3" />
+                {t.aiRetry}
+              </button>
+            </motion.div>
+          ) : optimization ? (
+            <motion.div
+              key="result"
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-3 gap-2">
+                <ParameterCard
+                  icon={<Zap className="h-3.5 w-3.5" />}
+                  label={t.aiOptVoltage}
+                  value={`${optimization.voltageKv} kV`}
+                />
+
+                <ParameterCard
+                  icon={<Droplet className="h-3.5 w-3.5" />}
+                  label={t.aiOptFlow}
+                  value={`${optimization.flowRateMlH} mL/h`}
+                />
+
+                <ParameterCard
+                  icon={<Ruler className="h-3.5 w-3.5" />}
+                  label={t.aiOptDistance}
+                  value={`${optimization.distanceMm} mm`}
+                />
+              </div>
+
+              {optimization.reasoning && (
+                <p className="line-clamp-3 rounded-xl border border-white/[0.06] bg-black/20 p-3 text-[11px] leading-relaxed text-zinc-500">
+                  {optimization.reasoning}
+                </p>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex h-16 items-center justify-center rounded-xl border border-dashed border-white/[0.08] text-[11px] text-zinc-600"
+            >
+              {t.aiOptSelectFormulation}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {QUICK_ACTIONS.map(
+            (action) => (
+              <button
+                key={action}
+                type="button"
+                onClick={() =>
+                  void handleChat(action)
+                }
+                disabled={chatLoading}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-left text-[10px] leading-snug text-zinc-500 transition-all hover:border-cyan-400/15 hover:bg-cyan-400/[0.035] hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.06]">
+        <button
+          type="button"
+          onClick={() =>
+            setChatOpen(
+              (current) => !current
+            )
+          }
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-white/[0.02]"
+        >
+          <span className="flex items-center gap-2 text-[11px] font-semibold text-zinc-300">
+            <Bot className="h-3.5 w-3.5 text-cyan-300" />
+            {t.aiChatTitle}
+          </span>
+
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-zinc-600 transition-transform ${
+              chatOpen
+                ? "rotate-180"
+                : ""
+            }`}
+          />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {chatOpen && (
+            <motion.div
+              initial={{
+                height: 0,
+                opacity: 0,
+              }}
+              animate={{
+                height: "auto",
+                opacity: 1,
+              }}
+              exit={{
+                height: 0,
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.24,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-white/[0.06] p-3">
+                <div className="mb-2 max-h-44 min-h-24 space-y-2 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/20 p-3">
+                  {messages.length === 0 &&
+                  !chatLoading ? (
+                    <div className="flex min-h-20 items-center justify-center px-4 text-center text-[10px] text-zinc-600">
+                      {t.aiChatEmpty}
+                    </div>
+                  ) : (
+                    messages.map(
+                      (message, index) => (
+                        <div
+                          key={`${message.sender}-${index}`}
+                          className={`flex ${
+                            message.sender ===
+                            "user"
+                              ? "justify-end"
+                              : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`group/message relative max-w-[88%] rounded-xl px-3 py-2 text-[11px] leading-relaxed ${
+                              message.sender ===
+                              "user"
+                                ? "border border-cyan-400/15 bg-cyan-400/[0.07] text-cyan-100"
+                                : "border border-white/[0.06] bg-white/[0.025] text-zinc-300"
+                            }`}
+                          >
+                            {message.text}
+
+                            {message.sender ===
+                              "ai" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleCopy(
+                                    message.text,
+                                    index
+                                  )
+                                }
+                                title={t.aiCopy}
+                                aria-label={
+                                  t.aiCopy
+                                }
+                                className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.07] bg-[#0b0d11] text-zinc-500 opacity-0 transition-all hover:text-cyan-300 group-hover/message:opacity-100"
+                              >
+                                {copiedIndex ===
+                                index ? (
+                                  <Check className="h-3 w-3 text-cyan-300" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    )
+                  )}
+
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="flex items-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
+                        {[0, 1, 2].map(
+                          (index) => (
+                            <span
+                              key={index}
+                              className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-300"
+                              style={{
+                                animationDelay: `${index * 140}ms`,
+                              }}
+                            />
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={chatEndRef} />
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    value={input}
+                    onChange={(event) =>
+                      setInput(
+                        event.target.value
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key ===
+                        "Enter"
+                      ) {
+                        void handleChat();
+                      }
+                    }}
+                    disabled={chatLoading}
+                    className="fnk-input min-w-0 flex-1 px-3 py-2 text-[11px]"
+                    placeholder={
+                      t.aiChatPlaceholder
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleChat()
+                    }
+                    disabled={
+                      chatLoading ||
+                      !input.trim()
+                    }
+                    className="flex h-8 w-9 items-center justify-center rounded-lg bg-cyan-400 text-[#071012] transition-all hover:bg-cyan-300 active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-600"
+                  >
+                    {chatLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+interface ParameterCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}
+
+function ParameterCard({
+  icon,
+  label,
+  value,
+}: ParameterCardProps) {
+  return (
+    <article className="rounded-xl border border-white/[0.06] bg-black/20 p-3 transition-colors hover:border-cyan-400/15 hover:bg-cyan-400/[0.025]">
+      <div className="mb-1 flex items-center gap-1.5 text-cyan-300/80">
+        {icon}
+
+        <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-zinc-600">
+          {label}
+        </span>
+      </div>
+
+      <p className="font-mono text-[13px] font-semibold text-zinc-100">
+        {value}
+      </p>
+    </article>
+  );
+}
+
+
+========================================
+FILE: .\src\types.ts
+========================================
+
+// Tipi allineati alle forme realmente usate da App.tsx / seedData.ts / componenti.
+// Enterprise Domain Model v2
+// Compatibile con l'architettura attuale e pronto per Firestore.
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  country: string;
+  contact?: string;
+}
+
+export interface RawMaterial {
+  id: string;
+  supplierId: string;
+
+  name: string;
+  category: string;
+
+  manufacturer?: string;
+
+  datasheet?: string;
+}
+
+export interface MaterialBatch {
+  id: string;
+
+  materialId: string;
+
+  batchNumber: string;
+
+  receivedDate: string;
+
+  expiryDate?: string;
+
+  notes?: string;
+}
+
+export interface Formulation {
+  id: string;
+  projectId: string;
+
+  polymerName: string;
+  solvent: string;
+
+  solidsContentPct: number;
+  viscosityMpas: number;
+  conductivityUsCm: number;
+  densityGcm3: number;
+
+  materialBatchIds: string[];
+}
+
+export interface TelemetryRecord {
+  id?: string;
+  experimentId?: string;
+
+  timestampSec: number;
+
+  voltageKv: number;
+  flowRateMlH: number;
+
+  temperatureC: number;
+  humidityPct: number;
+
+  distanceMm: number;
+}
+
+export interface Experiment {
+  id: string;
+
+  formulationId: string;
+
+  operationIdentifier: string;
+
+  machineModel: string;
+
+  injectorType: string;
+  collectorType: string;
+
+  distanceMm: number;
+
+  jetStabilityGrade: number;
+
+  operatorComments: string;
+
+  sourceFile: string;
+
+  ingestedAt: string;
+
+  telemetryData: TelemetryRecord[];
+
+  metadata?: Record<string, string>;
+}
+
+// ==========================================
+// AI
+// ==========================================
+
+export interface AISuggestion {
+  polymerName: string;
+  solvent: string;
+
+  voltageKv: number;
+  flowRateMlH: number;
+  distanceMm: number;
+
+  temperatureC: number;
+  humidityPct: number;
+
+  tips: string[];
+
+  reasoning: string;
+}
+
+export interface TelemetryAnalysis {
+  suggestion: string;
+  reasoning: string;
+  code?: string;
+}
+
+// ==========================================
+// ENTERPRISE DOMAIN MODEL (v2)
+// ==========================================
+
+export interface Company {
+  id: string;
+  name: string;
+  country?: string;
+  createdAt: string;
+}
+
+export type UserRole =
+  | "admin"
+  | "technician"
+  | "operator";
+
+export interface User {
+  id: string;
+
+  companyId: string;
+
+  firstName: string;
+  lastName: string;
+
+  email: string;
+
+  role: UserRole;
+
+  createdAt: string;
+}
+
+export interface Characterization {
+  id: string;
+
+  formulationId: string;
+
+  viscosityMpas: number;
+
+  conductivityUsCm: number;
+
+  densityGcm3: number;
+
+  surfaceTensionMnM?: number;
+
+  ph?: number;
+
+  measuredAt: string;
+
+  notes?: string;
+}
+
+export interface ProcessSetup {
+  id: string;
+
+  projectId: string;
+
+  machineModel: string;
+
+  injectorType: string;
+
+  collectorType: string;
+
+  needleGauge?: string;
+
+  needleCount?: number;
+
+  voltageKv: number;
+
+  flowRateMlH: number;
+
+  distanceMm: number;
+
+  temperatureC: number;
+
+  humidityPct: number;
+
+  createdAt: string;
+}
+
+export type ExperimentalRunStatus =
+  | "draft"
+  | "running"
+  | "completed"
+  | "failed";
+
+export interface ExperimentalRun {
+  id: string;
+
+  projectId: string;
+
+  formulationId: string;
+
+  characterizationId: string;
+
+  setupId: string;
+
+  operatorId?: string;
+
+  runNumber: string;
+
+  status: ExperimentalRunStatus;
+
+  startedAt: string;
+
+  finishedAt?: string;
+
+  notes?: string;
+}
+
+export interface AIAnalysis {
+  id: string;
+
+  runId: string;
+
+  summary: string;
+
+  recommendations: string[];
+
+  confidence: number;
+
+  createdAt: string;
+}
+
+export interface Report {
+  id: string;
+
+  runId: string;
+
+  title: string;
+
+  createdAt: string;
+
+  pdfUrl?: string;
+}
+
+
+========================================
+FILE: .\src\application\experiments\experiment.mapper.ts
+========================================
+
+import type {
+  Experiment as CanonicalExperiment,
+  ExperimentStatus,
+} from "../../core/types/experiment";
+
+import type {
+  ExperimentalSetup,
+} from "../../core/types/setup";
+
+import type {
+  ProcessRecord,
+  ProcessabilityGrade,
+} from "../../core/types/processRecord";
+
+import type {
+  DataQualityInfo,
+} from "../../core/types/dataQuality";
+
+import type {
+  Experiment as UiExperiment,
+  TelemetryRecord,
+} from "../../types";
+
+export interface CreateExperimentInput {
+  formulationId: string;
+
+  operationIdentifier: string;
+
+  machineModel: string;
+
+  injectorType: string;
+
+  collectorType: string;
+
+  voltageKv: number;
+
+  flowRateMlH: number;
+
+  distanceMm: number;
+
+  jetStabilityGrade: ProcessabilityGrade;
+
+  operatorComments: string;
+
+  sourceFile: string;
+
+  temperatureC?: number;
+
+  humidityPct?: number;
+}
+
+export interface CanonicalExperimentCreation {
+  experiment: CanonicalExperiment;
+
+  setup: ExperimentalSetup;
+
+  processRecord: ProcessRecord;
+}
+
+export interface ExperimentReadContext {
+  setupsById: ReadonlyMap<
+    string,
+    ExperimentalSetup
+  >;
+
+  processRecordsById: ReadonlyMap<
+    string,
+    ProcessRecord
+  >;
+}
+
+export function createCanonicalExperiment(
+  input: CreateExperimentInput,
+  projectId: string,
+  setup: ExperimentalSetup,
+  timestamp: string
+): CanonicalExperimentCreation {
+  const experimentId = createEntityId("EXP");
+  const processRecordId =
+    createEntityId("PROC");
+
+  const processRecord: ProcessRecord = {
+    id: processRecordId,
+    experimentId,
+    sequence: 0,
+    timestampSec: 0,
+
+    parameters: {
+      voltageKv: input.voltageKv,
+      flowRateMlH: input.flowRateMlH,
+      distanceMm: input.distanceMm,
+    },
+
+    environment:
+      input.temperatureC !== undefined ||
+      input.humidityPct !== undefined
+        ? {
+            temperatureC:
+              input.temperatureC,
+            humidityPct:
+              input.humidityPct,
+          }
+        : undefined,
+
+    evaluation: {
+      jetStabilityGrade:
+        input.jetStabilityGrade,
+
+      isStable:
+        input.jetStabilityGrade >= 4,
+
+      operatorComments:
+        normalizeOptionalText(
+          input.operatorComments
+        ),
+    },
+
+    createdAt: timestamp,
+  };
+
+  const experiment: CanonicalExperiment = {
+    id: experimentId,
+
+    projectId,
+
+    formulationId:
+      input.formulationId.trim(),
+
+    setupId: setup.id,
+
+    operationIdentifier:
+      input.operationIdentifier.trim(),
+
+    status: mapCreationStatus(),
+
+    processRecordIds: [
+      processRecordId,
+    ],
+
+    materialCharacterizationIds: [],
+
+    startedAt: timestamp,
+
+    notes:
+      normalizeOptionalText(
+        input.operatorComments
+      ),
+
+    createdAt: timestamp,
+
+    updatedAt: timestamp,
+
+    dataQuality:
+      createValidDataQuality(),
+  };
+
+  return {
+    experiment,
+    setup,
+    processRecord,
+  };
+}
+
+export function createExperimentalSetup(
+  input: CreateExperimentInput,
+  projectId: string,
+  timestamp: string
+): ExperimentalSetup {
+  return {
+    id: createEntityId("SETUP"),
+
+    projectId,
+
+    name: createSetupName(input),
+
+    machine: {
+      model: input.machineModel.trim(),
+      manufacturer: "Fluidnatek",
+    },
+
+    injector: {
+      type: input.injectorType.trim(),
+
+      needleCount:
+        resolveNeedleCount(
+          input.injectorType
+        ),
+
+      emitterCount:
+        resolveEmitterCount(
+          input.injectorType
+        ),
+    },
+
+    collector: {
+      type: input.collectorType.trim(),
+    },
+
+    createdAt: timestamp,
+
+    updatedAt: timestamp,
+
+    dataQuality:
+      createValidDataQuality(),
+  };
+}
+
+export function mapCanonicalExperimentToUi(
+  experiment: CanonicalExperiment,
+  context: ExperimentReadContext
+): UiExperiment {
+  const setup =
+    context.setupsById.get(
+      experiment.setupId
+    );
+
+  const processRecords =
+    experiment.processRecordIds
+      .map((processRecordId) =>
+        context.processRecordsById.get(
+          processRecordId
+        )
+      )
+      .filter(
+        (
+          processRecord
+        ): processRecord is ProcessRecord =>
+          processRecord !== undefined
+      )
+      .sort(
+        (first, second) =>
+          first.sequence - second.sequence
+      );
+
+  const primaryProcessRecord =
+    processRecords[0];
+
+  return {
+    id: experiment.id,
+
+    formulationId:
+      experiment.formulationId,
+
+    operationIdentifier:
+      experiment.operationIdentifier,
+
+    machineModel:
+      setup?.machine.model ??
+      "Unknown machine",
+
+    injectorType:
+      setup?.injector.type ??
+      "Unknown injector",
+
+    collectorType:
+      setup?.collector.type ??
+      "Unknown collector",
+
+    distanceMm:
+      primaryProcessRecord
+        ?.parameters.distanceMm ?? 0,
+
+    jetStabilityGrade:
+      primaryProcessRecord
+        ?.evaluation
+        ?.jetStabilityGrade ?? 0,
+
+    operatorComments:
+      primaryProcessRecord
+        ?.evaluation
+        ?.operatorComments ??
+      experiment.notes ??
+      "",
+
+    sourceFile:
+      resolveSourceFile(experiment),
+
+    ingestedAt:
+      experiment.createdAt,
+
+    telemetryData:
+      processRecords.map(
+        mapProcessRecordToTelemetry
+      ),
+
+    metadata: {
+      canonicalStatus:
+        experiment.status,
+
+      canonicalSetupId:
+        experiment.setupId,
+
+      canonicalProjectId:
+        experiment.projectId,
+    },
+  };
+}
+
+export function isEquivalentSetup(
+  setup: ExperimentalSetup,
+  input: CreateExperimentInput,
+  projectId: string
+): boolean {
+  return (
+    normalizeValue(
+      setup.projectId ?? ""
+    ) === normalizeValue(projectId) &&
+    normalizeValue(
+      setup.machine.model
+    ) ===
+      normalizeValue(
+        input.machineModel
+      ) &&
+    normalizeValue(
+      setup.injector.type
+    ) ===
+      normalizeValue(
+        input.injectorType
+      ) &&
+    normalizeValue(
+      setup.collector.type
+    ) ===
+      normalizeValue(
+        input.collectorType
+      )
+  );
+}
+
+function mapProcessRecordToTelemetry(
+  processRecord: ProcessRecord
+): TelemetryRecord {
+  return {
+    id: processRecord.id,
+
+    experimentId:
+      processRecord.experimentId,
+
+    timestampSec:
+      processRecord.timestampSec ?? 0,
+
+    voltageKv:
+      processRecord.parameters
+        .voltageKv ?? 0,
+
+    flowRateMlH:
+      processRecord.parameters
+        .flowRateMlH ?? 0,
+
+    temperatureC:
+      processRecord.environment
+        ?.temperatureC ?? 0,
+
+    humidityPct:
+      processRecord.environment
+        ?.humidityPct ?? 0,
+
+    distanceMm:
+      processRecord.parameters
+        .distanceMm ?? 0,
+  };
+}
+
+function createValidDataQuality(): DataQualityInfo {
+  return {
+    status: "valid",
+    warnings: [],
+    reviewed: false,
+  };
+}
+
+function mapCreationStatus(): ExperimentStatus {
+  return "running";
+}
+
+function resolveSourceFile(
+  experiment: CanonicalExperiment
+): string {
+  const sourceFile =
+    experiment.source &&
+    "fileName" in experiment.source &&
+    typeof experiment.source.fileName ===
+      "string"
+      ? experiment.source.fileName
+      : undefined;
+
+  return sourceFile ?? "Firestore";
+}
+
+function createSetupName(
+  input: CreateExperimentInput
+): string {
+  return [
+    input.machineModel.trim(),
+    input.injectorType.trim(),
+    input.collectorType.trim(),
+  ].join(" | ");
+}
+
+function resolveNeedleCount(
+  injectorType: string
+): number | undefined {
+  const normalized =
+    normalizeValue(injectorType);
+
+  if (normalized.includes("x8")) {
+    return 8;
+  }
+
+  if (
+    normalized.includes("single") ||
+    normalized.includes("coaxial")
+  ) {
+    return 1;
+  }
+
+  return undefined;
+}
+
+function resolveEmitterCount(
+  injectorType: string
+): number | undefined {
+  const normalized =
+    normalizeValue(injectorType);
+
+  if (normalized.includes("x4")) {
+    return 4;
+  }
+
+  if (
+    normalized.includes("single") ||
+    normalized.includes("coaxial")
+  ) {
+    return 1;
+  }
+
+  return undefined;
+}
+
+function normalizeOptionalText(
+  value: string
+): string | undefined {
+  const normalizedValue = value.trim();
+
+  return normalizedValue.length > 0
+    ? normalizedValue
+    : undefined;
+}
+
+function normalizeValue(
+  value: string
+): string {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function createEntityId(
+  prefix: string
+): string {
+  return `${prefix}_${crypto.randomUUID()}`;
+}
+
+
+========================================
+FILE: .\src\application\experiments\experiment.service.ts
+========================================
+
+import type {
+  Experiment as UiExperiment,
+} from "../../types";
+
+import type {
+  ExperimentalSetup,
+} from "../../core/types/setup";
+
+import { CollectionPaths } from "../../config/collectionPaths";
+import { experimentRepository } from "../../repositories/experiment.repository";
+import { formulationRepository } from "../../repositories/formulation.repository";
+import { projectRepository } from "../../repositories/project.repository";
+import { processRecordRepository } from "../../repositories/processRecord.repository";
+import { setupRepository } from "../../repositories/setup.repository";
+import {
+  firestoreService,
+  type FirestoreBatchOperation,
+} from "../../services/firestore.service";
+
+import {
+  createCanonicalExperiment,
+  createExperimentalSetup,
+  isEquivalentSetup,
+  mapCanonicalExperimentToUi,
+} from "./experiment.mapper";
+
+import type {
+  CreateExperimentInput,
+} from "./experiment.mapper";
+
+export interface ExperimentService {
+  getExperiments(): Promise<
+    UiExperiment[]
+  >;
+
+  createExperiment(
+    input: CreateExperimentInput
+  ): Promise<UiExperiment>;
+}
+
+class FirestoreExperimentService
+  implements ExperimentService
+{
+  async getExperiments(): Promise<
+    UiExperiment[]
+  > {
+    const [
+      experiments,
+      setups,
+      processRecords,
+    ] = await Promise.all([
+      experimentRepository.getAll(),
+      setupRepository.getAll(),
+      processRecordRepository.getAll(),
+    ]);
+
+    const setupsById = new Map(
+      setups.map((setup) => [
+        setup.id,
+        setup,
+      ])
+    );
+
+    const processRecordsById = new Map(
+      processRecords.map(
+        (processRecord) => [
+          processRecord.id,
+          processRecord,
+        ]
+      )
+    );
+
+    return experiments
+      .map((experiment) =>
+        mapCanonicalExperimentToUi(
+          experiment,
+          {
+            setupsById,
+            processRecordsById,
+          }
+        )
+      )
+      .sort((first, second) =>
+        second.ingestedAt.localeCompare(
+          first.ingestedAt
+        )
+      );
+  }
+
+  async createExperiment(
+    input: CreateExperimentInput
+  ): Promise<UiExperiment> {
+    validateInput(input);
+
+    const formulation =
+      await formulationRepository.getById(
+        input.formulationId.trim()
+      );
+
+    if (!formulation) {
+      throw new Error(
+        `Formulation "${input.formulationId}" does not exist in Firestore.`
+      );
+    }
+
+    const project =
+      await projectRepository.getById(
+        formulation.projectId
+      );
+
+    if (!project) {
+      throw new Error(
+        `Project "${formulation.projectId}" associated with the formulation does not exist in Firestore.`
+      );
+    }
+
+    const timestamp =
+      new Date().toISOString();
+
+    const setupResolution =
+      await resolveSetup(
+        input,
+        formulation.projectId,
+        timestamp
+      );
+
+    const creation =
+      createCanonicalExperiment(
+        input,
+        formulation.projectId,
+        setupResolution.setup,
+        timestamp
+      );
+
+    const operations: FirestoreBatchOperation[] =
+      [];
+
+    if (setupResolution.wasCreated) {
+      operations.push({
+        type: "set",
+        path: CollectionPaths.setups(),
+        id: creation.setup.id,
+        data: withoutId(creation.setup),
+      });
+    }
+
+    operations.push(
+      {
+        type: "set",
+        path:
+          CollectionPaths.processRecords(),
+        id: creation.processRecord.id,
+        data: withoutId(
+          creation.processRecord
+        ),
+      },
+      {
+        type: "set",
+        path:
+          CollectionPaths.experiments(),
+        id: creation.experiment.id,
+        data: withoutId(
+          creation.experiment
+        ),
+      }
+    );
+
+    await firestoreService.executeBatch(
+      operations
+    );
+
+    return mapCanonicalExperimentToUi(
+      creation.experiment,
+      {
+        setupsById: new Map([
+          [
+            creation.setup.id,
+            creation.setup,
+          ],
+        ]),
+
+        processRecordsById: new Map([
+          [
+            creation.processRecord.id,
+            creation.processRecord,
+          ],
+        ]),
+      }
+    );
+  }
+}
+
+interface SetupResolution {
+  setup: ExperimentalSetup;
+  wasCreated: boolean;
+}
+
+async function resolveSetup(
+  input: CreateExperimentInput,
+  projectId: string,
+  timestamp: string
+): Promise<SetupResolution> {
+  const existingSetups =
+    await setupRepository.getAll();
+
+  const equivalentSetup =
+    existingSetups.find((setup) =>
+      isEquivalentSetup(
+        setup,
+        input,
+        projectId
+      )
+    );
+
+  if (equivalentSetup) {
+    return {
+      setup: equivalentSetup,
+      wasCreated: false,
+    };
+  }
+
+  return {
+    setup: createExperimentalSetup(
+      input,
+      projectId,
+      timestamp
+    ),
+    wasCreated: true,
+  };
+}
+
+function validateInput(
+  input: CreateExperimentInput
+): void {
+  if (!input.formulationId.trim()) {
+    throw new Error(
+      "A formulation is required."
+    );
+  }
+
+  if (!input.operationIdentifier.trim()) {
+    throw new Error(
+      "An operation identifier is required."
+    );
+  }
+
+  if (!input.machineModel.trim()) {
+    throw new Error(
+      "A machine model is required."
+    );
+  }
+
+  if (!input.injectorType.trim()) {
+    throw new Error(
+      "An injector type is required."
+    );
+  }
+
+  if (!input.collectorType.trim()) {
+    throw new Error(
+      "A collector type is required."
+    );
+  }
+
+  if (
+    !Number.isFinite(input.voltageKv) ||
+    input.voltageKv < 0
+  ) {
+    throw new Error(
+      "Voltage must be a valid non-negative number."
+    );
+  }
+
+  if (
+    !Number.isFinite(input.flowRateMlH) ||
+    input.flowRateMlH < 0
+  ) {
+    throw new Error(
+      "Flow rate must be a valid non-negative number."
+    );
+  }
+
+  if (
+    !Number.isFinite(input.distanceMm) ||
+    input.distanceMm <= 0
+  ) {
+    throw new Error(
+      "Distance must be a valid positive number."
+    );
+  }
+
+  if (
+    input.jetStabilityGrade < 1 ||
+    input.jetStabilityGrade > 5
+  ) {
+    throw new Error(
+      "Jet stability grade must be between 1 and 5."
+    );
+  }
+}
+
+function withoutId<
+  TEntity extends { id: string }
+>(
+  entity: TEntity
+): Omit<TEntity, "id"> {
+  const {
+    id: _id,
+    ...entityData
+  } = entity;
+
+  return entityData;
+}
+
+export const experimentService: ExperimentService =
+  new FirestoreExperimentService();

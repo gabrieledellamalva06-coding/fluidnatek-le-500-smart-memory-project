@@ -15,6 +15,10 @@ export interface SimilarityQuery {
   temperatureC?: number;
   humidityPct?: number;
   distanceMm?: number;
+  solidsContentPct?: number;
+  polymerMaterialId?: string;
+  solvent1MaterialId?: string;
+  solvent2MaterialId?: string;
 }
 
 export interface HistoricalExperimentContext {
@@ -37,7 +41,14 @@ export interface NumericSummary {
   minimum: number;
   maximum: number;
   average: number;
+  median: number;
+  sampleSize: number;
 }
+
+export type RecommendationAvailability =
+  | "available"
+  | "low_confidence"
+  | "insufficient_data";
 
 export interface HistoricalProcessWindow {
   flowRateMlH?: NumericSummary;
@@ -49,6 +60,10 @@ export interface HistoricalProcessWindow {
 }
 
 export interface HistoricalAssessment {
+  status: RecommendationAvailability;
+  confidence: number;
+  minimumRequiredExperiments: number;
+  sourceExperimentIds: string[];
   total: number;
   graded: number;
   grade4: number;
@@ -58,5 +73,6 @@ export interface HistoricalAssessment {
   recommendation: Partial<Record<keyof HistoricalProcessWindow, number>>;
   warnings: string[];
   comments: string[];
+  adjustments: string[];
   interpretation: string;
 }

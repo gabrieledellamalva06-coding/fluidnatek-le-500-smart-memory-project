@@ -180,6 +180,8 @@ export function importMaterialRegistry(data: any) {
 
 export function saveMaterialRegistry() {
 
+  if (typeof localStorage === "undefined") return;
+
   localStorage.setItem(
 
     STORAGE_KEY,
@@ -191,6 +193,8 @@ export function saveMaterialRegistry() {
 }
 
 export function loadMaterialRegistry() {
+
+  if (typeof localStorage === "undefined") return;
 
   const raw = localStorage.getItem(STORAGE_KEY);
 

@@ -152,6 +152,7 @@ export function getRegistryStatistics() {
 const STORAGE_KEY = "fluidnatek_parameter_registry";
 
 export function saveRegistry() {
+  if (typeof localStorage === "undefined") return;
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify(exportParameterRegistry())
@@ -177,6 +178,7 @@ export function registerCustomAlias(
 }
 
 export function loadRegistry() {
+  if (typeof localStorage === "undefined") return;
   const raw = localStorage.getItem(STORAGE_KEY);
 
   if (!raw) return;

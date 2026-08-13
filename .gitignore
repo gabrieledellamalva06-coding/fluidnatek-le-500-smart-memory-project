@@ -8,3 +8,6 @@ coverage/
 !.env.example
 
 fluidnatek-ai-process-assistant/
+.vercel
+.tmp-tests/
+.tmp-dev/

@@ -29,6 +29,25 @@ body {
 }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+.fnk-light-app button { color: #0f172a; }
+.fnk-light-app button[class*="bg-blue-6"],
+.fnk-light-app button[class*="bg-blue-7"],
+.fnk-light-app button[class*="bg-emerald-6"],
+.fnk-light-app button[class*="bg-teal-"] { color: #ffffff; }
+.fnk-light-app button:disabled { cursor: not-allowed; opacity: 0.6; }
+.fnk-light-app ::placeholder { color: #64748b; opacity: 1; }
+/* Light application contrast baseline: muted labels remain readable on white/slate panels. */
+.fnk-light-app [class*="text-slate-400"],
+.fnk-light-app [class*="text-gray-400"],
+.fnk-light-app [class*="text-zinc-400"] { color: #475569 !important; }
+.fnk-light-app [class*="text-slate-500"],
+.fnk-light-app [class*="text-gray-500"],
+.fnk-light-app [class*="text-zinc-500"] { color: #475569 !important; }
+.fnk-light-app [class*="text-slate-600"],
+.fnk-light-app [class*="text-gray-600"],
+.fnk-light-app [class*="text-zinc-600"] { color: #334155 !important; }
+.fnk-light-app [class*="text-blue-500"] { color: #1d4ed8 !important; }
+.fnk-light-app [class*="text-emerald-500"] { color: #047857 !important; }
 ::selection { background: rgba(34, 211, 238, 0.22); color: #ecfeff; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

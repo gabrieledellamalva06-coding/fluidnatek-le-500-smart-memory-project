@@ -41,11 +41,12 @@ Fluidnatek LE-500 Smart Memory is designed to:
 
 ## Current Capabilities
 
-### Cloud persistence
+### Local application and persistence
 
-Projects, formulations and experiments are persisted in **Google Firestore** through a repository-based data layer.
-
-The application does not rely on browser local storage as the final source of truth for industrial data.
+The application runs locally in the browser, while typed repositories persist data to
+Firestore when Firebase is configured. A local persistence adapter remains available
+for offline compatibility and future desktop packaging; it is not a substitute for
+the configured Firestore source of truth.
 
 ### Adaptive Excel Import Engine
 
@@ -177,9 +178,11 @@ This separation must remain intact as the product evolves.
 
 ---
 
-## Firebase and Firestore
+## Database adapter
 
-The application uses Firebase as its cloud platform and Firestore as the persistent database.
+Firestore is the current persistent backend. Repository interfaces isolate storage so
+a future relational adapter such as MySQL can be introduced without rewriting the UI
+or domain engine. No database migration is performed automatically.
 
 Firebase configuration is supplied through environment variables. Secrets and environment-specific identifiers must not be committed to the repository.
 
@@ -478,6 +481,10 @@ Canonical TypeScript domain models
 
 ## Current Project Status
 
+The code-verified status and current limitations are maintained in
+[`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md). In particular, Excel
+Firestore persistence and real DataHub telemetry are not yet production-connected.
+
 | Area                       | Status                                    |
 | -------------------------- | ----------------------------------------- |
 | Core architecture          | Implemented                               |
@@ -533,7 +540,9 @@ docs/
     └── dashboard.png
 ```
 
-`CLAUDE.md` is not used by the running application. It is an engineering-instruction file for AI-assisted development tools. It should describe architecture rules, module responsibilities, TypeScript standards and safe modification practices.
+See [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) for installation, the operator workflow,
+Excel import, Firestore collections and verification commands. See
+[`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) for verified limits.
 
 ---
 

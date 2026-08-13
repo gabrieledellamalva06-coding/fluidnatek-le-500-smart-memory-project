@@ -76,6 +76,18 @@ export function calculateSimilarityScore(
       weight: 5,
       match: exactTextMatch,
     },
+    {
+      experimentValue: context.formulation?.polymerMaterialId,
+      queryValue: query.polymerMaterialId,
+      weight: 15,
+      match: exactTextMatch,
+    },
+    {
+      experimentValue: context.formulation?.solvent1MaterialId,
+      queryValue: query.solvent1MaterialId,
+      weight: 10,
+      match: exactTextMatch,
+    },
   ] as const;
 
   for (const field of contextFields) {
@@ -87,6 +99,12 @@ export function calculateSimilarityScore(
   }
 
   const numericRules: readonly NumericFieldRule[] = [
+    {
+      experimentValue: (context) => context.formulation?.solidsContentPct,
+      queryValue: (value) => value.solidsContentPct,
+      weight: 10,
+      tolerance: 3,
+    },
     {
       experimentValue: getAverageFlow,
       queryValue: (value) => value.flowRateMlH,

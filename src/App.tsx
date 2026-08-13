@@ -21,6 +21,7 @@ import { experimentService } from "./application/experiments/experiment.service"
 import { setupService } from "./application/setups/setup.service";
 import { solutionCharacterizationService } from "./application/characterizations/characterization.service";
 import {materialService,type CreateMaterialInput,} from "./application/materials/material.service";
+import { SEED_PROJECTS, SEED_FORMULATIONS, SEED_EXPERIMENTS } from "./seedData";
 const ACTIVE_PROJECT_KEY = "fluidnatek_active_project_id";
 
 function getStoredLanguage(): Language {
@@ -32,9 +33,31 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unexpected error.";
 }
 
+function resolveImportedFormulationId(parsed: ParsedExcelResult, formulations: Formulation[], projectId: string): string {
+  const polymer = (parsed.polymerName ?? "").trim().toLowerCase();
+  const solvent = (parsed.solventName ?? "").trim().toLowerCase();
+  const match = formulations.find((formulation) => formulation.projectId === projectId
+    && (!polymer || formulation.polymerName.toLowerCase().includes(polymer))
+    && (!solvent || formulation.solvent.toLowerCase().includes(solvent)));
+  return match?.id ?? `IMPORTED-${projectId}`;
+}
+
+function findMaterialByReference(reference: string | undefined, materials: Material[], category: "polymer" | "solvent"): Material | undefined {
+  const value = (reference ?? "").trim().toLocaleLowerCase();
+  if (!value) return undefined;
+  return materials.find((item) => item.category === category && [item.canonicalName, ...item.aliases, ...item.commercialNames, ...(item.productCodes ?? [])]
+    .some((candidate) => candidate.trim().toLocaleLowerCase() === value || candidate.trim().toLocaleLowerCase().includes(value) || value.includes(candidate.trim().toLocaleLowerCase())));
+}
+
+function readImportedFormulaName(parsed: ParsedExcelResult): string {
+  const entry = Object.entries(parsed.metadata).find(([key]) => key.trim().toLocaleLowerCase() === "formula");
+  return entry?.[1]?.trim() || parsed.operationIdentifier || "Imported formulation";
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<MainView>("PROJECTS");
-  const [lang, setLang] = useState<Language>(getStoredLanguage);
+  const lang: Language = "en";
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [formulations, setFormulations] = useState<Formulation[]>([]);
@@ -63,14 +86,17 @@ export default function App() {
           experimentService.getExperiments(),
         ]);
         if (cancelled) return;
-        setProjects(loadedProjects);
+        const useSeedProjects = loadedProjects.length === 0;
+        const useSeedFormulations = loadedFormulations.length === 0;
+        const useSeedExperiments = loadedExperiments.length === 0;
+        setProjects(useSeedProjects ? SEED_PROJECTS : loadedProjects);
         setMaterials(loadedMaterials);
-        setFormulations(loadedFormulations);
+        setFormulations(useSeedFormulations ? SEED_FORMULATIONS : loadedFormulations);
         setCharacterizations(loadedCharacterizations);
         setSetups(loadedSetups);
-        setExperiments(loadedExperiments);
+        setExperiments(useSeedExperiments ? SEED_EXPERIMENTS : loadedExperiments);
       } catch (error) {
-        if (!cancelled) setDataError(`Unable to load Firestore data: ${getErrorMessage(error)}`);
+        if (!cancelled) setDataError(`Unable to load local application data: ${getErrorMessage(error)}`);
       } finally {
         if (!cancelled) setIsDataLoading(false);
       }
@@ -79,7 +105,6 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => { localStorage.setItem("fluidnatek_lang", lang); }, [lang]);
 
   const activeProject = useMemo(
     () => projects.find((project) => project.id === activeProjectId) ?? null,
@@ -186,9 +211,57 @@ const handleAddMaterial = async (
     }
   };
 
-  const handleImportExperiments = (parsedList: ParsedExcelResult[], targetProjectId: string) => {
-    console.info("Historical import review", { parsedList, targetProjectId });
-    setDataError("Historical import is in review mode. No data was written.");
+  const handleImportExperiments = async (parsedList: ParsedExcelResult[], targetProjectId: string): Promise<void> => {
+    const imported: Experiment[] = [];
+    const skipped: string[] = [];
+    const createdFormulations = new Map<string, Formulation>();
+    for (const parsed of parsedList) {
+      const telemetry = parsed.telemetryData[0];
+      let formulationId = resolveImportedFormulationId(parsed, formulations, targetProjectId);
+      const existingFormulation = formulations.find((item) => item.id === formulationId);
+      if (!existingFormulation) {
+        const polymer = findMaterialByReference(parsed.polymerName, materials, "polymer");
+        const solvent = findMaterialByReference(parsed.solventName, materials, "solvent");
+        const key = `${targetProjectId}:${(parsed.polymerName || "").trim().toLocaleLowerCase()}:${(parsed.solventName || "").trim().toLocaleLowerCase()}`;
+        const cached = createdFormulations.get(key);
+        if (cached) formulationId = cached.id;
+        else if (polymer && solvent) {
+          const created = await formulationService.createFormulation({
+            projectId: targetProjectId,
+            name: readImportedFormulaName(parsed),
+            polymerName: polymer.canonicalName,
+            polymerMaterialId: polymer.id,
+            solvent: solvent.canonicalName,
+            solvent1Name: solvent.canonicalName,
+            solvent1MaterialId: solvent.id,
+            notes: `Created from ${parsed.sourceFile}; original reference: ${parsed.operationIdentifier}`,
+            solidsContentPct: 0,
+            viscosityMpas: 0,
+            conductivityUsCm: 0,
+            densityGcm3: 0,
+            materialBatchIds: [],
+          });
+          createdFormulations.set(key, created);
+          setFormulations((previous) => [...previous, created]);
+          formulationId = created.id;
+        }
+      }
+      const grade = parsed.jetStabilityGrade;
+      if (!telemetry || !formulations.some((item) => item.id === formulationId) || grade === undefined || grade < 1 || grade > 4 || !Number.isFinite(telemetry.voltageKv) || !Number.isFinite(telemetry.flowRateMlH) || !Number.isFinite(telemetry.distanceMm)) {
+        skipped.push(parsed.operationIdentifier || parsed.sourceFile);
+        continue;
+      }
+      const created = await experimentService.createExperiment({
+        formulationId, operationIdentifier: parsed.operationIdentifier, machineModel: parsed.metadata.machine || parsed.metadata.machineModel || "Imported machine",
+        injectorType: parsed.injectorType || "Imported injector", collectorType: parsed.collectorType || "Imported collector",
+        voltageKv: telemetry.voltageKv, collectorVoltageKv: telemetry.collectorVoltageKv, flowRateMlH: telemetry.flowRateMlH,
+        distanceMm: telemetry.distanceMm, drumSpeedRpm: telemetry.drumSpeedRpm, jetStabilityGrade: grade as 1 | 2 | 3 | 4,
+        operatorComments: parsed.operatorComments, sourceFile: parsed.sourceFile, temperatureC: telemetry.temperatureC, humidityPct: telemetry.humidityPct,
+      });
+      imported.push(created);
+    }
+    setExperiments((previous) => [...imported, ...previous]);
+    setDataError(`Imported ${imported.length} run${imported.length === 1 ? "" : "s"} into Firestore.${skipped.length > 0 ? ` Skipped ${skipped.length} incomplete or invalid row${skipped.length === 1 ? "" : "s"}.` : ""}`);
   };
 
   const renderMainView = (): React.ReactNode => {
@@ -210,21 +283,21 @@ const handleAddMaterial = async (
         }
         return <RunConfig project={activeProject} formulation={selectedFormulation} characterization={selectedCharacterization} setup={selectedSetup} projects={projects} formulations={formulations} characterizations={characterizations} setups={setups} experiments={experiments} onAddExperiment={handleAddExperiment} lang={lang} />;
       case "HISTORICAL_EXPERIMENTS":
-        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} />;
+        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} loading={isDataLoading} error={dataError} />;
       case "DATABASE_MANAGEMENT":
         return <ExcelImport projects={projects} formulations={formulations} onImportExperiment={handleImportExperiments} lang={lang} />;
     }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100 font-sans antialiased">
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} projectsCount={projects.length} experimentsCount={experiments.length} lang={lang} onLanguageChange={setLang} activeProjectSelected={Boolean(activeProject)} formulationSelected={Boolean(selectedFormulation)} setupSelected={Boolean(selectedSetup)} />
+    <div className="fnk-light-app flex h-screen overflow-hidden bg-slate-100 font-sans antialiased text-slate-950">
+      <Sidebar currentView={currentView} onViewChange={setCurrentView} projectsCount={projects.length} experimentsCount={experiments.length} collapsed={isSidebarCollapsed} onToggleCollapsed={() => setIsSidebarCollapsed((value) => !value)} activeProjectSelected={Boolean(activeProject)} formulationSelected={Boolean(selectedFormulation)} setupSelected={Boolean(selectedSetup)} />
       <div className="relative flex h-full min-w-0 flex-1 flex-col">
         <div className="flex min-h-[64px] items-center justify-between border-b border-slate-200 bg-white px-6">
           <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Current Project</p><p className="mt-0.5 text-sm font-bold text-slate-800">{activeProject?.name || "No project selected"}</p></div>
           {activeProject && <button type="button" onClick={() => setCurrentView("PROJECTS")} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600">Change Project</button>}
         </div>
-        {isDataLoading && <div className="border-b border-blue-100 bg-blue-50 px-6 py-3 text-sm text-blue-700">Loading data from Firestore…</div>}
+        {isDataLoading && <div className="border-b border-blue-100 bg-blue-50 px-6 py-3 text-sm text-blue-700">Loading local application data…</div>}
         {dataError && <div className="flex items-center justify-between gap-4 border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700"><span>{dataError}</span><button type="button" onClick={() => setDataError(null)} className="rounded-lg border border-red-200 bg-white px-3 py-1 text-xs font-semibold">Close</button></div>}
         {renderMainView()}
       </div>

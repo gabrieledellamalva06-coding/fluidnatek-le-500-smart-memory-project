@@ -25,39 +25,23 @@ export default function FluidnatekLogo({
   // They are connected smoothly as an organic liquid metaball.
   const LogoSymbol = () => (
     <svg
-      viewBox="0 0 160 160"
+      viewBox="0 0 200 200"
       className="w-full h-full select-none"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        {/* Glow effect for high-tech premium feel */}
-        <filter id="logo-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="5" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
+        <clipPath id="fluidnatek-symbol-clip">
+          <circle cx="100" cy="100" r="96" />
+        </clipPath>
       </defs>
 
-      {/* Blue Metaball Capsule: curves from top-right down to middle-left */}
-      <path
-        d="M 105 55 Q 83 75 62 95"
-        stroke={blueColor}
-        strokeWidth="52"
-        strokeLinecap="round"
-        style={{ filter: "drop-shadow(0px 3px 6px rgba(13, 67, 115, 0.4))" }}
-      />
-
-      {/* Teal Metaball Capsule: curves from middle-left down to bottom-right */}
-      <path
-        d="M 62 95 Q 81 113 100 130"
-        stroke={tealColor}
-        strokeWidth="52"
-        strokeLinecap="round"
-        style={{ filter: "drop-shadow(0px 4px 8px rgba(0, 178, 178, 0.35))" }}
-      />
-
-      {/* Subtle organic shine accent at overlap */}
-      <circle cx="81" cy="95" r="4" fill="#ffffff" opacity="0.15" />
+      <circle cx="100" cy="100" r="97" fill="#ffffff" stroke={blueColor} strokeWidth="6" />
+      <g clipPath="url(#fluidnatek-symbol-clip)">
+        <path d="M113 43c20 0 33 14 32 32-1 16-12 27-27 31-10 3-17 10-22 20l-35-26c8-10 15-20 18-31 4-15 16-26 34-26Z" fill={blueColor} />
+        <path d="M77 78c14 0 25 7 32 18 6 10 13 15 24 18 15 4 26 17 26 32 0 19-14 33-34 33-17 0-29-10-35-25-4-10-10-16-21-19-13-4-22-15-22-29 0-16 12-28 30-28Z" fill={tealColor} />
+      </g>
+      <text x="143" y="51" fill={blueColor} fontSize="14" fontFamily="Arial, sans-serif">®</text>
     </svg>
   );
 
@@ -100,16 +84,13 @@ export default function FluidnatekLogo({
 
   // Horizontal Logo (Default)
   return (
-    <div className={`flex items-center gap-3.5 ${className}`}>
-      {/* Symbol on the left */}
-      <div className="w-12 h-12 shrink-0">
+    <div className={`flex items-center gap-3 ${className}`}>
+      <div className="h-12 w-12 shrink-0">
         <LogoSymbol />
       </div>
-      
-      {/* Text on the right */}
       <div className="flex flex-col select-none">
         <div className="flex items-start leading-none">
-          <span className="text-2xl font-black tracking-tight font-sans flex items-center" style={{ color: textColor }}>
+          <span className="text-2xl font-black tracking-tight font-sans flex items-center" style={{ color: lightMode ? blueColor : textColor }}>
             Flu
             {/* Custom styled 'i' with a slanted capsule dot like the real logo */}
             <span className="relative flex flex-col items-center px-[1px]">
@@ -124,10 +105,10 @@ export default function FluidnatekLogo({
           <span className="text-[8px] font-bold align-super ml-0.5" style={{ color: blueColor }}>®</span>
         </div>
         
-        <div className="flex items-center justify-between mt-1 text-[9px] font-semibold tracking-[0.18em] uppercase" style={{ color: subtitleColor }}>
+        <div className="flex items-center justify-between mt-1 text-[9px] font-semibold tracking-[0.18em] uppercase" style={{ color: lightMode ? blueColor : subtitleColor }}>
           <span>One Step Ahead</span>
-          <span className="text-[8px] text-zinc-500 font-sans tracking-normal ml-3 lowercase font-normal">
-            by <strong className="font-semibold text-zinc-400">Bioinicia</strong>
+          <span className="text-[8px] font-sans tracking-normal ml-3 lowercase font-normal" style={{ color: lightMode ? "#334155" : "#71717a" }}>
+            by <strong className="font-semibold" style={{ color: lightMode ? blueColor : "#a1a1aa" }}>Bioinicia</strong>
           </span>
         </div>
       </div>

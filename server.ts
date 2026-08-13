@@ -172,6 +172,14 @@ async function startServer() {
       return res.status(400).json({ error: "Polimero e solvente sono richiesti." });
     }
 
+    // Numeric process settings must come from the typed historical recommendation
+    // engine. Gemini and heuristic defaults are intentionally not allowed to invent
+    // operating values when validated source evidence is unavailable.
+    return res.status(422).json({
+      code: "HISTORICAL_EVIDENCE_REQUIRED",
+      error: "Numeric recommendations are available only from validated historical experiments in Smart Memory.",
+    });
+
     const gemini = getGeminiClient();
 
     // Cache: stessa formulazione → risposta memorizzata (no nuova chiamata AI).

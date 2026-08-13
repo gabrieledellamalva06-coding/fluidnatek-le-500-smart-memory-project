@@ -13,9 +13,9 @@ import { projectRepository } from "../../repositories/project.repository";
 import { processRecordRepository } from "../../repositories/processRecord.repository";
 import { setupRepository } from "../../repositories/setup.repository";
 import {
-  firestoreService,
-  type FirestoreBatchOperation,
-} from "../../services/firestore.service";
+  localPersistenceService,
+} from "../../services/local.persistence.service";
+import { firestoreService, type FirestoreBatchOperation } from "../../services/firestore.service";
 
 import {
   createCanonicalExperiment,
@@ -168,6 +168,9 @@ class FirestoreExperimentService
     await firestoreService.executeBatch(
       operations
     );
+    await localPersistenceService.executeBatch(operations.map((operation) => operation.type === "set"
+      ? { ...operation, data: operation.data }
+      : operation));
 
     return mapCanonicalExperimentToUi(
       creation.experiment,

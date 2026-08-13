@@ -14,7 +14,7 @@ import type { Language } from "../lib/translations";
 interface ExcelImportProps {
   projects: Project[];
   formulations: Formulation[];
-  onImportExperiment: (parsedList: ParsedExcelResult[], targetProjectId: string) => void;
+  onImportExperiment: (parsedList: ParsedExcelResult[], targetProjectId: string) => Promise<void>;
   lang: Language;
 }
 
@@ -43,8 +43,16 @@ export default function ExcelImport({ projects, onImportExperiment }: ExcelImpor
       for (const file of Array.from(files)) {
         parsed.push(...(await parseElectrospinningExcel(file)));
       }
-      setResults((previous) => [...previous, ...parsed]);
-      onImportExperiment(parsed, selectedProjectId);
+      setResults((previous) => {
+        const merged = [...previous, ...parsed];
+        const unique = new Map<string, ParsedExcelResult>();
+        for (const item of merged) {
+          const key = `${item.sourceFile.trim().toLocaleLowerCase()}::${item.operationIdentifier.trim().toLocaleLowerCase()}`;
+          if (!unique.has(key)) unique.set(key, item);
+        }
+        return [...unique.values()];
+      });
+      await onImportExperiment(parsed, selectedProjectId);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to parse the selected file.");
     } finally {
@@ -70,7 +78,7 @@ export default function ExcelImport({ projects, onImportExperiment }: ExcelImpor
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-blue-800">
               <li>Choose the project that owns the historical runs.</li>
               <li>Upload one or more Fluidnatek Excel files.</li>
-              <li>Review the detected runs below before using them as historical memory.</li>
+              <li>Review the detected runs below; valid rows are persisted to Firestore.</li>
             </ol>
           </section>
         )}
