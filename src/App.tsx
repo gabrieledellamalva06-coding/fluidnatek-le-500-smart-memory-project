@@ -283,7 +283,7 @@ const handleAddMaterial = async (
         }
         return <RunConfig project={activeProject} formulation={selectedFormulation} characterization={selectedCharacterization} setup={selectedSetup} projects={projects} formulations={formulations} characterizations={characterizations} setups={setups} experiments={experiments} onAddExperiment={handleAddExperiment} lang={lang} />;
       case "HISTORICAL_EXPERIMENTS":
-        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} loading={isDataLoading} error={dataError} />;
+        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} loading={isDataLoading} error={dataError} />;
       case "DATABASE_MANAGEMENT":
         return <ExcelImport projects={projects} formulations={formulations} onImportExperiment={handleImportExperiments} lang={lang} />;
     }

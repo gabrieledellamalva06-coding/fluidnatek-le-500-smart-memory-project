@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import type { Experiment, Formulation, Project } from "../types";
+import type { Material } from "../core/types/material";
 
 import {
   adaptHistoricalExperiments,
@@ -34,6 +35,7 @@ interface HistoricalExperimentsProps {
   experiments: Experiment[];
   projects: Project[];
   formulations: Formulation[];
+  materials?: Material[];
   loading?: boolean;
   error?: string | null;
 }
@@ -42,6 +44,7 @@ export default function HistoricalExperiments({
   experiments,
   projects,
   formulations,
+  materials = [],
   loading = false,
   error = null,
 }: HistoricalExperimentsProps) {
@@ -62,8 +65,9 @@ export default function HistoricalExperiments({
         experiments,
         formulations,
         projects,
+        materials,
       }),
-    [experiments, formulations, projects]
+    [experiments, formulations, projects, materials]
   );
 
   const options = useMemo(

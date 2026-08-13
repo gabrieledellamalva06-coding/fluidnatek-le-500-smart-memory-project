@@ -4,6 +4,7 @@ import type {
   Project,
   TelemetryRecord,
 } from "../../types";
+import type { Material } from "../../core/types/material";
 
 import {
   normalizeDisplayText,
@@ -56,12 +57,14 @@ export interface HistoricalExperimentAdapterInput {
   experiments: readonly Experiment[];
   formulations: readonly Formulation[];
   projects: readonly Project[];
+  materials?: readonly Material[];
 }
 
 export function adaptHistoricalExperiments({
   experiments,
   formulations,
   projects,
+  materials = [],
 }: HistoricalExperimentAdapterInput): HistoricalExperimentRecord[] {
   const formulationById = new Map(
     formulations.map((formulation) => [formulation.id, formulation])
@@ -70,6 +73,7 @@ export function adaptHistoricalExperiments({
   const projectById = new Map(
     projects.map((project) => [project.id, project])
   );
+  const materialById = new Map(materials.map((material) => [material.id, material]));
 
   return experiments.map((experiment) => {
     const formulation =
@@ -83,6 +87,7 @@ export function adaptHistoricalExperiments({
       formulation,
       project,
       projectId,
+      materialById,
     });
   });
 }
@@ -92,6 +97,7 @@ interface AdaptHistoricalExperimentInput {
   formulation: Formulation | null;
   project: Project | null;
   projectId: string;
+  materialById: ReadonlyMap<string, Material>;
 }
 
 function adaptHistoricalExperiment({
@@ -99,6 +105,7 @@ function adaptHistoricalExperiment({
   formulation,
   project,
   projectId,
+  materialById,
 }: AdaptHistoricalExperimentInput): HistoricalExperimentRecord {
   const telemetry = selectRepresentativeTelemetry(
     experiment.telemetryData
@@ -116,18 +123,20 @@ function adaptHistoricalExperiment({
     normalizeDisplayText(experiment.formulationId);
 
   const polymer = normalizePolymerName(formulation?.polymerName);
+  const polymerMaterial = formulation?.polymerMaterialId ? materialById.get(formulation.polymerMaterialId) : undefined;
   const polymerType = readMetadataValue(experiment, [
     "polymerType",
     "polymer_type",
     "canonicalPolymerType",
-  ]);
+  ]) || polymerMaterial?.polymerFamily || polymerMaterial?.category || "";
 
   const solvent = resolveSolventDescription(formulation);
+  const solventMaterial = formulation?.solvent1MaterialId ? materialById.get(formulation.solvent1MaterialId) : undefined;
   const solventType = readMetadataValue(experiment, [
     "solventType",
     "solvent_type",
     "canonicalSolventType",
-  ]);
+  ]) || solventMaterial?.solventFamily || solventMaterial?.category || "";
 
   const machine = normalizeMachineModel(experiment.machineModel);
   const grade = normalizeGrade(experiment.jetStabilityGrade);
