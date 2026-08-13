@@ -70,6 +70,8 @@ export default function App() {
   const [selectedSetupId, setSelectedSetupId] = useState("");
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<"loading" | "firestore" | "error">("loading");
+  const [lastDataLoadAt, setLastDataLoadAt] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,8 +94,13 @@ export default function App() {
         setCharacterizations(loadedCharacterizations);
         setSetups(loadedSetups);
         setExperiments(loadedExperiments.length === 0 ? SEED_EXPERIMENTS : loadedExperiments);
+        setDataSource("firestore");
+        setLastDataLoadAt(new Date().toLocaleTimeString());
       } catch (error) {
-        if (!cancelled) setDataError(`Unable to load shared Firestore data. ${getErrorMessage(error)}`);
+        if (!cancelled) {
+          setDataSource("error");
+          setDataError(`Unable to load shared Firestore data. ${getErrorMessage(error)}`);
+        }
       } finally {
         if (!cancelled) setIsDataLoading(false);
       }
@@ -294,7 +301,8 @@ const handleAddMaterial = async (
           <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Current Project</p><p className="mt-0.5 text-sm font-bold text-slate-800">{activeProject?.name || "No project selected"}</p></div>
           {activeProject && <button type="button" onClick={() => setCurrentView("PROJECTS")} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600">Change Project</button>}
         </div>
-        {isDataLoading && <div className="border-b border-blue-100 bg-blue-50 px-6 py-3 text-sm text-blue-700">Loading local application data…</div>}
+        {isDataLoading && <div className="border-b border-blue-100 bg-blue-50 px-6 py-3 text-sm text-blue-700">Loading shared Firestore data…</div>}
+        {!isDataLoading && dataSource === "firestore" && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200 bg-emerald-50 px-6 py-2 text-xs font-semibold text-emerald-800"><span>Connected to shared Firestore · {projects.length} projects · {experiments.length} experiments · {materials.length} materials · {formulations.length} formulations · {setups.length} setups{lastDataLoadAt ? ` · Updated ${lastDataLoadAt}` : ""}</span><div className="flex items-center gap-3"><span>{import.meta.env.VITE_FIREBASE_PROJECT_ID || "Firebase project unavailable"}</span><button type="button" onClick={() => window.location.reload()} className="rounded-lg border border-emerald-300 bg-white px-3 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100">Refresh shared data</button></div></div>}
         {dataError && <div className="flex items-center justify-between gap-4 border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700"><span>{dataError}</span><button type="button" onClick={() => setDataError(null)} className="rounded-lg border border-red-200 bg-white px-3 py-1 text-xs font-semibold">Close</button></div>}
         {renderMainView()}
       </div>

@@ -127,7 +127,7 @@ export default function Sidebar({
         {!collapsed && <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Experiment Workflow</p>}
         <div className="space-y-1.5">{workflowItems.map(renderItem)}</div>
 
-        <div className="mt-7">
+        <div className="sticky bottom-0 mt-7 border-t border-slate-100 bg-white pt-4">
           {!collapsed && <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Data & History</p>}
           <div className="space-y-1.5">
             {renderItem({
