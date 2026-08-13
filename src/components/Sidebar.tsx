@@ -123,7 +123,7 @@ export default function Sidebar({
         {collapsed ? <FluidnatekLogo variant="symbol" className="h-10" lightMode /> : <FluidnatekLogo variant="horizontal" className="h-12" lightMode />}
       </header>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-5">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
         {!collapsed && <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Experiment Workflow</p>}
         <div className="space-y-1.5">{workflowItems.map(renderItem)}</div>
 
