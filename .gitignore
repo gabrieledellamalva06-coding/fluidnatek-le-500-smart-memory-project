@@ -6,6 +6,16 @@ coverage/
 *.log
 .env*
 !.env.example
+# Never commit local credentials or cloud service-account material.
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+service-account*.json
+firebase-adminsdk*.json
+google-credentials*.json
+*.pem
+*.key
 
 fluidnatek-ai-process-assistant/
 .vercel
