@@ -358,11 +358,11 @@ function mapProcessRecordToTelemetry(
 
     temperatureC:
       processRecord.environment
-        ?.temperatureC ?? 0,
+        ?.temperatureC,
 
     humidityPct:
       processRecord.environment
-        ?.humidityPct ?? 0,
+        ?.humidityPct,
 
     distanceMm:
       processRecord.parameters
@@ -473,4 +473,17 @@ function createEntityId(
   prefix: string
 ): string {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+export interface UpdateExperimentInput {
+  operationIdentifier?: string;
+  voltageKv?: number;
+  collectorVoltageKv?: number;
+  flowRateMlH?: number;
+  distanceMm?: number;
+  drumSpeedRpm?: number;
+  temperatureC?: number;
+  humidityPct?: number;
+  jetStabilityGrade?: ProcessabilityGrade;
+  operatorComments?: string;
 }

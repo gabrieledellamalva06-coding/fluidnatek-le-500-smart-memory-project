@@ -26,6 +26,7 @@ import {
 
 import type {
   CreateExperimentInput,
+  UpdateExperimentInput,
 } from "./experiment.mapper";
 
 export interface ExperimentService {
@@ -35,6 +36,11 @@ export interface ExperimentService {
 
   createExperiment(
     input: CreateExperimentInput
+  ): Promise<UiExperiment>;
+
+  updateExperiment(
+    id: string,
+    input: UpdateExperimentInput
   ): Promise<UiExperiment>;
 }
 
@@ -190,6 +196,43 @@ class FirestoreExperimentService
         ]),
       }
     );
+  }
+
+  async updateExperiment(id: string, input: UpdateExperimentInput): Promise<UiExperiment> {
+    const experiment = await experimentRepository.getById(id);
+    if (!experiment) throw new Error(`Experiment "${id}" does not exist in Firestore.`);
+    const processRecordId = experiment.processRecordIds[0];
+    const processRecord = processRecordId ? await processRecordRepository.getById(processRecordId) : null;
+    if (!processRecord) throw new Error(`Experiment "${id}" has no editable process record.`);
+    if (input.operationIdentifier !== undefined && input.operationIdentifier.trim() === "") throw new Error("Run name cannot be empty.");
+    const numericValues = [input.voltageKv, input.collectorVoltageKv, input.flowRateMlH, input.distanceMm, input.drumSpeedRpm, input.temperatureC, input.humidityPct].filter((value): value is number => value !== undefined);
+    if (numericValues.some((value) => !Number.isFinite(value))) throw new Error("All numeric parameters must be finite numbers.");
+    if (input.jetStabilityGrade !== undefined && ![1, 2, 3, 4].includes(input.jetStabilityGrade)) throw new Error("Processability grade must be between 1 and 4.");
+    const parameters = {
+      ...processRecord.parameters,
+      ...(input.voltageKv !== undefined ? { voltageKv: input.voltageKv } : {}),
+      ...(input.collectorVoltageKv !== undefined ? { collectorVoltageKv: input.collectorVoltageKv } : {}),
+      ...(input.flowRateMlH !== undefined ? { flowRateMlH: input.flowRateMlH } : {}),
+      ...(input.distanceMm !== undefined ? { distanceMm: input.distanceMm } : {}),
+      ...(input.drumSpeedRpm !== undefined ? { collectorSpeedRpm: input.drumSpeedRpm } : {}),
+    };
+    const environment = input.temperatureC !== undefined || input.humidityPct !== undefined
+      ? { ...processRecord.environment, ...(input.temperatureC !== undefined ? { temperatureC: input.temperatureC } : {}), ...(input.humidityPct !== undefined ? { humidityPct: input.humidityPct } : {}) }
+      : processRecord.environment;
+    const evaluation = input.jetStabilityGrade !== undefined || input.operatorComments !== undefined
+      ? { ...processRecord.evaluation, ...(input.jetStabilityGrade !== undefined ? { jetStabilityGrade: input.jetStabilityGrade, processabilityGrade: input.jetStabilityGrade, isStable: input.jetStabilityGrade >= 4 } : {}), ...(input.operatorComments !== undefined ? { operatorComments: input.operatorComments } : {}) }
+      : processRecord.evaluation;
+    const experimentPatch = {
+      ...(input.operationIdentifier !== undefined ? { operationIdentifier: input.operationIdentifier.trim() } : {}),
+      ...(input.operatorComments !== undefined ? { notes: input.operatorComments } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+    await experimentRepository.update(id, experimentPatch);
+    await processRecordRepository.update(processRecord.id, { parameters, environment, evaluation });
+    const refreshed = await this.getExperiments();
+    const updated = refreshed.find((item) => item.id === id);
+    if (!updated) throw new Error("Experiment was updated but could not be reloaded.");
+    return updated;
   }
 }
 

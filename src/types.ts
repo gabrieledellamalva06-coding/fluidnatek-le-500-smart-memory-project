@@ -84,8 +84,8 @@ export interface TelemetryRecord {
   collectorVoltageKv?: number;
   flowRateMlH: number;
 
-  temperatureC: number;
-  humidityPct: number;
+  temperatureC?: number;
+  humidityPct?: number;
 
   distanceMm: number;
   drumSpeedRpm?: number;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertCircle,
@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Play,
   Search,
+  X,
 } from "lucide-react";
 import type { Experiment, Formulation, Project } from "../types";
 import type { ExperimentalSetup } from "../core/types/setup";
@@ -16,9 +17,16 @@ import type { Language } from "../lib/translations";
 import NumericField from "./ui/NumericField";
 import { buildHistoricalContexts } from "../features/experimental-assistant/contextBuilder";
 import { searchSimilarExperiments } from "../features/experimental-assistant/similarity.engine";
+import { searchSimilarSolutionExperiments } from "../features/experimental-assistant/similarity.engine";
+import type { SolutionSimilarityMatch } from "../features/experimental-assistant/similarity.types";
 import { analyzeSimilarExperiments } from "../features/experimental-assistant/historicalAnalysis";
 import { buildSmartStartingPoint } from "../features/experimental-assistant/smartStartingPoint";
 import { RECOMMENDATION_CONFIG } from "../features/experimental-assistant/recommendation.config";
+import { processParameterTolerances } from "../features/experimental-assistant/processParameterTolerances";
+import { searchSimilarProcessExperiments } from "../features/experimental-assistant/processConditionSimilarity.engine";
+import type { ProcessConditionKey } from "../features/experimental-assistant/processConditionSimilarity.types";
+import { buildInitialParameterRecommendation, type InitialParameterRecommendation, type ParameterRecommendation, type RecommendedParameterKey } from "../features/experimental-assistant/initialParameterRecommendation";
+import type { Material } from "../core/types/material";
 
 interface Props {
   project: Project;
@@ -30,6 +38,7 @@ interface Props {
   characterizations: SolutionCharacterization[];
   setups: ExperimentalSetup[];
   experiments: Experiment[];
+  materials: Material[];
   onAddExperiment: (input: CreateExperimentInput) => Promise<void>;
   lang: Language;
 }
@@ -47,6 +56,7 @@ export default function RunConfig({
   characterizations,
   setups,
   experiments,
+  materials,
   onAddExperiment,
   lang,
 }: Props) {
@@ -66,10 +76,22 @@ export default function RunConfig({
   const [unsafeOverride, setUnsafeOverride] = useState(false);
   const [invalidParameterMessage, setInvalidParameterMessage] = useState<string[]>([]);
   const [focusMode, setFocusMode] = useState(false);
+  const [openAnalysisPanel, setOpenAnalysisPanel] = useState<"analysis" | "recommendation" | null>(null);
+  const [selectedRecommendationKeys, setSelectedRecommendationKeys] = useState<RecommendedParameterKey[]>([]);
+  const [recommendationPreviewOpen, setRecommendationPreviewOpen] = useState(false);
+  const [recommendationApplyMessage, setRecommendationApplyMessage] = useState("");
 
   const contexts = useMemo(
-    () => buildHistoricalContexts(projects, formulations, characterizations, setups, experiments),
-    [projects, formulations, characterizations, setups, experiments]
+    () => buildHistoricalContexts(projects, formulations, characterizations, setups, experiments).map((context) => {
+      const historicalFormulation = context.formulation;
+      return {
+        ...context,
+        polymerMaterial: materials.find((item) => item.id === historicalFormulation?.polymerMaterialId),
+        solvent1Material: materials.find((item) => item.id === historicalFormulation?.solvent1MaterialId),
+        solvent2Material: materials.find((item) => item.id === historicalFormulation?.solvent2MaterialId),
+      };
+    }),
+    [projects, formulations, characterizations, setups, experiments, materials]
   );
 
   const query = useMemo(
@@ -99,6 +121,68 @@ export default function RunConfig({
     [contexts, query]
   );
 
+  const currentPolymerMaterial = materials.find((item) => item.id === formulation.polymerMaterialId);
+  const currentSolventMaterial = materials.find((item) => item.id === formulation.solvent1MaterialId);
+  const solutionMatches = useMemo(
+    () => searchSimilarSolutionExperiments(contexts, {
+      polymer: formulation.polymerName,
+      polymerFamily: currentPolymerMaterial?.polymerFamily,
+      molecularWeight: currentPolymerMaterial?.molecularWeight,
+      polymerConcentrationPct: formulation.polymerConcentrationPct ?? (formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined),
+      solvent: formulation.solvent,
+      solvent1: formulation.solvent1Name ?? formulation.solvent,
+      solvent1RatioPct: formulation.solvent1RatioPct,
+      solvent2: formulation.solvent2Name,
+      solvent2RatioPct: formulation.solvent2RatioPct,
+      solventFamily: currentSolventMaterial?.solventFamily,
+    }, 0, 12),
+    [contexts, currentPolymerMaterial, currentSolventMaterial, formulation]
+  );
+  const allSolutionMatches = useMemo(
+    () => searchSimilarSolutionExperiments(contexts, { polymer: formulation.polymerName, polymerFamily: currentPolymerMaterial?.polymerFamily, molecularWeight: currentPolymerMaterial?.molecularWeight, polymerConcentrationPct: formulation.polymerConcentrationPct ?? (formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined), solvent: formulation.solvent, solvent1: formulation.solvent1Name ?? formulation.solvent, solvent1RatioPct: formulation.solvent1RatioPct, solvent2: formulation.solvent2Name, solvent2RatioPct: formulation.solvent2RatioPct, solventFamily: currentSolventMaterial?.solventFamily }, 0, contexts.length),
+    [contexts, currentPolymerMaterial, currentSolventMaterial, formulation]
+  );
+  const [selectedHistoricalId, setSelectedHistoricalId] = useState("");
+  const [analysisTab, setAnalysisTab] = useState<"solutions" | "process">("solutions");
+  const [processSearchExecuted, setProcessSearchExecuted] = useState(false);
+  const [includedProcessKeys, setIncludedProcessKeys] = useState<ProcessConditionKey[]>([]);
+  useEffect(() => { setIncludedProcessKeys([]); setProcessSearchExecuted(false); setSelectedHistoricalId(""); setSelectedRecommendationKeys([]); setRecommendationPreviewOpen(false); setRecommendationApplyMessage(""); }, [formulation.id]);
+  const selectedSolutionMatch = solutionMatches.find((match) => match.context.experiment.id === selectedHistoricalId);
+  const topSolutionMatch = solutionMatches[0];
+  const toggleAnalysisPanel = () => {
+    setOpenAnalysisPanel((value) => {
+      if (value === "analysis") {
+        setSelectedHistoricalId("");
+        setAnalysisTab("solutions");
+        setProcessSearchExecuted(false);
+        return null;
+      }
+      setSelectedHistoricalId("");
+      setAnalysisTab("solutions");
+      setProcessSearchExecuted(false);
+      return "analysis";
+    });
+  };
+  const toggleRecommendationPanel = () => {
+    setSelectedHistoricalId("");
+    setAnalysisTab("solutions");
+    setProcessSearchExecuted(false);
+    setOpenAnalysisPanel((value) => value === "recommendation" ? null : "recommendation");
+  };
+  const initialRecommendation = useMemo<InitialParameterRecommendation>(() => buildInitialParameterRecommendation(solutionMatches), [solutionMatches]);
+  const currentParameterValues: Record<RecommendedParameterKey, number> = { flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm };
+  const applySelectedRecommendations = () => {
+    initialRecommendation.parameters.forEach((parameter) => {
+      if (!selectedRecommendationKeys.includes(parameter.key) || parameter.value === undefined) return;
+      const setters: Record<RecommendedParameterKey, (value: number) => void> = { flowRateMlH: setFlowRateMlH, voltageKv: setVoltageKv, collectorVoltageKv: setCollectorVoltageKv, temperatureC: setTemperatureC, humidityPct: setHumidityPct, distanceMm: setDistanceMm, drumSpeedRpm: setDrumSpeedRpm };
+      setters[parameter.key](parameter.value);
+    });
+    setProcessSearchExecuted(false);
+    setSelectedHistoricalId("");
+    setRecommendationPreviewOpen(false);
+    setRecommendationApplyMessage("Selected starting parameters were copied to the current run. Review them before continuing.");
+  };
+  const processMatches = useMemo(() => processSearchExecuted ? searchSimilarProcessExperiments(contexts, { included: includedProcessKeys, values: { flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm } }, allSolutionMatches) : [], [contexts, includedProcessKeys, processSearchExecuted, flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm, allSolutionMatches]);
   const assessment = useMemo(
     () => analyzeSimilarExperiments(matches, query),
     [matches, query]
@@ -121,7 +205,7 @@ export default function RunConfig({
   }
 
   const analyze = () => {
-    const invalid = validateParameters({ flowRateMlH, voltageKv, hvNegativeKv: collectorVoltageKv, temperatureC, humidityPct, distanceMm });
+    const invalid = validateParameters({ flowRateMlH, voltageKv, temperatureC, humidityPct, distanceMm });
     if (invalid.length > 0 && !unsafeOverride) {
       setInvalidParameterMessage(invalid);
       setError("Unprocessable parameters: correct the values or explicitly confirm the unsafe override.");
@@ -196,7 +280,7 @@ export default function RunConfig({
         <Progress stage={stage} />
 
         {stage === "parameters" && (
-          <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <Activity className="h-5 w-5 text-blue-600" />
               <div>
@@ -250,43 +334,43 @@ export default function RunConfig({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <Metric label="Similar Runs" value={String(assessment.total)} />
-              <Metric label="Recommendation status" value={recommendationStatusLabel(assessment.status)} />
-              <Metric label="Deterministic confidence" value={`${Math.round(assessment.confidence * 100)}%`} />
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <OverviewCard title="Historical Analysis" subtitle="Compare with similar historical experiments." tone="blue" open={openAnalysisPanel === "analysis"} onToggle={toggleAnalysisPanel}>
+                <div className="flex flex-wrap gap-2"><Status tone="green">Solution Similarity: {topSolutionMatch?.score.toFixed(0) ?? "No data"}%</Status><Status tone="green">Historical Grade: {topSolutionMatch && validGrade(topSolutionMatch.context.experiment.jetStabilityGrade) ? `${topSolutionMatch.context.experiment.jetStabilityGrade}/4` : "No data"}</Status></div>
+                <p className="mt-3 text-sm text-slate-700">Top match: <b>{topSolutionMatch?.context.experiment.operationIdentifier || "No data"}</b></p>
+                <button type="button" onClick={toggleAnalysisPanel} className="mt-4 w-full rounded-xl border border-blue-300 bg-white px-4 py-3 text-xs font-bold text-blue-700">{openAnalysisPanel === "analysis" ? "Close analysis" : "Open analysis"}⌄</button>
+              </OverviewCard>
+              <OverviewCard title="Recommended Starting Parameters" subtitle="Get starting points from similar successful experiments." tone="violet" open={openAnalysisPanel === "recommendation"} onToggle={toggleRecommendationPanel}>
+                <Status tone="amber">{initialRecommendation.evidenceLevel[0].toUpperCase() + initialRecommendation.evidenceLevel.slice(1)} historical evidence</Status>
+                <p className="mt-3 text-sm text-slate-700">Best match: <b>{initialRecommendation.bestMatch?.score.toFixed(0) ?? "No data"}% similarity</b></p>
+                <button type="button" onClick={toggleRecommendationPanel} className="mt-4 w-full rounded-xl border border-violet-300 bg-white px-4 py-3 text-xs font-bold text-violet-700">{openAnalysisPanel === "recommendation" ? "Close recommendations" : "Open recommendations"}⌄</button>
+              </OverviewCard>
             </div>
-
-            {matches.length > 0 && (
-              <div className="mt-5 rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Closest Historical Runs</p>
-                <div className="mt-3 space-y-2">
-                  {matches.slice(0, 5).map((match) => (
-                    <div key={match.context.experiment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-4 py-3 text-sm">
-                      <span className="font-semibold text-slate-800">{match.context.experiment.operationIdentifier || "Historical Run"}</span>
-                      <div className="flex gap-3 text-xs text-slate-500">
-                        <span>Similarity <b className="text-slate-800">{match.score.toFixed(0)}%</b></span>
+            {openAnalysisPanel === "analysis" && <div className="mt-4 rounded-3xl border border-blue-200 bg-white p-5">
+              <div className="mb-4 flex gap-2 border-b border-slate-200 pb-3"><button type="button" onClick={() => { setAnalysisTab("solutions"); setSelectedHistoricalId(""); setProcessSearchExecuted(false); setIncludedProcessKeys([]); }} className={`rounded-lg px-3 py-2 text-xs font-bold ${analysisTab === "solutions" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>Similar Solutions</button><button type="button" onClick={() => { setAnalysisTab("process"); setSelectedHistoricalId(""); setProcessSearchExecuted(false); setIncludedProcessKeys([]); }} className={`rounded-lg px-3 py-2 text-xs font-bold ${analysisTab === "process" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>Similar Process Conditions</button></div>
+              {analysisTab === "process" ? <ProcessConditionSearch flowRateMlH={flowRateMlH} voltageKv={voltageKv} collectorVoltageKv={collectorVoltageKv} temperatureC={temperatureC} humidityPct={humidityPct} distanceMm={distanceMm} drumSpeedRpm={drumSpeedRpm} included={includedProcessKeys} onToggle={(key) => setIncludedProcessKeys((keys) => keys.includes(key) ? keys.filter((item) => item !== key) : [...keys, key])} onSearch={() => { setSelectedHistoricalId(""); setProcessSearchExecuted(true); }} onSelect={(id) => setSelectedHistoricalId((current) => current === id ? "" : id)} selectedHistoricalId={selectedHistoricalId} matches={processMatches} comparison={(match) => <ExperimentComparison current={currentRunSnapshot({ formulation, runName: runName || "Current Run", polymerMaterial: currentPolymerMaterial, solventMaterial: currentSolventMaterial, flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm })} match={(match.solutionMatch ?? { context: match.context, score: 0, tier: 4, comparableCriteriaCount: 0, comparableCriteriaTotal: 5, dataCompleteness: 0, evidenceLevel: "limited", rankingScore: 0, reasons: [] }) as SolutionSimilarityMatch} processMatch={match} />} /> : <>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Closest Historical Runs</p>
+                <div className="mt-2 space-y-1.5">
+                  {solutionMatches.slice(0, 5).map((match) => <React.Fragment key={match.context.experiment.id}><button type="button" aria-expanded={selectedHistoricalId === match.context.experiment.id} aria-controls={`comparison-${match.context.experiment.id}`} onClick={() => setSelectedHistoricalId((current) => current === match.context.experiment.id ? "" : match.context.experiment.id)} className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs ${selectedHistoricalId === match.context.experiment.id ? "border-blue-400 bg-blue-50" : "border-slate-200 bg-white hover:bg-blue-50"}`}>
+                      <span className="min-w-0 whitespace-normal break-words font-semibold text-slate-800">{match.context.experiment.operationIdentifier || match.context.experiment.id}</span>
+                      <div className="flex shrink-0 gap-2 text-[10px] text-slate-500">
+                        <span>Solution Similarity <b className="text-slate-800">{match.score.toFixed(0)}%</b></span>
+                        <span>{match.evidenceLevel[0].toUpperCase() + match.evidenceLevel.slice(1)} evidence · {match.comparableCriteriaCount}/{match.comparableCriteriaTotal}</span>
                         {validGrade(match.context.experiment.jetStabilityGrade) && <span>Grade <b className="text-slate-800">{match.context.experiment.jetStabilityGrade}/4</b></span>}
                       </div>
-                    </div>
-                  ))}
+                    </button>{selectedHistoricalId === match.context.experiment.id && <div id={`comparison-${match.context.experiment.id}`} className="ml-3 border-l-2 border-blue-200 pl-3"><ExperimentComparison current={currentRunSnapshot({ formulation, runName: runName || "Current Run", polymerMaterial: currentPolymerMaterial, solventMaterial: currentSolventMaterial, flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm })} match={match} /></div>}</React.Fragment>)}
+                  {solutionMatches.length === 0 && <p className="rounded-xl bg-white p-3 text-xs text-slate-500">No comparable historical runs.</p>}
                 </div>
               </div>
-            )}
+              <Metric label="Highest Solution Similarity" value={topSolutionMatch ? `${topSolutionMatch.score.toFixed(0)}%` : "No data"} />
+              <Metric label="Total Similar Runs" value={String(solutionMatches.length)} />
+              <Metric label="Historical Evidence" value={`${Math.round(assessment.confidence * 100)}%`} />
+               </>}
+            </div>}
 
-            {assessment.status === "insufficient_data" ? (
-              <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900"><p>Insufficient reliable data: {assessment.grade4} valid Grade 4 source runs found; at least {assessment.minimumRequiredExperiments} are required. No robust numeric recommendation is produced.</p>{assessment.adjustments.length > 0 && <div className="mt-4"><p className="font-bold">Directional adjustments to investigate</p><ul className="mt-2 list-disc space-y-1 pl-5">{assessment.adjustments.map((adjustment) => <li key={adjustment}>{adjustment}</li>)}</ul><p className="mt-3 text-xs font-semibold">These are evidence-based directions from the closest operation, not guaranteed setpoints.</p></div>}</div>
-            ) : (
-              <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                <Window label="Flow rate" summary={assessment.processWindow.flowRateMlH} unit="mL/h" sensible={(v) => v >= 0 && v <= 100} />
-                <Window label="HV+" summary={assessment.processWindow.voltageKv} unit="kV" sensible={(v) => Math.abs(v) <= 100} />
-                <Window label="HV-" summary={assessment.processWindow.hvNegativeKv} unit="kV" sensible={(v) => Math.abs(v) <= 100} />
-                <Window label="Temperature" summary={assessment.processWindow.temperatureC} unit="°C" sensible={(v) => v >= -20 && v <= 100} />
-                <Window label="Humidity" summary={assessment.processWindow.humidityPct} unit="%" sensible={(v) => v >= 0 && v <= 100} />
-                <Window label="Distance" summary={assessment.processWindow.distanceMm} unit="mm" sensible={(v) => v >= 1 && v <= 1000} />
-              </div>
-            )}
 
-            {assessment.interpretation && <p className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm text-blue-800">{assessment.interpretation}</p>}
+            {openAnalysisPanel === "recommendation" && <div className="mt-4 rounded-3xl border border-violet-200 bg-violet-50/40 p-5"><InitialRecommendationPanel recommendation={initialRecommendation} selectedKeys={selectedRecommendationKeys} onSelectedKeysChange={(keys) => { setSelectedRecommendationKeys(keys); setRecommendationApplyMessage(""); }} currentValues={currentParameterValues} previewOpen={recommendationPreviewOpen} onPreviewOpen={() => setRecommendationPreviewOpen(true)} onPreviewCancel={() => setRecommendationPreviewOpen(false)} onApply={applySelectedRecommendations} successMessage={recommendationApplyMessage} /></div>}
 
             <div className="mt-6 flex flex-wrap justify-between gap-3">
               <button type="button" onClick={() => setStage("parameters")} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700">Adjust Parameters</button>
@@ -348,10 +432,106 @@ export default function RunConfig({
 }
 
 function Progress({ stage }: { stage: Stage }) { const items: Stage[]=["parameters","analysis","processability","review"]; const current=items.indexOf(stage); const percent=Math.round(((current+1)/items.length)*100); return <div className="mt-6"><div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-600"><span>Workflow progress</span><span>{percent}%</span></div><div className="h-3 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${percent}%` }} /></div></div>; }
+function OverviewCard({ title, subtitle, tone, open, onToggle, children }: { title: string; subtitle: string; tone: "blue" | "violet"; open: boolean; onToggle: () => void; children: React.ReactNode }) { const accent = tone === "blue" ? "border-blue-200" : "border-violet-200"; return <section className={`rounded-3xl border ${accent} bg-white p-5 shadow-sm`}><button type="button" onClick={onToggle} className="flex w-full items-start justify-between gap-4 text-left"><span><span className={`text-sm font-bold ${tone === "blue" ? "text-blue-700" : "text-violet-700"}`}>{title}</span><span className="mt-1 block text-xs text-slate-500">{subtitle}</span></span><span className="text-lg text-slate-500">{open ? "⌃" : "⌄"}</span></button>{open && <div className="mt-4">{children}</div>}</section>; }
+
+interface CurrentRunSnapshot {
+  formulation: Formulation;
+  runName: string;
+  polymerMaterial?: Material;
+  solventMaterial?: Material;
+  flowRateMlH: number;
+  voltageKv: number;
+  collectorVoltageKv: number;
+  temperatureC: number;
+  humidityPct: number;
+  distanceMm: number;
+  drumSpeedRpm: number;
+}
+
+function currentRunSnapshot(input: CurrentRunSnapshot): CurrentRunSnapshot { return input; }
+
+function ExperimentComparison({ current, match, processMatch }: { current: CurrentRunSnapshot; match: SolutionSimilarityMatch; processMatch?: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch }) {
+  const historical = match.context;
+  const formulation = historical.formulation;
+  const telemetry = historical.experiment.telemetryData.find((item) => [item.flowRateMlH, item.voltageKv, item.collectorVoltageKv, item.temperatureC, item.humidityPct, item.distanceMm, item.drumSpeedRpm].some((value) => typeof value === "number" && Number.isFinite(value)));
+  const currentConcentration = current.formulation.polymerConcentrationPct ?? (current.formulation.solidsContentPct > 0 ? current.formulation.solidsContentPct : undefined);
+  const historicalConcentration = formulation?.polymerConcentrationPct ?? (formulation && formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined);
+  const rows = [
+    solutionRow("Polymer", current.formulation.polymerName, formulation?.polymerName),
+    solutionRow("Polymer Family", current.polymerMaterial?.polymerFamily, historical.polymerMaterial?.polymerFamily),
+    solutionRow("Molecular Weight", current.polymerMaterial?.molecularWeight, historical.polymerMaterial?.molecularWeight),
+    solutionRow("Concentration", percent(currentConcentration), percent(historicalConcentration)),
+    solutionRow("Solvent 1", current.formulation.solvent1Name ?? current.formulation.solvent, formulation?.solvent1Name ?? formulation?.solvent),
+    solutionRow("Solvent 1 Ratio", percent(current.formulation.solvent1RatioPct), percent(formulation?.solvent1RatioPct)),
+    solutionRow("Solvent 2", current.formulation.solvent2Name, formulation?.solvent2Name),
+    solutionRow("Solvent 2 Ratio", percent(current.formulation.solvent2RatioPct), percent(formulation?.solvent2RatioPct)),
+    processRow("Flow Rate", current.flowRateMlH, telemetry?.flowRateMlH, "flowRateMlH"),
+    processRow("HV+", current.voltageKv, telemetry?.voltageKv, "voltageKv"),
+    processRow("HV-", current.collectorVoltageKv, telemetry?.collectorVoltageKv, "collectorVoltageKv"),
+    processRow("Temperature", current.temperatureC, telemetry?.temperatureC, "temperatureC"),
+    processRow("Relative Humidity", current.humidityPct, telemetry?.humidityPct, "humidityPct"),
+    processRow("Working Distance", current.distanceMm, telemetry?.distanceMm, "distanceMm"),
+    processRow("Drum / Collector Speed", current.drumSpeedRpm, telemetry?.drumSpeedRpm, "drumSpeedRpm"),
+  ].filter((row): row is ComparisonRow => row !== null);
+  const currentLabel = current.runName || "Current Run";
+  const historicalLabel = historical.experiment.operationIdentifier || historical.experiment.id;
+  return <section className="mt-4 rounded-3xl border border-blue-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Experiment Comparison</p><h3 className="mt-1 text-xl font-bold text-slate-950">{currentLabel} vs {historicalLabel}</h3></div><div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Similarity {match.score.toFixed(0)}%</span><span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Historical Grade: {validGrade(historical.experiment.jetStabilityGrade) ? `${historical.experiment.jetStabilityGrade}/4` : "No data"}</span></div></div><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[720px] table-fixed text-left text-xs"><thead><tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400"><th className="w-[28%] px-3 py-2">Parameter</th><th className="w-[27%] px-3 py-2">{currentLabel}</th><th className="w-[18%] px-3 py-2 text-center">Comparison</th><th className="w-[27%] px-3 py-2">{historicalLabel}</th></tr></thead><tbody><tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Solution / Formulation</td></tr>{rows.slice(0, 8).map((row) => <ComparisonTableRow key={row.label} row={row} />)}<tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Process Parameters</td></tr>{rows.slice(8).map((row) => <ComparisonTableRow key={row.label} row={row} />)}<tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Historical Result / Processability</td></tr><tr className="border-b border-slate-100"><td className="px-3 py-2 font-semibold text-slate-700">Processability Grade</td><td className="px-3 py-2 text-slate-600">Not run yet</td><td className="px-3 py-2 text-center"><Status tone="gray">No data</Status></td><td className="px-3 py-2 text-slate-600">{validGrade(historical.experiment.jetStabilityGrade) ? `${historical.experiment.jetStabilityGrade}/4` : "No data"}</td></tr></tbody></table></div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Historical Comments / Result</p><p className="mt-1 text-sm text-slate-600">{historical.experiment.operatorComments || "No data"}</p></div><div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Experiment Details</p><p className="mt-1 text-xs text-slate-600">ID: {historical.experiment.id} · Project: {historical.project?.name || "Not available"} · Formulation: {formulation?.name || formulation?.polymerName || "Not available"} · Setup: {historical.setup?.name || historical.setup?.machine.model || "Not available"} · Date: {historical.experiment.ingestedAt || "Not available"}</p></div></div></section>;
+}
+
+function ComparisonTableRow({ row }: { row: ComparisonRow }) { return <tr className="border-b border-slate-100"><td className="px-3 py-2 font-semibold text-slate-700">{row.label}</td><td className="px-3 py-2 text-slate-600">{row.current}</td><td className="px-3 py-2 text-center">{row.status}</td><td className="px-3 py-2 text-slate-600">{row.historical}</td></tr>; }
+
+function InitialRecommendationPanel({ recommendation, selectedKeys, onSelectedKeysChange, currentValues, previewOpen, onPreviewOpen, onPreviewCancel, onApply, successMessage }: { recommendation: InitialParameterRecommendation; selectedKeys: RecommendedParameterKey[]; onSelectedKeysChange: (keys: RecommendedParameterKey[]) => void; currentValues: Record<RecommendedParameterKey, number>; previewOpen: boolean; onPreviewOpen: () => void; onPreviewCancel: () => void; onApply: () => void; successMessage: string }) {
+  const [evidenceKey, setEvidenceKey] = useState<RecommendedParameterKey | null>(null);
+  const evidenceLabel = recommendation.evidenceLevel === "insufficient" ? "Insufficient historical evidence" : `${recommendation.evidenceLevel[0].toUpperCase()}${recommendation.evidenceLevel.slice(1)} historical evidence`;
+  const reliableKeys = recommendation.parameters.filter((parameter) => parameter.value !== undefined).map((parameter) => parameter.key);
+  const allReliableSelected = reliableKeys.length > 0 && reliableKeys.every((key) => selectedKeys.includes(key));
+  const selectedParameters = recommendation.parameters.filter((parameter) => selectedKeys.includes(parameter.key) && parameter.value !== undefined);
+  const evidenceParameter = recommendation.parameters.find((parameter) => parameter.key === evidenceKey);
+  return <section className="rounded-3xl border border-violet-200 bg-violet-50/60 p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Recommended Starting Parameters</h3><p className="mt-1 text-xs text-slate-600">Historical starting points—not guaranteed machine setpoints.</p></div><div className="text-left sm:text-right"><p className="text-sm font-bold text-violet-800">{evidenceLabel}</p><p className="mt-1 text-xs text-slate-600">{recommendation.supportingExperimentCount} similar experiment{recommendation.supportingExperimentCount === 1 ? "" : "s"} · {recommendation.successfulExperimentCount} successful supporting</p>{recommendation.bestMatch && <p className="mt-1 text-xs text-slate-600">Best match: {formatRecommendationNumber(recommendation.bestMatch.score, 0)}% Solution Similarity · Grade {validGrade(recommendation.bestMatch.context.experiment.jetStabilityGrade) ? `${recommendation.bestMatch.context.experiment.jetStabilityGrade}/4` : "No data"}</p>}</div></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><RecommendationParameterCards recommendation={recommendation} selectedKeys={selectedKeys} onSelectedKeysChange={onSelectedKeysChange} evidenceKey={evidenceKey} onEvidenceToggle={(key) => setEvidenceKey((current) => current === key ? null : key)} /></div>{evidenceParameter && <RecommendationEvidencePanel parameter={evidenceParameter} />}{reliableKeys.length > 0 && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-violet-200 pt-4"><label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={allReliableSelected} onChange={(event) => onSelectedKeysChange(event.target.checked ? reliableKeys : [])} />Select all reliable recommendations</label><button type="button" disabled={selectedParameters.length === 0} onClick={onPreviewOpen} className="rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Use selected starting parameters</button></div>}{previewOpen && <div role="dialog" aria-modal="true" aria-labelledby="recommendation-preview-title" className="mt-4 rounded-2xl border border-violet-300 bg-white p-4 shadow-sm"><h4 id="recommendation-preview-title" className="font-bold text-slate-950">Confirm starting parameters</h4><p className="mt-1 text-xs text-slate-600">Review every current value before replacing it in this unsaved run.</p><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[480px] text-left text-xs"><thead><tr className="border-b border-slate-200 text-slate-500"><th className="px-2 py-2">Parameter</th><th className="px-2 py-2">Current value</th><th className="px-2 py-2">Proposed value</th></tr></thead><tbody>{selectedParameters.map((parameter) => <tr key={parameter.key} className="border-b border-slate-100"><td className="px-2 py-2 font-semibold">{parameter.label}</td><td className="px-2 py-2">{formatRecommendationValue(parameter.key, currentValues[parameter.key])} {parameter.unit}</td><td className="px-2 py-2 font-bold text-violet-800">{formatRecommendationValue(parameter.key, parameter.value!)} {parameter.unit}</td></tr>)}</tbody></table></div><div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onPreviewCancel} className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel</button><button type="button" onClick={onApply} className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white">Confirm and copy</button></div></div>}{successMessage && <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">{successMessage}</p>}</section>;
+}
+
+function ProcessConditionSearch({ flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm, included, onToggle, onSearch, onSelect, selectedHistoricalId, matches, comparison }: { flowRateMlH: number; voltageKv: number; collectorVoltageKv: number; temperatureC: number; humidityPct: number; distanceMm: number; drumSpeedRpm: number; included: ProcessConditionKey[]; onToggle: (key: ProcessConditionKey) => void; onSearch: () => void; onSelect: (id: string) => void; selectedHistoricalId: string; matches: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch[]; comparison: (match: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch) => React.ReactNode }) {
+  const values: Array<[ProcessConditionKey, string, number, string]> = [["flowRateMlH", "Flow Rate", flowRateMlH, "mL/h"], ["voltageKv", "HV+", voltageKv, "kV"], ["collectorVoltageKv", "HV−", collectorVoltageKv, "kV"], ["temperatureC", "Temperature", temperatureC, "°C"], ["humidityPct", "Relative Humidity", humidityPct, "%"], ["distanceMm", "Working Distance", distanceMm, "mm"], ["drumSpeedRpm", "Drum/Collector Speed", drumSpeedRpm, "rpm"]];
+  const includedSummary = values.filter(([key]) => included.includes(key));
+  return <div><p className="text-sm font-bold text-slate-800">Intended process conditions</p><p className="mt-1 text-xs text-slate-500">Select only the process conditions you want to use as search constraints.</p><p className="mt-3 rounded-xl bg-blue-50 p-3 text-xs text-blue-800">Results are ranked by process similarity and available evidence. Solution similarity and historical grade are shown separately.</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{values.map(([key, label, value, unit]) => <label key={key} className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs"><span className="min-w-0"><input type="checkbox" checked={included.includes(key)} onChange={() => onToggle(key)} className="mr-2" />{label}: <b>{value} {unit}</b></span><span className="shrink-0 text-slate-400">Include</span></label>)}</div><button type="button" onClick={onSearch} disabled={included.length === 0} className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">Find Similar Process Conditions</button>{includedSummary.length > 0 && <p className="mt-3 text-xs text-slate-600">Searching by: {includedSummary.map(([, label, value, unit]) => `${label} ${value} ${unit}`).join(" · ")}</p>}<div className="mt-4 space-y-2">{matches.map((match) => <React.Fragment key={match.context.experiment.id}><button type="button" onClick={() => onSelect(match.context.experiment.id)} className="flex w-full min-w-0 flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 p-3 text-left text-xs hover:bg-blue-50"><span className="min-w-0 flex-1"><span className="block break-words font-bold text-slate-900">{match.context.experiment.operationIdentifier || match.context.experiment.id}</span><span className="mt-1 block break-words text-slate-500">Project: {match.context.project?.name || "No data"} · Formulation: {match.context.formulation?.name || match.context.formulation?.polymerName || "No data"} · Setup: {match.context.setup?.name || match.context.setup?.machine.model || "No data"}</span></span><span className="grid shrink-0 grid-cols-2 gap-1 text-[10px] sm:flex sm:flex-wrap sm:justify-end"><Status tone="blue">Process {match.processScore}%</Status><Status tone="violet">Overall {match.rankingScore}%</Status><Status tone="gray">Evidence {match.comparableCriteriaCount}/{match.comparableCriteriaTotal} · {match.evidenceLevel}</Status><Status tone="green">Solution {match.solutionMatch ? `${match.solutionMatch.score.toFixed(0)}%` : "No data"}</Status><Status tone="amber">Grade {validGrade(match.context.experiment.jetStabilityGrade) ? `${match.context.experiment.jetStabilityGrade}/4` : "No grade"}</Status></span></button>{selectedHistoricalId === match.context.experiment.id && <div className="ml-3 border-l-2 border-blue-200 pl-3">{comparison(match)}</div>}</React.Fragment>)}{matches.length === 0 && <p className="text-xs text-slate-500">Run a search to view historical process-condition evidence.</p>}</div>{matches.length > 0 && <div className="mt-4 rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold text-slate-700">Observed parameters in matching historical runs</p><div className="mt-2 grid gap-1 text-[11px] text-slate-600">{values.filter(([key]) => !included.includes(key)).map(([key, label, , unit]) => { const nums = matches.map((match) => match.context.experiment.telemetryData.find((item) => typeof item[key] === "number" && Number.isFinite(item[key]))?.[key]).filter((value): value is number => value !== undefined); return <p key={key}>{label}: {nums.length === 0 ? "Insufficient historical evidence" : `${Math.min(...nums)}–${Math.max(...nums)} ${unit} · ${nums.length} supporting experiments`}</p>; })}</div></div>}</div>;
+}
+
+function RecommendationParameterCards({ recommendation, selectedKeys, onSelectedKeysChange, evidenceKey, onEvidenceToggle }: { recommendation: InitialParameterRecommendation; selectedKeys: RecommendedParameterKey[]; onSelectedKeysChange: (keys: RecommendedParameterKey[]) => void; evidenceKey: RecommendedParameterKey | null; onEvidenceToggle: (key: RecommendedParameterKey) => void }) {
+  return <>{recommendation.parameters.map((parameter) => <RecommendationParameterCard key={parameter.key} parameter={parameter} selected={selectedKeys.includes(parameter.key)} onSelectedChange={(selected) => onSelectedKeysChange(selected ? [...selectedKeys, parameter.key] : selectedKeys.filter((key) => key !== parameter.key))} evidenceOpen={evidenceKey === parameter.key} onEvidenceToggle={() => onEvidenceToggle(parameter.key)} />)}</>;
+}
+
+function RecommendationParameterCard({ parameter, selected, onSelectedChange, evidenceOpen, onEvidenceToggle }: { parameter: ParameterRecommendation; selected: boolean; onSelectedChange: (selected: boolean) => void; evidenceOpen: boolean; onEvidenceToggle: () => void }) {
+  const reliable = parameter.value !== undefined;
+  const disclosureId = `recommendation-sources-${parameter.key}`;
+  return <article className="flex min-w-0 flex-col rounded-2xl border border-violet-200 bg-white p-4"><div className="flex items-start justify-between gap-2"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{parameter.label}</p><EvidenceBadge level={parameter.evidenceLevel} /></div><p className="mt-3 text-lg font-bold text-slate-950">{reliable ? <>{formatRecommendationValue(parameter.key, parameter.value!)} <span className="text-sm font-semibold">{parameter.unit}</span></> : "No reliable historical recommendation"}</p>{reliable && parameter.range && <div className="mt-3 space-y-1 text-xs text-slate-600"><p>Supporting experiments: <b>{parameter.supportingExperimentCount}</b></p><p>Historical usable range: <b>{formatRecommendationValue(parameter.key, parameter.range.minimum)}–{formatRecommendationValue(parameter.key, parameter.range.maximum)} {parameter.unit}</b></p></div>}{reliable && <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={selected} onChange={(event) => onSelectedChange(event.target.checked)} aria-label={`Apply ${parameter.label} recommendation`} className="mt-0.5" />Apply this recommendation</label>}<button type="button" aria-expanded={evidenceOpen} aria-controls={disclosureId} onClick={onEvidenceToggle} className="mt-auto pt-4 text-left text-xs font-bold text-violet-700">Why this recommendation? {evidenceOpen ? "▴" : "▾"}</button></article>;
+}
+
+function RecommendationEvidencePanel({ parameter }: { parameter: ParameterRecommendation }) {
+  const included = parameter.sources.filter((source) => source.status === "included");
+  const excluded = parameter.sources.filter((source) => source.status !== "included");
+  return <section id={`recommendation-sources-${parameter.key}`} className="mt-4 rounded-2xl border border-violet-200 bg-white p-4"><h4 className="font-bold text-slate-950">Recommendation evidence: {parameter.label}</h4><div className="mt-3 grid gap-4 lg:grid-cols-2"><RecommendationSourceGroup title="Included supporting experiments" sources={included} parameter={parameter} /><RecommendationSourceGroup title="Excluded historical values" sources={excluded} parameter={parameter} /></div></section>;
+}
+
+function RecommendationSourceGroup({ title, sources, parameter }: { title: string; sources: ParameterRecommendation["sources"]; parameter: ParameterRecommendation }) {
+  return <section><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>{sources.length === 0 ? <p className="mt-1 text-xs text-slate-500">None.</p> : <div className="mt-1 space-y-2">{sources.map((source) => <div key={`${parameter.key}-${source.experimentId}-${source.status}`} className="min-w-0 rounded-xl bg-slate-50 p-3 text-[11px] text-slate-600"><div className="flex flex-wrap items-start justify-between gap-2"><p className="min-w-0 flex-1 break-words font-bold text-slate-800">{source.experimentName}</p><span className={`rounded-full px-2 py-0.5 font-bold ${source.status === "included" ? "bg-emerald-100 text-emerald-700" : source.status === "outlier" ? "bg-amber-100 text-amber-800" : source.status === "no-consensus" ? "bg-red-100 text-red-700" : "bg-slate-200 text-slate-700"}`}>{source.status === "included" ? "Included" : source.status === "outlier" ? "Excluded as IQR outlier" : source.status === "no-consensus" ? "Excluded: no parameter consensus" : "Excluded: insufficient solution evidence"}</span></div><p className="mt-1">Raw value: <b>{formatRecommendationValue(parameter.key, source.rawValue)} {source.unit}</b></p><p>Solution Similarity: {formatRecommendationNumber(source.solutionSimilarity, 0)}% · Grade: {source.grade ? `${source.grade}/4` : "No data"}</p><p>Success weight: {formatRecommendationNumber(source.successWeight, 2)} · Contribution weight: {formatRecommendationNumber(source.contributionWeight, 3)}</p>{source.exclusionReason && <p className="mt-1 text-slate-500">{source.exclusionReason}</p>}</div>)}</div>}</section>;
+}
+
+const RECOMMENDATION_DISPLAY_DIGITS: Record<RecommendedParameterKey, number> = { flowRateMlH: 2, voltageKv: 1, collectorVoltageKv: 1, temperatureC: 1, humidityPct: 1, distanceMm: 1, drumSpeedRpm: 0 };
+function formatRecommendationValue(key: RecommendedParameterKey, value: number): string { return formatRecommendationNumber(value, RECOMMENDATION_DISPLAY_DIGITS[key]); }
+function formatRecommendationNumber(value: number, maximumFractionDigits: number): string { return new Intl.NumberFormat("en-US", { maximumFractionDigits, useGrouping: false }).format(value); }
+
+function EvidenceBadge({ level }: { level: "high" | "medium" | "low" | "insufficient" }) { const labels = { high: "High", medium: "Medium", low: "Low", insufficient: "No data" }; const styles = { high: "bg-emerald-50 text-emerald-700", medium: "bg-amber-50 text-amber-700", low: "bg-orange-50 text-orange-700", insufficient: "bg-slate-100 text-slate-500" }; return <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${styles[level]}`}>{labels[level]}</span>; }
+
+interface ComparisonRow { label: string; current: string; historical: string; status: React.ReactNode }
+function solutionRow(label: string, current: string | undefined, historical: string | undefined): ComparisonRow | null { if (!current && !historical) return null; const status = !current || !historical ? <Status tone="gray">No data</Status> : current.trim().toLowerCase() === historical.trim().toLowerCase() ? <Status tone="green">Same</Status> : <Status tone="amber">Close</Status>; return { label, current: current || "No data", historical: historical || "No data", status }; }
+function processRow(label: string, current: number, historical: number | undefined, key: string): ComparisonRow { const tolerance = processParameterTolerances[key]; if (historical === undefined || !Number.isFinite(historical)) return { label, current: formatValue(current, tolerance.unit), historical: "No data", status: <Status tone="gray">No data</Status> }; const difference = historical - current; const threshold = Math.max(tolerance.absolute, Math.abs(current) * tolerance.relative); const close = Math.abs(difference) <= threshold; const status = close ? <Status tone="amber">Close ({formatSigned(difference)} {tolerance.unit})</Status> : <Status tone="red">Different ({formatSigned(difference)} {tolerance.unit})</Status>; return { label, current: formatValue(current, tolerance.unit), historical: formatValue(historical, tolerance.unit), status }; }
+function percent(value: number | undefined): string | undefined { return value === undefined || !Number.isFinite(value) ? undefined : `${value}%`; }
+function formatValue(value: number, unit: string): string { return Number.isFinite(value) ? `${value} ${unit}` : "No data"; }
+function formatSigned(value: number): string { return `${value >= 0 ? "+" : ""}${Number(value.toFixed(2))}`; }
+function Status({ tone, children }: { tone: "green" | "amber" | "red" | "gray" | "blue" | "violet"; children: React.ReactNode }) { const classes = { green: "bg-emerald-50 text-emerald-700", amber: "bg-amber-50 text-amber-700", red: "bg-red-50 text-red-700", gray: "bg-slate-100 text-slate-500", blue: "bg-blue-50 text-blue-700", violet: "bg-violet-50 text-violet-700" }; return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${classes[tone]}`}>{children}</span>; }
 function ContextStrip({ project, formulation, setup, characterization }: { project: Project; formulation: Formulation; setup: ExperimentalSetup; characterization?: SolutionCharacterization }) { const solventParts=[formulation.solvent1Name && `${formulation.solvent1Name} ${formulation.solvent1RatioPct ?? ""}%`, formulation.solvent2Name && `${formulation.solvent2Name} ${formulation.solvent2RatioPct ?? ""}%`].filter(Boolean).join(" + "); return <div className="mt-6 grid gap-3 md:grid-cols-4"><Pill label="Project" value={project.name}/><Pill label="Formulation" value={formulation.name || formulation.polymerName} detail={`${formulation.polymerName} · ${solventParts || formulation.solvent} · ${formulation.solidsContentPct}% solids`}/><Pill label="Machine" value={setup.machine.model} detail={setup.machine.manufacturer}/><Pill label="Setup escalation" value={`${setup.injector.needleCount ?? setup.injector.emitterCount ?? "?"} needles`} detail={`${setup.injector.model || setup.injector.type} → ${setup.collector.model || setup.collector.type}`}/>{characterization && <Pill label="Characterization" value={characterization.measuredAt ? new Date(characterization.measuredAt).toLocaleDateString() : "Selected"}/>}</div>; }
 function Pill({label,value,detail}:{label:string;value:string;detail?:string}){return <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"><p className="text-[9px] font-bold uppercase text-slate-500">{label}</p><p className="text-sm font-semibold text-slate-900">{value}</p>{detail && <p className="mt-1 text-[11px] text-slate-600">{detail}</p>}</div>}
 function Metric({label,value}:{label:string;value:string}){return <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{label}</p><p className="mt-2 font-semibold text-slate-800">{value}</p></div>}
-function Window({label,summary,unit,sensible}:{label:string;summary:{minimum:number;maximum:number;average:number}|undefined;unit:string;sensible:(value:number)=>boolean}){if(!summary||![summary.minimum,summary.maximum,summary.average].every(sensible))return null;return <div className="rounded-xl border border-slate-200 p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{label}</p><p className="mt-2 font-mono font-bold text-slate-800">{summary.minimum.toFixed(2)}–{summary.maximum.toFixed(2)} {unit}</p><p className="mt-1 text-xs text-slate-400">avg {summary.average.toFixed(2)}</p></div>}
 function gradeLabel(grade:1|2|3|4,lang:Language):string{const labels={it:["Non processabile","Instabile","Accettabile","Stabile"],en:["Not processable","Unstable","Acceptable","Stable"],es:["No procesable","Inestable","Aceptable","Estable"]} as const;return labels[lang][grade-1]}
 function validGrade(value:number):boolean{return Number.isFinite(value)&&value>=1&&value<=4}
 function recommendationStatusLabel(status:"available"|"low_confidence"|"insufficient_data"):string{return status==="available"?"Recommendation available":status==="low_confidence"?"Low confidence":"Insufficient data"}
@@ -359,7 +539,6 @@ function recommendationStatusLabel(status:"available"|"low_confidence"|"insuffic
 interface CurrentParameters {
   flowRateMlH: number;
   voltageKv: number;
-  hvNegativeKv: number;
   temperatureC: number;
   humidityPct: number;
   distanceMm: number;
@@ -369,7 +548,6 @@ function validateParameters(parameters: CurrentParameters): string[] {
   const checks: Array<[string, number, { minimum: number; maximum: number }, string]> = [
     ["Flow", parameters.flowRateMlH, RECOMMENDATION_CONFIG.limits.flowRateMlH, "mL/h"],
     ["HV+", parameters.voltageKv, RECOMMENDATION_CONFIG.limits.voltageKv, "kV"],
-    ["HV−", parameters.hvNegativeKv, RECOMMENDATION_CONFIG.limits.hvNegativeKv, "kV"],
     ["Temperature", parameters.temperatureC, RECOMMENDATION_CONFIG.limits.temperatureC, "°C"],
     ["RH", parameters.humidityPct, RECOMMENDATION_CONFIG.limits.humidityPct, "%"],
     ["Distance", parameters.distanceMm, RECOMMENDATION_CONFIG.limits.distanceMm, "mm"],

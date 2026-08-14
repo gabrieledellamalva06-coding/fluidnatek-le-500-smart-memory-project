@@ -12,7 +12,7 @@ import type { Language } from "./lib/translations";
 import type { Material } from "./core/types/material";
 import type { SolutionCharacterization } from "./core/types/characterization";
 import type { ExperimentalSetup } from "./core/types/setup";
-import type { CreateExperimentInput } from "./application/experiments/experiment.mapper";
+import type { CreateExperimentInput, UpdateExperimentInput } from "./application/experiments/experiment.mapper";
 import type { CreateSetupInput } from "./application/setups/setup.service";
 import type { CreateSolutionCharacterizationInput } from "./application/characterizations/characterization.service";
 import { projectService } from "./application/projects/project.service";
@@ -214,6 +214,12 @@ const handleAddMaterial = async (
       throw new Error(message);
     }
   };
+  const handleUpdateExperiment = async (id: string, input: UpdateExperimentInput): Promise<Experiment> => {
+    setDataError(null);
+    const updated = await experimentService.updateExperiment(id, input);
+    setExperiments((previous) => previous.map((experiment) => experiment.id === id ? updated : experiment));
+    return updated;
+  };
 
   const handleImportExperiments = async (parsedList: ParsedExcelResult[], targetProjectId: string): Promise<void> => {
     const imported: Experiment[] = [];
@@ -285,9 +291,9 @@ const handleAddMaterial = async (
         if (!activeProject || !selectedFormulation || !selectedSetup) {
           return <main className="flex-1 overflow-y-auto bg-slate-100 p-8"><div className="rounded-2xl bg-amber-50 p-5 text-amber-800">Complete Project, Formulation and Setup first.</div></main>;
         }
-        return <RunConfig project={activeProject} formulation={selectedFormulation} characterization={selectedCharacterization} setup={selectedSetup} projects={projects} formulations={formulations} characterizations={characterizations} setups={setups} experiments={experiments} onAddExperiment={handleAddExperiment} lang={lang} />;
+        return <RunConfig project={activeProject} formulation={selectedFormulation} characterization={selectedCharacterization} setup={selectedSetup} projects={projects} formulations={formulations} characterizations={characterizations} setups={setups} experiments={experiments} materials={materials} onAddExperiment={handleAddExperiment} lang={lang} />;
       case "HISTORICAL_EXPERIMENTS":
-        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} loading={isDataLoading} error={dataError} />;
+        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} loading={isDataLoading} error={dataError} onUpdateExperiment={handleUpdateExperiment} />;
       case "DATABASE_MANAGEMENT":
         return <ExcelImport projects={projects} formulations={formulations} onImportExperiment={handleImportExperiments} lang={lang} />;
     }

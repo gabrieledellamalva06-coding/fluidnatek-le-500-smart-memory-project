@@ -3,6 +3,7 @@ import type {
   HistoricalExperimentContext,
   SimilarityMatch,
   SimilarityQuery,
+  SolutionSimilarityMatch,
 } from "./similarity.types";
 
 interface NumericFieldRule {
@@ -158,6 +159,185 @@ export function calculateSimilarityScore(
   }
 
   return maxScore <= 0 ? 0 : round((score / maxScore) * 100, 2);
+}
+
+/**
+ * Compares solution composition only. Process parameters are intentionally
+ * excluded: this answers how a solution was historically processed, before a
+ * process window is derived from the matching experiments.
+ */
+export function searchSimilarSolutionExperiments(
+  contexts: readonly HistoricalExperimentContext[],
+  query: SimilarityQuery,
+  minimumSimilarity = 0,
+  maximumResults = 12
+): SolutionSimilarityMatch[] {
+  return contexts
+    .map((context) => {
+      const result = calculateSolutionSimilarity(context, query);
+      return result === null ? null : { ...result, context, rankingScore: calculateSolutionRankingScore(result.score, result.comparableCriteriaCount, context) };
+    })
+    .filter((match): match is SolutionSimilarityMatch => match !== null && match.score >= minimumSimilarity)
+    .sort((left, right) => right.rankingScore - left.rankingScore || right.score - left.score)
+    .slice(0, maximumResults);
+}
+
+export function calculateSolutionSimilarity(
+  context: HistoricalExperimentContext,
+  query: SimilarityQuery
+): Omit<SolutionSimilarityMatch, "context"> | null {
+  const formulation = context.formulation;
+  if (!formulation) return null;
+
+  const polymer = formulation.polymerName ?? context.polymerMaterial?.canonicalName;
+  const solvent1 = formulation.solvent1Name ?? formulation.solvent;
+  const solvent2 = formulation.solvent2Name;
+  const polymerFamily = context.polymerMaterial?.polymerFamily;
+  const solventFamily = context.solvent1Material?.solventFamily;
+  const molecularWeight = context.polymerMaterial?.molecularWeight;
+  const concentration = formulation.polymerConcentrationPct ??
+    (formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined);
+
+  const reasons: string[] = [];
+  let score = 0;
+  let maxScore = 0;
+  let exactPolymer = false;
+  let familyFallback = false;
+  let comparableCriteriaCount = 0;
+
+  if (query.polymer) {
+    maxScore += 35;
+    exactPolymer = safeTextMatch(polymer, query.polymer);
+    if (normalizeText(polymer) && normalizeText(query.polymer)) comparableCriteriaCount += 1;
+    if (exactPolymer) {
+      score += 35;
+      reasons.push(`Same polymer: ${display(polymer)}`);
+    }
+  }
+
+  if (query.polymerFamily) {
+    maxScore += 15;
+    if (safeTextMatch(polymerFamily, query.polymerFamily)) {
+      score += 15;
+      familyFallback = !exactPolymer;
+      reasons.push(`Same polymer family: ${display(polymerFamily)}`);
+    }
+    if (normalizeText(polymerFamily) && normalizeText(query.polymerFamily)) comparableCriteriaCount += 1;
+  }
+
+  const molecularWeightScore = compareMolecularWeight(molecularWeight, query.molecularWeight);
+  if (molecularWeightScore !== null) {
+    comparableCriteriaCount += 1;
+    maxScore += 15;
+    score += 15 * molecularWeightScore;
+    if (molecularWeightScore === 1) reasons.push(`Same molecular weight: ${display(molecularWeight)}`);
+    else if (molecularWeightScore >= 0.5) reasons.push(`Similar molecular weight: ${display(molecularWeight)}`);
+  }
+
+  const concentrationScore = compareConcentration(concentration, query.polymerConcentrationPct);
+  if (concentrationScore !== null) {
+    comparableCriteriaCount += 1;
+    maxScore += 15;
+    score += 15 * concentrationScore;
+    const difference = Math.abs(concentration - (query.polymerConcentrationPct as number));
+    reasons.push(`Concentration difference: ${round(difference, 2)}%`);
+  }
+
+  const solventScore = compareSolventSystem(
+    { first: solvent1, second: solvent2, family: solventFamily, firstRatio: formulation.solvent1RatioPct, secondRatio: formulation.solvent2RatioPct },
+    { first: query.solvent1 ?? query.solvent, second: query.solvent2, family: query.solventFamily, firstRatio: query.solvent1RatioPct, secondRatio: query.solvent2RatioPct },
+  );
+  if (solventScore !== null) {
+    comparableCriteriaCount += 1;
+    maxScore += 20;
+    score += 20 * solventScore.score;
+    reasons.push(...solventScore.reasons);
+  }
+
+  if (maxScore === 0 || (!exactPolymer && !familyFallback && solventScore === null)) return null;
+
+  const tier: ContextTier = exactPolymer && molecularWeightScore === 1 && concentrationScore === 1 && solventScore?.score === 1
+    ? 4
+    : exactPolymer && solventScore !== null
+      ? 3
+      : exactPolymer
+        ? 2
+        : 1;
+
+  const dataCompleteness = comparableCriteriaCount / 5;
+  return { tier, score: round((score / maxScore) * 100, 2), comparableCriteriaCount, comparableCriteriaTotal: 5, dataCompleteness, evidenceLevel: resolveEvidenceLevel(comparableCriteriaCount, context), rankingScore: 0, reasons };
+}
+
+function resolveEvidenceLevel(criteria: number, context: HistoricalExperimentContext): "strong" | "moderate" | "limited" {
+  const hasSolutionData = Boolean(context.formulation?.polymerName || context.formulation?.solvent || context.polymerMaterial?.molecularWeight || context.polymerMaterial?.polymerFamily);
+  if (criteria >= 4 && hasSolutionData) return "strong";
+  if (criteria >= 3 && hasSolutionData) return "moderate";
+  return "limited";
+}
+
+function calculateSolutionRankingScore(score: number, criteria: number, context: HistoricalExperimentContext): number {
+  const completeness = criteria / 5;
+  const grade = context.experiment.jetStabilityGrade;
+  const success = Number.isInteger(grade) && grade >= 1 && grade <= 4 ? grade / 4 : 0;
+  return round(score * 0.6 + completeness * 25 + success * 15, 2);
+}
+
+interface SolventSystem {
+  first?: string;
+  second?: string;
+  family?: string;
+  firstRatio?: number;
+  secondRatio?: number;
+}
+
+function compareSolventSystem(left: SolventSystem, right: SolventSystem): { score: number; reasons: string[] } | null {
+  if (!right.first && !right.second && !right.family) return null;
+  const leftNames = [left.first, left.second].filter((value): value is string => Boolean(normalizeText(value))).map(normalizeText).sort();
+  const rightNames = [right.first, right.second].filter((value): value is string => Boolean(normalizeText(value))).map(normalizeText).sort();
+  if (leftNames.length === 0 || rightNames.length === 0) {
+    return safeTextMatch(left.family, right.family) ? { score: 0.45, reasons: [`Same solvent family: ${display(left.family)}`] } : null;
+  }
+  if (leftNames.join("|") !== rightNames.join("|")) {
+    return safeTextMatch(left.family, right.family) ? { score: 0.35, reasons: [`Similar solvent family: ${display(left.family)}`] } : null;
+  }
+  const ratioDifference = Math.abs((left.firstRatio ?? 100) - (right.firstRatio ?? 100));
+  const ratioScore = Math.max(0, 1 - ratioDifference / 100);
+  const reasons = [`Same solvent system: ${leftNames.join(" + ")}`];
+  if (ratioDifference === 0) reasons.push("Same solvent ratios");
+  else reasons.push(`Solvent ratio difference: ${round(ratioDifference, 2)}%`);
+  return { score: ratioScore, reasons };
+}
+
+function compareConcentration(left: number | undefined, right: number | undefined): number | null {
+  if (left === undefined || right === undefined || !Number.isFinite(left) || !Number.isFinite(right)) return null;
+  const difference = Math.abs(left - right);
+  if (difference === 0) return 1;
+  if (difference <= 1) return 0.85;
+  if (difference <= 2) return 0.65;
+  if (difference <= 5) return 0.35;
+  return 0;
+}
+
+function compareMolecularWeight(left: string | undefined, right: string | number | undefined): number | null {
+  const leftValue = parseMolecularWeight(left);
+  const rightValue = parseMolecularWeight(right);
+  if (leftValue === null || rightValue === null) return null;
+  if (leftValue === rightValue) return 1;
+  const difference = Math.abs(leftValue - rightValue) / Math.max(leftValue, rightValue);
+  return difference <= 0.1 ? 0.75 : difference <= 0.25 ? 0.45 : 0;
+}
+
+function parseMolecularWeight(value: string | number | undefined): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const match = value?.trim().toLocaleLowerCase().match(/^([0-9]+(?:\.[0-9]+)?)\s*(kda|mda)?$/);
+  if (!match) return null;
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) return null;
+  return match[2] === "mda" ? amount * 1000 : amount;
+}
+
+function display(value: string | number | undefined): string {
+  return value === undefined || value === "" ? "unknown" : String(value);
 }
 
 function resolveContextTier(

@@ -11,6 +11,7 @@ import {
 
 import type { Experiment, Formulation, Project } from "../types";
 import type { Material } from "../core/types/material";
+import type { UpdateExperimentInput } from "../application/experiments/experiment.mapper";
 
 import {
   adaptHistoricalExperiments,
@@ -38,6 +39,7 @@ interface HistoricalExperimentsProps {
   materials?: Material[];
   loading?: boolean;
   error?: string | null;
+  onUpdateExperiment: (id: string, input: UpdateExperimentInput) => Promise<Experiment>;
 }
 
 export default function HistoricalExperiments({
@@ -47,6 +49,7 @@ export default function HistoricalExperiments({
   materials = [],
   loading = false,
   error = null,
+  onUpdateExperiment,
 }: HistoricalExperimentsProps) {
   const [filters, setFilters] = useState<HistoricalExperimentFilters>(
     createEmptyHistoricalExperimentFilters
@@ -58,6 +61,11 @@ export default function HistoricalExperiments({
 
   const [selectedExperimentId, setSelectedExperimentId] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [editingExperiment, setEditingExperiment] = useState<HistoricalExperimentRecord | null>(null);
+  const [editValues, setEditValues] = useState<EditExperimentValues | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editMessage, setEditMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const records = useMemo(
     () =>
@@ -87,6 +95,7 @@ export default function HistoricalExperiments({
 
   const selectedRecord =
     records.find((record) => record.id === selectedExperimentId) ?? null;
+
 
   const hasActiveFilters = useMemo(
     () => JSON.stringify(filters) !== JSON.stringify(createEmptyHistoricalExperimentFilters()),
@@ -451,8 +460,11 @@ export default function HistoricalExperiments({
           <ExperimentDetails
             record={selectedRecord}
             onClose={() => setSelectedExperimentId("")}
+            onEdit={() => { setEditingExperiment(selectedRecord); setEditValues(toEditValues(selectedRecord)); setEditMessage(null); setSuccessMessage(null); }}
           />
         )}
+        {successMessage && <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">{successMessage}</p>}
+        {editingExperiment && editValues && <ExperimentEdit record={editingExperiment} values={editValues} saving={editSaving} message={editMessage} onChange={(key, value) => setEditValues((current) => current ? { ...current, [key]: value } : current)} onCancel={() => { if (JSON.stringify(editValues) !== JSON.stringify(toEditValues(editingExperiment)) && !window.confirm("Discard unsaved changes?")) return; setEditingExperiment(null); setEditValues(null); }} onSave={async () => { if (!window.confirm("This updates a historical experiment and may affect Historical Analysis and recommendations. Continue?")) return; setEditSaving(true); setEditMessage(null); try { await onUpdateExperiment(editingExperiment.id, fromEditValues(editValues)); setEditingExperiment(null); setEditValues(null); setSuccessMessage("Experiment updated successfully."); setSelectedExperimentId(editingExperiment.id); } catch (saveError) { setEditMessage(saveError instanceof Error ? saveError.message : "Unable to update experiment."); } finally { setEditSaving(false); } }} />}
       </div>
     </main>
   );
@@ -593,11 +605,13 @@ function SortableHeader({
 interface ExperimentDetailsProps {
   record: HistoricalExperimentRecord;
   onClose: () => void;
+  onEdit: () => void;
 }
 
 function ExperimentDetails({
   record,
   onClose,
+  onEdit,
 }: ExperimentDetailsProps) {
   const values = [
     valueItem("Flow rate", record.flowRateMlH, "mL/h"),
@@ -624,14 +638,14 @@ function ExperimentDetails({
           </h2>
         </div>
 
-        <button
+        <div className="flex items-center gap-2"><button type="button" onClick={onEdit} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">Edit Experiment</button><button
           type="button"
           onClick={onClose}
           className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100"
           aria-label="Close experiment details"
         >
           <X className="h-4 w-4" />
-        </button>
+        </button></div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
@@ -682,6 +696,11 @@ function ExperimentDetails({
     </section>
   );
 }
+
+interface EditExperimentValues { operationIdentifier: string; flowRateMlH: string; voltageKv: string; collectorVoltageKv: string; temperatureC: string; humidityPct: string; distanceMm: string; drumSpeedRpm: string; grade: string; comments: string; }
+function toEditValues(record: HistoricalExperimentRecord): EditExperimentValues { return { operationIdentifier: record.runIdentifier, flowRateMlH: String(record.flowRateMlH ?? ""), voltageKv: String(record.positiveVoltageKv ?? ""), collectorVoltageKv: String(record.negativeVoltageKv ?? ""), temperatureC: String(record.temperatureC ?? ""), humidityPct: String(record.humidityPct ?? ""), distanceMm: String(record.workingDistanceMm ?? ""), drumSpeedRpm: String(record.collectorSpeedRpm ?? ""), grade: String(record.grade ?? ""), comments: record.operatorComments }; }
+function fromEditValues(values: EditExperimentValues): UpdateExperimentInput { const number = (value: string) => value.trim() === "" ? undefined : Number(value); const grade = number(values.grade); return { operationIdentifier: values.operationIdentifier, flowRateMlH: number(values.flowRateMlH), voltageKv: number(values.voltageKv), collectorVoltageKv: number(values.collectorVoltageKv), temperatureC: number(values.temperatureC), humidityPct: number(values.humidityPct), distanceMm: number(values.distanceMm), drumSpeedRpm: number(values.drumSpeedRpm), jetStabilityGrade: grade as 1 | 2 | 3 | 4 | undefined, operatorComments: values.comments }; }
+function ExperimentEdit({ record, values, saving, message, onChange, onCancel, onSave }: { record: HistoricalExperimentRecord; values: EditExperimentValues; saving: boolean; message: string | null; onChange: (key: keyof EditExperimentValues, value: string) => void; onCancel: () => void; onSave: () => Promise<void> }) { const fields: Array<[keyof EditExperimentValues, string, string]> = [["flowRateMlH", "Flow Rate", "mL/h"], ["voltageKv", "HV+", "kV"], ["collectorVoltageKv", "HV−", "kV"], ["temperatureC", "Temperature", "°C"], ["humidityPct", "Relative Humidity", "%"], ["distanceMm", "Working Distance", "mm"], ["drumSpeedRpm", "Drum/Collector Speed", "rpm"], ["grade", "Processability Grade", "1–4"]]; return <section className="mt-5 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">Edit Experiment</p><h2 className="mt-1 text-xl font-bold">{record.runIdentifier}</h2></div><p className="text-xs text-slate-500">Changes affect historical analysis and recommendations.</p></div><div className="mt-5 grid gap-3 md:grid-cols-2"><label className="text-xs font-bold text-slate-600 md:col-span-2">Run name<input value={values.operationIdentifier} onChange={(event) => onChange("operationIdentifier", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /></label>{fields.map(([key, label, unit]) => <label key={key} className="text-xs font-bold text-slate-600">{label} ({unit})<input type="number" value={values[key]} onChange={(event) => onChange(key, event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /></label>)}<label className="text-xs font-bold text-slate-600 md:col-span-2">Comments<textarea value={values.comments} onChange={(event) => onChange("comments", event.target.value)} className="mt-1 min-h-20 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /></label></div>{message && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{message}</p>}<div className="mt-5 flex justify-end gap-2"><button type="button" onClick={onCancel} disabled={saving} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold">Cancel</button><button type="button" onClick={() => void onSave()} disabled={saving} className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save Changes"}</button></div></section>; }
 
 function Info({ label, value }: { label: string; value: string }) {
   return (

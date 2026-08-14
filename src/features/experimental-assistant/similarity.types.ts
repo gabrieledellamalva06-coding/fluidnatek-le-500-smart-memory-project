@@ -1,6 +1,7 @@
 import type { Experiment, Formulation, Project } from "../../types";
 import type { SolutionCharacterization } from "../../core/types/characterization";
 import type { ExperimentalSetup } from "../../core/types/setup";
+import type { Material } from "../../core/types/material";
 
 export interface SimilarityQuery {
   projectId?: string;
@@ -19,6 +20,14 @@ export interface SimilarityQuery {
   polymerMaterialId?: string;
   solvent1MaterialId?: string;
   solvent2MaterialId?: string;
+  polymerFamily?: string;
+  molecularWeight?: string | number;
+  polymerConcentrationPct?: number;
+  solvent1?: string;
+  solvent1RatioPct?: number;
+  solvent2?: string;
+  solvent2RatioPct?: number;
+  solventFamily?: string;
 }
 
 export interface HistoricalExperimentContext {
@@ -27,6 +36,9 @@ export interface HistoricalExperimentContext {
   project?: Project;
   characterization?: SolutionCharacterization;
   setup?: ExperimentalSetup;
+  polymerMaterial?: Material;
+  solvent1Material?: Material;
+  solvent2Material?: Material;
 }
 
 export type ContextTier = 1 | 2 | 3 | 4;
@@ -34,6 +46,19 @@ export type ContextTier = 1 | 2 | 3 | 4;
 export interface SimilarityMatch {
   tier: ContextTier;
   score: number;
+  context: HistoricalExperimentContext;
+  reasons?: string[];
+}
+
+export interface SolutionSimilarityMatch {
+  tier: ContextTier;
+  score: number;
+  comparableCriteriaCount: number;
+  comparableCriteriaTotal: 5;
+  dataCompleteness: number;
+  evidenceLevel: "strong" | "moderate" | "limited";
+  rankingScore: number;
+  reasons: string[];
   context: HistoricalExperimentContext;
 }
 
