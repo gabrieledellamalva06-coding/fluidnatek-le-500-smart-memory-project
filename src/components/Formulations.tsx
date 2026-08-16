@@ -16,6 +16,10 @@ import type { SolutionCharacterization } from "../core/types/characterization";
 import type { CreateSolutionCharacterizationInput } from "../application/characterizations/characterization.service";
 import type { Language } from "../lib/translations";
 import type { CreateMaterialInput } from "../application/materials/material.service";
+import {
+  buildPolymerMaterialOptions,
+  formatPolymerOptionLabel,
+} from "./polymerMaterialOptions";
 
 interface Props {
   projects: Project[];
@@ -138,40 +142,10 @@ const [materialError, setMaterialError] =
     .filter((item) => item.formulationId === selectedFormulationId)
     .sort((a, b) => parseDate(b.measuredAt) - parseDate(a.measuredAt));
 
- const polymers = useMemo(() => {
-  const bestByShortName = new Map<string, Material>();
-
-  const scoreMaterial = (material: Material): number => {
-    let score = 0;
-
-    if (material.polymerFamily?.trim()) score += 10;
-    if (material.molecularWeight?.trim()) score += 5;
-    if (material.supplier?.trim()) score += 2;
-    if (material.articleNumber?.trim()) score += 1;
-
-    return score;
-  };
-
-  materials
-    .filter((item) =>
-      ["polymer", "biopolymer", "copolymer"].includes(item.category)
-    )
-    .forEach((item) => {
-      const shortName = polymerShortName(item);
-      const current = bestByShortName.get(shortName);
-
-      if (
-        !current ||
-        scoreMaterial(item) > scoreMaterial(current)
-      ) {
-        bestByShortName.set(shortName, item);
-      }
-    });
-
-  return Array.from(bestByShortName.values()).sort((a, b) =>
-    polymerShortName(a).localeCompare(polymerShortName(b))
+  const polymers = useMemo(
+    () => buildPolymerMaterialOptions(materials),
+    [materials]
   );
-}, [materials]);
   const solvents = materials.filter((item) => item.category === "solvent");
   const polymer = materials.find((item) => item.id === form.polymerId);
   const solvent1 = materials.find((item) => item.id === form.solvent1Id);
@@ -434,7 +408,7 @@ const createMaterial = async (
     label="Polymer"
     value={form.polymerId}
     materials={polymers}
-    shortName
+    showPolymerDetails
     onChange={(polymerId) =>
       setForm((s) => ({
         ...s,
@@ -742,13 +716,13 @@ function MaterialSelect({
   value,
   materials,
   onChange,
-  shortName = false,
+  showPolymerDetails = false,
 }: {
   label: string;
   value: string;
   materials: Material[];
   onChange: (value: string) => void;
-  shortName?: boolean;
+  showPolymerDetails?: boolean;
 }) {
   return (
     <label className="block">
@@ -757,7 +731,7 @@ function MaterialSelect({
         <option value="">Choose material</option>
         {materials.map((material) => (
           <option key={material.id} value={material.id}>
-            {shortName ? polymerShortName(material) : material.canonicalName}
+            {showPolymerDetails ? formatPolymerOptionLabel(material) : material.canonicalName}
           </option>
         ))}
       </select>
@@ -765,34 +739,6 @@ function MaterialSelect({
   );
 }
 
-function polymerShortName(material: Material): string {
-  const source = [
-    material.polymerFamily,
-    ...material.aliases,
-    ...material.commercialNames,
-    material.canonicalName,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  if (source.includes("polycaprolactone") || source.includes("pcl")) return "PCL";
-  if (source.includes("polyethylene oxide") || source.includes("peo") || source.includes("polyox")) return "PEO";
-  if (source.includes("polyvinyl alcohol") || source.includes("pva")) return "PVA";
-  if (source.includes("polyacrylonitrile") || source.includes("pan")) return "PAN";
-  if (source.includes("cellulose acetate") || source.includes("celac")) return "CA";
-  if (source.includes("polyvinylpyrrolidone") || source.includes("pvp")) return "PVP";
-  if (source.includes("polyvinylidene fluoride") || source.includes("pvdf")) return "PVDF";
-  if (source.includes("polylactic acid") || source.includes("pla")) return "PLA";
-  if (source.includes("plga")) return "PLGA";
-  if (source.includes("thermoplastic polyurethane") || source.includes("tpu")) return "TPU";
-  if (source.includes("polyurethane") || source.includes("pu")) return "PU";
-  if (source.includes("polystyrene") || source.includes("ps")) return "PS";
-  if (source.includes("pmma")) return "PMMA";
-  if (source.includes("pco")) return "PCO";
-
-  return material.polymerFamily?.trim() || material.canonicalName;
-}
 function TextInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="block"><span className="label">{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} className="input" /></label>; }
 function NumberInput({ label, unit, value, onChange }: { label: string; unit: string; value: number; onChange: (value: number) => void }) { return <label className="block"><span className="label">{label}</span><div className="relative"><input type="number" step="0.01" value={value} onChange={(e) => onChange(Number(e.target.value))} className="input pr-16" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">{unit}</span></div></label>; }
 function MaterialSummary({ material }: { material: Material }) {
