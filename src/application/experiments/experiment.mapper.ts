@@ -264,12 +264,12 @@ export function mapCanonicalExperimentToUi(
 
     distanceMm:
       primaryProcessRecord
-        ?.parameters.distanceMm ?? 0,
+        ?.parameters.distanceMm,
 
     jetStabilityGrade:
       primaryProcessRecord
         ?.evaluation
-        ?.jetStabilityGrade ?? 0,
+        ?.jetStabilityGrade,
 
     operatorComments:
       primaryProcessRecord
@@ -346,7 +346,7 @@ function mapProcessRecordToTelemetry(
 
     voltageKv:
       processRecord.parameters
-        .voltageKv ?? 0,
+        .voltageKv,
 
     collectorVoltageKv:
       processRecord.parameters
@@ -354,7 +354,7 @@ function mapProcessRecordToTelemetry(
 
     flowRateMlH:
       processRecord.parameters
-        .flowRateMlH ?? 0,
+        .flowRateMlH,
 
     temperatureC:
       processRecord.environment
@@ -366,7 +366,7 @@ function mapProcessRecordToTelemetry(
 
     distanceMm:
       processRecord.parameters
-        .distanceMm ?? 0,
+        .distanceMm,
 
     drumSpeedRpm:
       processRecord.parameters

@@ -27,6 +27,8 @@ import { searchSimilarProcessExperiments } from "../features/experimental-assist
 import type { ProcessConditionKey } from "../features/experimental-assistant/processConditionSimilarity.types";
 import { buildInitialParameterRecommendation, type InitialParameterRecommendation, type ParameterRecommendation, type RecommendedParameterKey } from "../features/experimental-assistant/initialParameterRecommendation";
 import type { Material } from "../core/types/material";
+import { classifyCategoricalComparison, classifyNumericComparison } from "../features/experimental-assistant/comparisonClassification";
+import { finiteNumberOrUndefined, isMissingValue } from "../features/experimental-assistant/valueSemantics";
 
 interface Props {
   project: Project;
@@ -61,13 +63,13 @@ export default function RunConfig({
   lang,
 }: Props) {
   const [stage, setStage] = useState<Stage>("parameters");
-  const [flowRateMlH, setFlowRateMlH] = useState(1);
-  const [voltageKv, setVoltageKv] = useState(15);
-  const [collectorVoltageKv, setCollectorVoltageKv] = useState(0);
-  const [temperatureC, setTemperatureC] = useState(25);
-  const [humidityPct, setHumidityPct] = useState(40);
-  const [distanceMm, setDistanceMm] = useState(150);
-  const [drumSpeedRpm, setDrumSpeedRpm] = useState(0);
+  const [flowRateMlH, setFlowRateMlH] = useState<number | undefined>(1);
+  const [voltageKv, setVoltageKv] = useState<number | undefined>(15);
+  const [collectorVoltageKv, setCollectorVoltageKv] = useState<number | undefined>(0);
+  const [temperatureC, setTemperatureC] = useState<number | undefined>(25);
+  const [humidityPct, setHumidityPct] = useState<number | undefined>(40);
+  const [distanceMm, setDistanceMm] = useState<number | undefined>(150);
+  const [drumSpeedRpm, setDrumSpeedRpm] = useState<number | undefined>(0);
   const [runName, setRunName] = useState("");
   const [processability, setProcessability] = useState<ProcessabilityGrade>(3);
   const [comments, setComments] = useState("");
@@ -108,7 +110,7 @@ export default function RunConfig({
       temperatureC,
       humidityPct,
       distanceMm,
-      solidsContentPct: formulation.solidsContentPct,
+      solidsContentPct: finiteNumberOrUndefined(formulation.solidsContentPct),
       polymerMaterialId: formulation.polymerMaterialId,
       solvent1MaterialId: formulation.solvent1MaterialId,
       solvent2MaterialId: formulation.solvent2MaterialId,
@@ -128,7 +130,7 @@ export default function RunConfig({
       polymer: formulation.polymerName,
       polymerFamily: currentPolymerMaterial?.polymerFamily,
       molecularWeight: currentPolymerMaterial?.molecularWeight,
-      polymerConcentrationPct: formulation.polymerConcentrationPct ?? (formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined),
+      polymerConcentrationPct: finiteNumberOrUndefined(formulation.polymerConcentrationPct) ?? finiteNumberOrUndefined(formulation.solidsContentPct),
       solvent: formulation.solvent,
       solvent1: formulation.solvent1Name ?? formulation.solvent,
       solvent1RatioPct: formulation.solvent1RatioPct,
@@ -139,7 +141,7 @@ export default function RunConfig({
     [contexts, currentPolymerMaterial, currentSolventMaterial, formulation]
   );
   const allSolutionMatches = useMemo(
-    () => searchSimilarSolutionExperiments(contexts, { polymer: formulation.polymerName, polymerFamily: currentPolymerMaterial?.polymerFamily, molecularWeight: currentPolymerMaterial?.molecularWeight, polymerConcentrationPct: formulation.polymerConcentrationPct ?? (formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined), solvent: formulation.solvent, solvent1: formulation.solvent1Name ?? formulation.solvent, solvent1RatioPct: formulation.solvent1RatioPct, solvent2: formulation.solvent2Name, solvent2RatioPct: formulation.solvent2RatioPct, solventFamily: currentSolventMaterial?.solventFamily }, 0, contexts.length),
+    () => searchSimilarSolutionExperiments(contexts, { polymer: formulation.polymerName, polymerFamily: currentPolymerMaterial?.polymerFamily, molecularWeight: currentPolymerMaterial?.molecularWeight, polymerConcentrationPct: finiteNumberOrUndefined(formulation.polymerConcentrationPct) ?? finiteNumberOrUndefined(formulation.solidsContentPct), solvent: formulation.solvent, solvent1: formulation.solvent1Name ?? formulation.solvent, solvent1RatioPct: formulation.solvent1RatioPct, solvent2: formulation.solvent2Name, solvent2RatioPct: formulation.solvent2RatioPct, solventFamily: currentSolventMaterial?.solventFamily }, 0, contexts.length),
     [contexts, currentPolymerMaterial, currentSolventMaterial, formulation]
   );
   const [selectedHistoricalId, setSelectedHistoricalId] = useState("");
@@ -170,7 +172,7 @@ export default function RunConfig({
     setOpenAnalysisPanel((value) => value === "recommendation" ? null : "recommendation");
   };
   const initialRecommendation = useMemo<InitialParameterRecommendation>(() => buildInitialParameterRecommendation(solutionMatches), [solutionMatches]);
-  const currentParameterValues: Record<RecommendedParameterKey, number> = { flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm };
+  const currentParameterValues: Partial<Record<RecommendedParameterKey, number>> = { flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm };
   const applySelectedRecommendations = () => {
     initialRecommendation.parameters.forEach((parameter) => {
       if (!selectedRecommendationKeys.includes(parameter.key) || parameter.value === undefined) return;
@@ -221,6 +223,11 @@ export default function RunConfig({
       setError("Enter a Run / Sample Code before saving.");
       return;
     }
+    const requiredValues = [flowRateMlH, voltageKv, distanceMm];
+    if (requiredValues.some((value) => finiteNumberOrUndefined(value) === undefined)) {
+      setError("Flow rate, HV+ and working distance must contain valid numeric values before saving.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -230,10 +237,10 @@ export default function RunConfig({
         machineModel: setup.machine.model,
         injectorType: setup.injector.type,
         collectorType: setup.collector.type,
-        voltageKv,
+        voltageKv: voltageKv as number,
         collectorVoltageKv,
-        flowRateMlH,
-        distanceMm,
+        flowRateMlH: flowRateMlH as number,
+        distanceMm: distanceMm as number,
         drumSpeedRpm: drumSpeedRpm > 0 ? drumSpeedRpm : undefined,
         jetStabilityGrade: processability,
         operatorComments: comments.trim(),
@@ -290,13 +297,13 @@ export default function RunConfig({
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <NumericField label="Q1" unit="mL/h" value={flowRateMlH} onChange={(v) => setFlowRateMlH(v ?? 0)} min={0} decimals={3} />
-              <NumericField label="HV+" unit="kV" value={voltageKv} onChange={(v) => setVoltageKv(v ?? 0)} decimals={2} />
-              <NumericField label="HV-" unit="kV" value={collectorVoltageKv} onChange={(v) => setCollectorVoltageKv(v ?? 0)} decimals={2} />
-              <NumericField label="Temperature" unit="°C" value={temperatureC} onChange={(v) => setTemperatureC(v ?? 0)} decimals={1} />
-              <NumericField label="RH" unit="%" value={humidityPct} onChange={(v) => setHumidityPct(v ?? 0)} min={0} max={100} decimals={1} />
-              <NumericField label="dZ" unit="mm" value={distanceMm} onChange={(v) => setDistanceMm(v ?? 0)} min={0} decimals={1} />
-              <NumericField label="Drum speed" unit="rpm" value={drumSpeedRpm} onChange={(v) => setDrumSpeedRpm(v ?? 0)} min={0} decimals={0} />
+              <NumericField label="Q1" unit="mL/h" value={flowRateMlH} onChange={setFlowRateMlH} min={0} decimals={3} />
+              <NumericField label="HV+" unit="kV" value={voltageKv} onChange={setVoltageKv} decimals={2} />
+              <NumericField label="HV-" unit="kV" value={collectorVoltageKv} onChange={setCollectorVoltageKv} decimals={2} />
+              <NumericField label="Temperature" unit="°C" value={temperatureC} onChange={setTemperatureC} decimals={1} />
+              <NumericField label="RH" unit="%" value={humidityPct} onChange={setHumidityPct} min={0} max={100} decimals={1} />
+              <NumericField label="dZ" unit="mm" value={distanceMm} onChange={setDistanceMm} min={0} decimals={1} />
+              <NumericField label="Drum speed" unit="rpm" value={drumSpeedRpm} onChange={setDrumSpeedRpm} min={0} decimals={0} />
               <label className="block sm:col-span-2">
                 <span className="label">Run / Sample Code</span>
                 <input value={runName} onChange={(e) => setRunName(e.target.value)} className="input" placeholder="Example: PEO-RUN-024" />
@@ -439,13 +446,13 @@ interface CurrentRunSnapshot {
   runName: string;
   polymerMaterial?: Material;
   solventMaterial?: Material;
-  flowRateMlH: number;
-  voltageKv: number;
-  collectorVoltageKv: number;
-  temperatureC: number;
-  humidityPct: number;
-  distanceMm: number;
-  drumSpeedRpm: number;
+  flowRateMlH?: number;
+  voltageKv?: number;
+  collectorVoltageKv?: number;
+  temperatureC?: number;
+  humidityPct?: number;
+  distanceMm?: number;
+  drumSpeedRpm?: number;
 }
 
 function currentRunSnapshot(input: CurrentRunSnapshot): CurrentRunSnapshot { return input; }
@@ -454,8 +461,8 @@ function ExperimentComparison({ current, match, processMatch }: { current: Curre
   const historical = match.context;
   const formulation = historical.formulation;
   const telemetry = historical.experiment.telemetryData.find((item) => [item.flowRateMlH, item.voltageKv, item.collectorVoltageKv, item.temperatureC, item.humidityPct, item.distanceMm, item.drumSpeedRpm].some((value) => typeof value === "number" && Number.isFinite(value)));
-  const currentConcentration = current.formulation.polymerConcentrationPct ?? (current.formulation.solidsContentPct > 0 ? current.formulation.solidsContentPct : undefined);
-  const historicalConcentration = formulation?.polymerConcentrationPct ?? (formulation && formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined);
+  const currentConcentration = finiteNumberOrUndefined(current.formulation.polymerConcentrationPct) ?? finiteNumberOrUndefined(current.formulation.solidsContentPct);
+  const historicalConcentration = finiteNumberOrUndefined(formulation?.polymerConcentrationPct) ?? finiteNumberOrUndefined(formulation?.solidsContentPct);
   const rows = [
     solutionRow("Polymer", current.formulation.polymerName, formulation?.polymerName),
     solutionRow("Polymer Family", current.polymerMaterial?.polymerFamily, historical.polymerMaterial?.polymerFamily),
@@ -475,12 +482,12 @@ function ExperimentComparison({ current, match, processMatch }: { current: Curre
   ].filter((row): row is ComparisonRow => row !== null);
   const currentLabel = current.runName || "Current Run";
   const historicalLabel = historical.experiment.operationIdentifier || historical.experiment.id;
-  return <section className="mt-4 rounded-3xl border border-blue-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Experiment Comparison</p><h3 className="mt-1 text-xl font-bold text-slate-950">{currentLabel} vs {historicalLabel}</h3></div><div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Similarity {match.score.toFixed(0)}%</span><span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Historical Grade: {validGrade(historical.experiment.jetStabilityGrade) ? `${historical.experiment.jetStabilityGrade}/4` : "No data"}</span></div></div><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[720px] table-fixed text-left text-xs"><thead><tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400"><th className="w-[28%] px-3 py-2">Parameter</th><th className="w-[27%] px-3 py-2">{currentLabel}</th><th className="w-[18%] px-3 py-2 text-center">Comparison</th><th className="w-[27%] px-3 py-2">{historicalLabel}</th></tr></thead><tbody><tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Solution / Formulation</td></tr>{rows.slice(0, 8).map((row) => <ComparisonTableRow key={row.label} row={row} />)}<tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Process Parameters</td></tr>{rows.slice(8).map((row) => <ComparisonTableRow key={row.label} row={row} />)}<tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Historical Result / Processability</td></tr><tr className="border-b border-slate-100"><td className="px-3 py-2 font-semibold text-slate-700">Processability Grade</td><td className="px-3 py-2 text-slate-600">Not run yet</td><td className="px-3 py-2 text-center"><Status tone="gray">No data</Status></td><td className="px-3 py-2 text-slate-600">{validGrade(historical.experiment.jetStabilityGrade) ? `${historical.experiment.jetStabilityGrade}/4` : "No data"}</td></tr></tbody></table></div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Historical Comments / Result</p><p className="mt-1 text-sm text-slate-600">{historical.experiment.operatorComments || "No data"}</p></div><div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Experiment Details</p><p className="mt-1 text-xs text-slate-600">ID: {historical.experiment.id} · Project: {historical.project?.name || "Not available"} · Formulation: {formulation?.name || formulation?.polymerName || "Not available"} · Setup: {historical.setup?.name || historical.setup?.machine.model || "Not available"} · Date: {historical.experiment.ingestedAt || "Not available"}</p></div></div></section>;
+  return <section className="mt-4 rounded-3xl border border-blue-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Experiment Comparison</p><h3 className="mt-1 text-xl font-bold text-slate-950">{currentLabel} vs {historicalLabel}</h3></div><div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Solution Similarity {match.score.toFixed(0)}%</span><span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Historical Grade: {validGrade(historical.experiment.jetStabilityGrade) ? `${historical.experiment.jetStabilityGrade}/4` : "No data"}</span></div></div><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[720px] table-fixed text-left text-xs"><thead><tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400"><th className="w-[28%] px-3 py-2">Parameter</th><th className="w-[27%] px-3 py-2">{currentLabel}</th><th className="w-[18%] px-3 py-2 text-center">Comparison</th><th className="w-[27%] px-3 py-2">{historicalLabel}</th></tr></thead><tbody><tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Solution / Formulation</td></tr>{rows.slice(0, 8).map((row) => <ComparisonTableRow key={row.label} row={row} />)}<tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Process Parameters</td></tr>{rows.slice(8).map((row) => <ComparisonTableRow key={row.label} row={row} />)}<tr><td colSpan={4} className="bg-blue-50/60 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-700">Historical Result / Processability</td></tr><tr className="border-b border-slate-100"><td className="px-3 py-2 font-semibold text-slate-700">Processability Grade</td><td className="px-3 py-2 text-slate-600">Not run yet</td><td className="px-3 py-2 text-center"><Status tone="gray">No data</Status></td><td className="px-3 py-2 text-slate-600">{validGrade(historical.experiment.jetStabilityGrade) ? `${historical.experiment.jetStabilityGrade}/4` : "No data"}</td></tr></tbody></table></div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Historical Comments / Result</p><p className="mt-1 text-sm text-slate-600">{historical.experiment.operatorComments || "No data"}</p></div><div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Experiment Details</p><p className="mt-1 text-xs text-slate-600">ID: {historical.experiment.id} · Project: {historical.project?.name || "Not available"} · Formulation: {formulation?.name || formulation?.polymerName || "Not available"} · Setup: {historical.setup?.name || historical.setup?.machine.model || "Not available"} · Date: {historical.experiment.ingestedAt || "Not available"}</p></div></div></section>;
 }
 
 function ComparisonTableRow({ row }: { row: ComparisonRow }) { return <tr className="border-b border-slate-100"><td className="px-3 py-2 font-semibold text-slate-700">{row.label}</td><td className="px-3 py-2 text-slate-600">{row.current}</td><td className="px-3 py-2 text-center">{row.status}</td><td className="px-3 py-2 text-slate-600">{row.historical}</td></tr>; }
 
-function InitialRecommendationPanel({ recommendation, selectedKeys, onSelectedKeysChange, currentValues, previewOpen, onPreviewOpen, onPreviewCancel, onApply, successMessage }: { recommendation: InitialParameterRecommendation; selectedKeys: RecommendedParameterKey[]; onSelectedKeysChange: (keys: RecommendedParameterKey[]) => void; currentValues: Record<RecommendedParameterKey, number>; previewOpen: boolean; onPreviewOpen: () => void; onPreviewCancel: () => void; onApply: () => void; successMessage: string }) {
+function InitialRecommendationPanel({ recommendation, selectedKeys, onSelectedKeysChange, currentValues, previewOpen, onPreviewOpen, onPreviewCancel, onApply, successMessage }: { recommendation: InitialParameterRecommendation; selectedKeys: RecommendedParameterKey[]; onSelectedKeysChange: (keys: RecommendedParameterKey[]) => void; currentValues: Partial<Record<RecommendedParameterKey, number>>; previewOpen: boolean; onPreviewOpen: () => void; onPreviewCancel: () => void; onApply: () => void; successMessage: string }) {
   const [evidenceKey, setEvidenceKey] = useState<RecommendedParameterKey | null>(null);
   const evidenceLabel = recommendation.evidenceLevel === "insufficient" ? "Insufficient historical evidence" : `${recommendation.evidenceLevel[0].toUpperCase()}${recommendation.evidenceLevel.slice(1)} historical evidence`;
   const reliableKeys = recommendation.parameters.filter((parameter) => parameter.value !== undefined).map((parameter) => parameter.key);
@@ -490,8 +497,8 @@ function InitialRecommendationPanel({ recommendation, selectedKeys, onSelectedKe
   return <section className="rounded-3xl border border-violet-200 bg-violet-50/60 p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Recommended Starting Parameters</h3><p className="mt-1 text-xs text-slate-600">Historical starting points—not guaranteed machine setpoints.</p></div><div className="text-left sm:text-right"><p className="text-sm font-bold text-violet-800">{evidenceLabel}</p><p className="mt-1 text-xs text-slate-600">{recommendation.supportingExperimentCount} similar experiment{recommendation.supportingExperimentCount === 1 ? "" : "s"} · {recommendation.successfulExperimentCount} successful supporting</p>{recommendation.bestMatch && <p className="mt-1 text-xs text-slate-600">Best match: {formatRecommendationNumber(recommendation.bestMatch.score, 0)}% Solution Similarity · Grade {validGrade(recommendation.bestMatch.context.experiment.jetStabilityGrade) ? `${recommendation.bestMatch.context.experiment.jetStabilityGrade}/4` : "No data"}</p>}</div></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><RecommendationParameterCards recommendation={recommendation} selectedKeys={selectedKeys} onSelectedKeysChange={onSelectedKeysChange} evidenceKey={evidenceKey} onEvidenceToggle={(key) => setEvidenceKey((current) => current === key ? null : key)} /></div>{evidenceParameter && <RecommendationEvidencePanel parameter={evidenceParameter} />}{reliableKeys.length > 0 && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-violet-200 pt-4"><label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={allReliableSelected} onChange={(event) => onSelectedKeysChange(event.target.checked ? reliableKeys : [])} />Select all reliable recommendations</label><button type="button" disabled={selectedParameters.length === 0} onClick={onPreviewOpen} className="rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Use selected starting parameters</button></div>}{previewOpen && <div role="dialog" aria-modal="true" aria-labelledby="recommendation-preview-title" className="mt-4 rounded-2xl border border-violet-300 bg-white p-4 shadow-sm"><h4 id="recommendation-preview-title" className="font-bold text-slate-950">Confirm starting parameters</h4><p className="mt-1 text-xs text-slate-600">Review every current value before replacing it in this unsaved run.</p><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[480px] text-left text-xs"><thead><tr className="border-b border-slate-200 text-slate-500"><th className="px-2 py-2">Parameter</th><th className="px-2 py-2">Current value</th><th className="px-2 py-2">Proposed value</th></tr></thead><tbody>{selectedParameters.map((parameter) => <tr key={parameter.key} className="border-b border-slate-100"><td className="px-2 py-2 font-semibold">{parameter.label}</td><td className="px-2 py-2">{formatRecommendationValue(parameter.key, currentValues[parameter.key])} {parameter.unit}</td><td className="px-2 py-2 font-bold text-violet-800">{formatRecommendationValue(parameter.key, parameter.value!)} {parameter.unit}</td></tr>)}</tbody></table></div><div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onPreviewCancel} className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel</button><button type="button" onClick={onApply} className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white">Confirm and copy</button></div></div>}{successMessage && <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">{successMessage}</p>}</section>;
 }
 
-function ProcessConditionSearch({ flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm, included, onToggle, onSearch, onSelect, selectedHistoricalId, matches, comparison }: { flowRateMlH: number; voltageKv: number; collectorVoltageKv: number; temperatureC: number; humidityPct: number; distanceMm: number; drumSpeedRpm: number; included: ProcessConditionKey[]; onToggle: (key: ProcessConditionKey) => void; onSearch: () => void; onSelect: (id: string) => void; selectedHistoricalId: string; matches: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch[]; comparison: (match: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch) => React.ReactNode }) {
-  const values: Array<[ProcessConditionKey, string, number, string]> = [["flowRateMlH", "Flow Rate", flowRateMlH, "mL/h"], ["voltageKv", "HV+", voltageKv, "kV"], ["collectorVoltageKv", "HV−", collectorVoltageKv, "kV"], ["temperatureC", "Temperature", temperatureC, "°C"], ["humidityPct", "Relative Humidity", humidityPct, "%"], ["distanceMm", "Working Distance", distanceMm, "mm"], ["drumSpeedRpm", "Drum/Collector Speed", drumSpeedRpm, "rpm"]];
+function ProcessConditionSearch({ flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm, drumSpeedRpm, included, onToggle, onSearch, onSelect, selectedHistoricalId, matches, comparison }: { flowRateMlH?: number; voltageKv?: number; collectorVoltageKv?: number; temperatureC?: number; humidityPct?: number; distanceMm?: number; drumSpeedRpm?: number; included: ProcessConditionKey[]; onToggle: (key: ProcessConditionKey) => void; onSearch: () => void; onSelect: (id: string) => void; selectedHistoricalId: string; matches: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch[]; comparison: (match: import("../features/experimental-assistant/processConditionSimilarity.types").ProcessConditionMatch) => React.ReactNode }) {
+  const values: Array<[ProcessConditionKey, string, number | undefined, string]> = [["flowRateMlH", "Flow Rate", flowRateMlH, "mL/h"], ["voltageKv", "HV+", voltageKv, "kV"], ["collectorVoltageKv", "HV−", collectorVoltageKv, "kV"], ["temperatureC", "Temperature", temperatureC, "°C"], ["humidityPct", "Relative Humidity", humidityPct, "%"], ["distanceMm", "Working Distance", distanceMm, "mm"], ["drumSpeedRpm", "Drum/Collector Speed", drumSpeedRpm, "rpm"]];
   const includedSummary = values.filter(([key]) => included.includes(key));
   return <div><p className="text-sm font-bold text-slate-800">Intended process conditions</p><p className="mt-1 text-xs text-slate-500">Select only the process conditions you want to use as search constraints.</p><p className="mt-3 rounded-xl bg-blue-50 p-3 text-xs text-blue-800">Results are ranked by process similarity and available evidence. Solution similarity and historical grade are shown separately.</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{values.map(([key, label, value, unit]) => <label key={key} className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs"><span className="min-w-0"><input type="checkbox" checked={included.includes(key)} onChange={() => onToggle(key)} className="mr-2" />{label}: <b>{value} {unit}</b></span><span className="shrink-0 text-slate-400">Include</span></label>)}</div><button type="button" onClick={onSearch} disabled={included.length === 0} className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">Find Similar Process Conditions</button>{includedSummary.length > 0 && <p className="mt-3 text-xs text-slate-600">Searching by: {includedSummary.map(([, label, value, unit]) => `${label} ${value} ${unit}`).join(" · ")}</p>}<div className="mt-4 space-y-2">{matches.map((match) => <React.Fragment key={match.context.experiment.id}><button type="button" onClick={() => onSelect(match.context.experiment.id)} className="flex w-full min-w-0 flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 p-3 text-left text-xs hover:bg-blue-50"><span className="min-w-0 flex-1"><span className="block break-words font-bold text-slate-900">{match.context.experiment.operationIdentifier || match.context.experiment.id}</span><span className="mt-1 block break-words text-slate-500">Project: {match.context.project?.name || "No data"} · Formulation: {match.context.formulation?.name || match.context.formulation?.polymerName || "No data"} · Setup: {match.context.setup?.name || match.context.setup?.machine.model || "No data"}</span></span><span className="grid shrink-0 grid-cols-2 gap-1 text-[10px] sm:flex sm:flex-wrap sm:justify-end"><Status tone="blue">Process {match.processScore}%</Status><Status tone="violet">Overall {match.rankingScore}%</Status><Status tone="gray">Evidence {match.comparableCriteriaCount}/{match.comparableCriteriaTotal} · {match.evidenceLevel}</Status><Status tone="green">Solution {match.solutionMatch ? `${match.solutionMatch.score.toFixed(0)}%` : "No data"}</Status><Status tone="amber">Grade {validGrade(match.context.experiment.jetStabilityGrade) ? `${match.context.experiment.jetStabilityGrade}/4` : "No grade"}</Status></span></button>{selectedHistoricalId === match.context.experiment.id && <div className="ml-3 border-l-2 border-blue-200 pl-3">{comparison(match)}</div>}</React.Fragment>)}{matches.length === 0 && <p className="text-xs text-slate-500">Run a search to view historical process-condition evidence.</p>}</div>{matches.length > 0 && <div className="mt-4 rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold text-slate-700">Observed parameters in matching historical runs</p><div className="mt-2 grid gap-1 text-[11px] text-slate-600">{values.filter(([key]) => !included.includes(key)).map(([key, label, , unit]) => { const nums = matches.map((match) => match.context.experiment.telemetryData.find((item) => typeof item[key] === "number" && Number.isFinite(item[key]))?.[key]).filter((value): value is number => value !== undefined); return <p key={key}>{label}: {nums.length === 0 ? "Insufficient historical evidence" : `${Math.min(...nums)}–${Math.max(...nums)} ${unit} · ${nums.length} supporting experiments`}</p>; })}</div></div>}</div>;
 }
@@ -517,17 +524,17 @@ function RecommendationSourceGroup({ title, sources, parameter }: { title: strin
 }
 
 const RECOMMENDATION_DISPLAY_DIGITS: Record<RecommendedParameterKey, number> = { flowRateMlH: 2, voltageKv: 1, collectorVoltageKv: 1, temperatureC: 1, humidityPct: 1, distanceMm: 1, drumSpeedRpm: 0 };
-function formatRecommendationValue(key: RecommendedParameterKey, value: number): string { return formatRecommendationNumber(value, RECOMMENDATION_DISPLAY_DIGITS[key]); }
+function formatRecommendationValue(key: RecommendedParameterKey, value: unknown): string { const numeric = finiteNumberOrUndefined(value); return numeric === undefined ? "No data" : formatRecommendationNumber(numeric, RECOMMENDATION_DISPLAY_DIGITS[key]); }
 function formatRecommendationNumber(value: number, maximumFractionDigits: number): string { return new Intl.NumberFormat("en-US", { maximumFractionDigits, useGrouping: false }).format(value); }
 
 function EvidenceBadge({ level }: { level: "high" | "medium" | "low" | "insufficient" }) { const labels = { high: "High", medium: "Medium", low: "Low", insufficient: "No data" }; const styles = { high: "bg-emerald-50 text-emerald-700", medium: "bg-amber-50 text-amber-700", low: "bg-orange-50 text-orange-700", insufficient: "bg-slate-100 text-slate-500" }; return <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${styles[level]}`}>{labels[level]}</span>; }
 
 interface ComparisonRow { label: string; current: string; historical: string; status: React.ReactNode }
-function solutionRow(label: string, current: string | undefined, historical: string | undefined): ComparisonRow | null { if (!current && !historical) return null; const status = !current || !historical ? <Status tone="gray">No data</Status> : current.trim().toLowerCase() === historical.trim().toLowerCase() ? <Status tone="green">Same</Status> : <Status tone="amber">Close</Status>; return { label, current: current || "No data", historical: historical || "No data", status }; }
-function processRow(label: string, current: number, historical: number | undefined, key: string): ComparisonRow { const tolerance = processParameterTolerances[key]; if (historical === undefined || !Number.isFinite(historical)) return { label, current: formatValue(current, tolerance.unit), historical: "No data", status: <Status tone="gray">No data</Status> }; const difference = historical - current; const threshold = Math.max(tolerance.absolute, Math.abs(current) * tolerance.relative); const close = Math.abs(difference) <= threshold; const status = close ? <Status tone="amber">Close ({formatSigned(difference)} {tolerance.unit})</Status> : <Status tone="red">Different ({formatSigned(difference)} {tolerance.unit})</Status>; return { label, current: formatValue(current, tolerance.unit), historical: formatValue(historical, tolerance.unit), status }; }
+function solutionRow(label: string, current: string | undefined, historical: string | undefined): ComparisonRow { const comparison = classifyCategoricalComparison(current, historical); const status = comparison.kind === "no-data" ? <Status tone="gray">No data</Status> : comparison.kind === "same" ? <Status tone="green">Same</Status> : <Status tone="red">Different</Status>; return { label, current: isMissingValue(current) ? "No data" : String(current), historical: isMissingValue(historical) ? "No data" : String(historical), status }; }
+function processRow(label: string, current: unknown, historical: unknown, key: string): ComparisonRow { const tolerance = processParameterTolerances[key]; const comparison = classifyNumericComparison(current, historical, tolerance); const status = comparison.kind === "no-data" ? <Status tone="gray">No data</Status> : comparison.kind === "same" ? <Status tone="green">Same</Status> : comparison.kind === "close" ? <Status tone="amber">Close ({formatSigned(comparison.delta)} {tolerance.unit})</Status> : <Status tone="red">Different ({formatSigned(comparison.delta)} {tolerance.unit})</Status>; return { label, current: formatValue(current, tolerance.unit), historical: formatValue(historical, tolerance.unit), status }; }
 function percent(value: number | undefined): string | undefined { return value === undefined || !Number.isFinite(value) ? undefined : `${value}%`; }
-function formatValue(value: number, unit: string): string { return Number.isFinite(value) ? `${value} ${unit}` : "No data"; }
-function formatSigned(value: number): string { return `${value >= 0 ? "+" : ""}${Number(value.toFixed(2))}`; }
+function formatValue(value: unknown, unit: string): string { const numeric = finiteNumberOrUndefined(value); return numeric === undefined ? "No data" : `${numeric} ${unit}`; }
+function formatSigned(value: number | undefined): string { return value === undefined ? "" : `${value >= 0 ? "+" : ""}${Number(value.toFixed(2))}`; }
 function Status({ tone, children }: { tone: "green" | "amber" | "red" | "gray" | "blue" | "violet"; children: React.ReactNode }) { const classes = { green: "bg-emerald-50 text-emerald-700", amber: "bg-amber-50 text-amber-700", red: "bg-red-50 text-red-700", gray: "bg-slate-100 text-slate-500", blue: "bg-blue-50 text-blue-700", violet: "bg-violet-50 text-violet-700" }; return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${classes[tone]}`}>{children}</span>; }
 function ContextStrip({ project, formulation, setup, characterization }: { project: Project; formulation: Formulation; setup: ExperimentalSetup; characterization?: SolutionCharacterization }) { const solventParts=[formulation.solvent1Name && `${formulation.solvent1Name} ${formulation.solvent1RatioPct ?? ""}%`, formulation.solvent2Name && `${formulation.solvent2Name} ${formulation.solvent2RatioPct ?? ""}%`].filter(Boolean).join(" + "); return <div className="mt-6 grid gap-3 md:grid-cols-4"><Pill label="Project" value={project.name}/><Pill label="Formulation" value={formulation.name || formulation.polymerName} detail={`${formulation.polymerName} · ${solventParts || formulation.solvent} · ${formulation.solidsContentPct}% solids`}/><Pill label="Machine" value={setup.machine.model} detail={setup.machine.manufacturer}/><Pill label="Setup escalation" value={`${setup.injector.needleCount ?? setup.injector.emitterCount ?? "?"} needles`} detail={`${setup.injector.model || setup.injector.type} → ${setup.collector.model || setup.collector.type}`}/>{characterization && <Pill label="Characterization" value={characterization.measuredAt ? new Date(characterization.measuredAt).toLocaleDateString() : "Selected"}/>}</div>; }
 function Pill({label,value,detail}:{label:string;value:string;detail?:string}){return <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"><p className="text-[9px] font-bold uppercase text-slate-500">{label}</p><p className="text-sm font-semibold text-slate-900">{value}</p>{detail && <p className="mt-1 text-[11px] text-slate-600">{detail}</p>}</div>}

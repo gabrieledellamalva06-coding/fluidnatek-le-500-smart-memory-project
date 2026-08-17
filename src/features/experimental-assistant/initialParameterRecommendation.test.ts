@@ -60,3 +60,18 @@ test("insufficient solution evidence remains distinct from consensus exclusion",
   assert.ok(temperature);
   assert.equal(temperature.sources.find((source) => source.experimentId === "ineligible")?.status, "insufficient-evidence");
 });
+
+test("recommendation excludes missing values but preserves real zero", () => {
+  const missing = match("missing", { collectorVoltageKv: Number.NaN });
+  missing.context.experiment.telemetryData[0].collectorVoltageKv = undefined;
+  const result = buildInitialParameterRecommendation([
+    match("zero-a", { collectorVoltageKv: 0 }),
+    match("zero-b", { collectorVoltageKv: 0 }),
+    missing,
+  ]);
+  const hvNegative = result.parameters.find((item) => item.key === "collectorVoltageKv");
+  assert.ok(hvNegative);
+  assert.equal(hvNegative.value, 0);
+  assert.equal(hvNegative.supportingExperimentCount, 2);
+  assert.equal(hvNegative.sources.some((source) => source.experimentId === "missing"), false);
+});

@@ -23,3 +23,15 @@ test("missing and zero-closeness records are excluded; ties are deterministic", 
   const result = searchSimilarProcessExperiments([context("z", { temperatureC: 100 }), context("b", { temperatureC: 20 }), context("a", { temperatureC: 20 }), context("missing", {})], { included: ["temperatureC"], values: { temperatureC: 20 } });
   assert.deepEqual(result.map((item) => item.context.experiment.id), ["a", "b"]);
 });
+
+test("real zero is comparable while missing criteria do not add evidence", () => {
+  const result = searchSimilarProcessExperiments(
+    [context("zero", { collectorVoltageKv: 0 }), context("missing", {})],
+    { included: ["collectorVoltageKv", "drumSpeedRpm"], values: { collectorVoltageKv: 0, drumSpeedRpm: 0 } }
+  );
+  assert.equal(result.length, 1);
+  assert.equal(result[0].context.experiment.id, "zero");
+  assert.equal(result[0].comparableCriteriaCount, 1);
+  assert.equal(result[0].comparableCriteriaTotal, 2);
+  assert.equal(result[0].processScore, 100);
+});

@@ -5,6 +5,7 @@ import type {
   SimilarityQuery,
   SolutionSimilarityMatch,
 } from "./similarity.types";
+import { finiteNumberOrUndefined, normalizedComparableText } from "./valueSemantics";
 
 interface NumericFieldRule {
   experimentValue: (context: HistoricalExperimentContext) => number | undefined;
@@ -92,7 +93,7 @@ export function calculateSimilarityScore(
   ] as const;
 
   for (const field of contextFields) {
-    if (!normalizeText(field.queryValue)) continue;
+    if (!normalizeText(field.queryValue) || !normalizeText(field.experimentValue)) continue;
     maxScore += field.weight;
     if (field.match(field.experimentValue, field.queryValue)) {
       score += field.weight;
@@ -148,9 +149,9 @@ export function calculateSimilarityScore(
     const queryValue = rule.queryValue(query);
     if (queryValue === undefined || !Number.isFinite(queryValue)) continue;
 
-    maxScore += rule.weight;
     const experimentValue = rule.experimentValue(context);
     if (experimentValue === undefined || !Number.isFinite(experimentValue)) continue;
+    maxScore += rule.weight;
 
     const difference = Math.abs(experimentValue - queryValue);
     if (difference === 0) score += rule.weight;
@@ -195,8 +196,9 @@ export function calculateSolutionSimilarity(
   const polymerFamily = context.polymerMaterial?.polymerFamily;
   const solventFamily = context.solvent1Material?.solventFamily;
   const molecularWeight = context.polymerMaterial?.molecularWeight;
-  const concentration = formulation.polymerConcentrationPct ??
-    (formulation.solidsContentPct > 0 ? formulation.solidsContentPct : undefined);
+  const concentration =
+    finiteNumberOrUndefined(formulation.polymerConcentrationPct) ??
+    finiteNumberOrUndefined(formulation.solidsContentPct);
 
   const reasons: string[] = [];
   let score = 0;
@@ -205,24 +207,24 @@ export function calculateSolutionSimilarity(
   let familyFallback = false;
   let comparableCriteriaCount = 0;
 
-  if (query.polymer) {
+  if (normalizeText(polymer) && normalizeText(query.polymer)) {
     maxScore += 35;
     exactPolymer = safeTextMatch(polymer, query.polymer);
-    if (normalizeText(polymer) && normalizeText(query.polymer)) comparableCriteriaCount += 1;
+    comparableCriteriaCount += 1;
     if (exactPolymer) {
       score += 35;
       reasons.push(`Same polymer: ${display(polymer)}`);
     }
   }
 
-  if (query.polymerFamily) {
+  if (normalizeText(polymerFamily) && normalizeText(query.polymerFamily)) {
     maxScore += 15;
     if (safeTextMatch(polymerFamily, query.polymerFamily)) {
       score += 15;
       familyFallback = !exactPolymer;
       reasons.push(`Same polymer family: ${display(polymerFamily)}`);
     }
-    if (normalizeText(polymerFamily) && normalizeText(query.polymerFamily)) comparableCriteriaCount += 1;
+    comparableCriteriaCount += 1;
   }
 
   const molecularWeightScore = compareMolecularWeight(molecularWeight, query.molecularWeight);
@@ -300,9 +302,12 @@ function compareSolventSystem(left: SolventSystem, right: SolventSystem): { scor
   if (leftNames.join("|") !== rightNames.join("|")) {
     return safeTextMatch(left.family, right.family) ? { score: 0.35, reasons: [`Similar solvent family: ${display(left.family)}`] } : null;
   }
-  const ratioDifference = Math.abs((left.firstRatio ?? 100) - (right.firstRatio ?? 100));
-  const ratioScore = Math.max(0, 1 - ratioDifference / 100);
   const reasons = [`Same solvent system: ${leftNames.join(" + ")}`];
+  const leftRatio = finiteNumberOrUndefined(left.firstRatio);
+  const rightRatio = finiteNumberOrUndefined(right.firstRatio);
+  if (leftRatio === undefined || rightRatio === undefined) return { score: 1, reasons };
+  const ratioDifference = Math.abs(leftRatio - rightRatio);
+  const ratioScore = Math.max(0, 1 - ratioDifference / 100);
   if (ratioDifference === 0) reasons.push("Same solvent ratios");
   else reasons.push(`Solvent ratio difference: ${round(ratioDifference, 2)}%`);
   return { score: ratioScore, reasons };
@@ -398,7 +403,7 @@ function getHvNegative(context: HistoricalExperimentContext): number | undefined
 }
 
 function normalizeText(value: string | undefined): string {
-  return value?.trim().toLocaleLowerCase().replace(/\s+/g, " ") ?? "";
+  return normalizedComparableText(value) ?? "";
 }
 
 function exactTextMatch(left: string | undefined, right: string | undefined): boolean {

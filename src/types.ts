@@ -66,10 +66,10 @@ export interface Formulation {
 
   notes?: string;
 
-  solidsContentPct: number;
-  viscosityMpas: number;
-  conductivityUsCm: number;
-  densityGcm3: number;
+  solidsContentPct?: number;
+  viscosityMpas?: number;
+  conductivityUsCm?: number;
+  densityGcm3?: number;
 
   materialBatchIds: string[];
 }
@@ -80,14 +80,14 @@ export interface TelemetryRecord {
 
   timestampSec: number;
 
-  voltageKv: number;
+  voltageKv?: number;
   collectorVoltageKv?: number;
-  flowRateMlH: number;
+  flowRateMlH?: number;
 
   temperatureC?: number;
   humidityPct?: number;
 
-  distanceMm: number;
+  distanceMm?: number;
   drumSpeedRpm?: number;
 }
 
@@ -103,9 +103,9 @@ export interface Experiment {
   injectorType: string;
   collectorType: string;
 
-  distanceMm: number;
+  distanceMm?: number;
 
-  jetStabilityGrade: number;
+  jetStabilityGrade?: number;
 
   operatorComments: string;
 

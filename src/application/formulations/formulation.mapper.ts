@@ -63,10 +63,10 @@ export function mapCanonicalFormulationToUi(
     solvent2MaterialId: solvent2Component?.materialId,
     solvent2RatioPct: readRatio(solvent2Component),
     notes: formulation.notes,
-    solidsContentPct: characterization?.solidsContentPct ?? polymerConcentrationPct ?? 0,
-    viscosityMpas: characterization?.viscosityMpas ?? 0,
-    conductivityUsCm: characterization?.conductivityUsCm ?? 0,
-    densityGcm3: characterization?.densityGcm3 ?? 0,
+    solidsContentPct: characterization?.solidsContentPct ?? polymerConcentrationPct,
+    viscosityMpas: characterization?.viscosityMpas,
+    conductivityUsCm: characterization?.conductivityUsCm,
+    densityGcm3: characterization?.densityGcm3,
     materialBatchIds: [],
   };
 }
