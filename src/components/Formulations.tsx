@@ -45,11 +45,18 @@ interface FormState {
   name: string;
   polymerId: string;
   polymerConcentrationPct: number;
+  polymer2Id: string;
+  polymer2ConcentrationPct: number;
+  polymer3Id: string;
+  polymer3ConcentrationPct: number;
   solvent1Id: string;
   solvent1RatioPct: number;
   useSolvent2: boolean;
   solvent2Id: string;
   solvent2RatioPct: number;
+  useSolvent3: boolean;
+  solvent3Id: string;
+  solvent3RatioPct: number;
   notes: string;
 }
 
@@ -57,11 +64,18 @@ const EMPTY_FORM: FormState = {
   name: "",
   polymerId: "",
   polymerConcentrationPct: 10,
+  polymer2Id: "",
+  polymer2ConcentrationPct: 0,
+  polymer3Id: "",
+  polymer3ConcentrationPct: 0,
   solvent1Id: "",
   solvent1RatioPct: 100,
   useSolvent2: false,
   solvent2Id: "",
   solvent2RatioPct: 0,
+  useSolvent3: false,
+  solvent3Id: "",
+  solvent3RatioPct: 0,
   notes: "",
 };
 
@@ -150,6 +164,10 @@ const [materialError, setMaterialError] =
   const polymer = materials.find((item) => item.id === form.polymerId);
   const solvent1 = materials.find((item) => item.id === form.solvent1Id);
   const solvent2 = materials.find((item) => item.id === form.solvent2Id);
+  const solvent3 = materials.find((item) => item.id === form.solvent3Id);
+  const solventTotal = form.useSolvent2
+    ? form.solvent1RatioPct + form.solvent2RatioPct + (form.useSolvent3 ? form.solvent3RatioPct : 0)
+    : form.solvent1RatioPct;
   console.log("SELECTED POLYMER:", polymer);
   console.log("SELECTED SOLVENT 1:", solvent1);
   console.log("SELECTED SOLVENT 2:", solvent2);
@@ -249,6 +267,14 @@ const createMaterial = async (
       setError("Choose Solvent 2 or disable the second solvent.");
       return;
     }
+    if (form.useSolvent3 && !solvent3) {
+      setError("Choose Solvent 3 or disable the third solvent.");
+      return;
+    }
+    if (!Number.isFinite(solventTotal) || Math.abs(solventTotal - 100) > 0.001) {
+      setError("Solvent ratios must total exactly 100%.");
+      return;
+    }
 
     setSaving(true);
     setError("");
@@ -277,6 +303,14 @@ const createMaterial = async (
         conductivityUsCm: 0,
         densityGcm3: 0,
         materialBatchIds: [],
+        compositionComponents: [
+          { materialId: polymer.id, materialName: polymer.canonicalName, role: "polymer", quantity: form.polymerConcentrationPct, unit: "wt_pct", basis: "wt/wt" },
+          ...(form.polymer2Id ? [{ materialId: form.polymer2Id, materialName: materials.find((item) => item.id === form.polymer2Id)?.canonicalName || form.polymer2Id, role: "polymer" as const, quantity: form.polymer2ConcentrationPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
+          ...(form.polymer3Id ? [{ materialId: form.polymer3Id, materialName: materials.find((item) => item.id === form.polymer3Id)?.canonicalName || form.polymer3Id, role: "polymer" as const, quantity: form.polymer3ConcentrationPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
+          { materialId: solvent1.id, materialName: solvent1.canonicalName, role: "solvent", quantity: form.solvent1RatioPct, unit: "wt_pct", basis: "wt/wt" },
+          ...(form.useSolvent2 && solvent2 ? [{ materialId: solvent2.id, materialName: solvent2.canonicalName, role: "solvent" as const, quantity: form.solvent2RatioPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
+          ...(form.useSolvent3 && solvent3 ? [{ materialId: solvent3.id, materialName: solvent3.canonicalName, role: "solvent" as const, quantity: form.solvent3RatioPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
+        ],
       });
       setForm(EMPTY_FORM);
       setShowCreate(false);
@@ -543,6 +577,16 @@ const createMaterial = async (
 )}
               {polymer && <MaterialSummary material={polymer} />}
 
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Additional polymers (optional, up to 3 total)</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <MaterialSelect label="Polymer 2" value={form.polymer2Id} materials={polymers} showPolymerDetails onChange={(polymer2Id) => setForm((s) => ({ ...s, polymer2Id }))} />
+                  <NumberInput label="Polymer 2 concentration" unit="wt%" value={form.polymer2ConcentrationPct} onChange={(polymer2ConcentrationPct) => setForm((s) => ({ ...s, polymer2ConcentrationPct }))} />
+                  <MaterialSelect label="Polymer 3" value={form.polymer3Id} materials={polymers} showPolymerDetails onChange={(polymer3Id) => setForm((s) => ({ ...s, polymer3Id }))} />
+                  <NumberInput label="Polymer 3 concentration" unit="wt%" value={form.polymer3ConcentrationPct} onChange={(polymer3ConcentrationPct) => setForm((s) => ({ ...s, polymer3ConcentrationPct }))} />
+                </div>
+              </div>
+
               <div className="grid gap-5 md:grid-cols-2">
 <div>
   <MaterialSelect
@@ -570,14 +614,19 @@ const createMaterial = async (
   >
     + Add new solvent
   </button>
-</div>                <NumberInput label="Solvent 1 Ratio" unit="%" value={form.solvent1RatioPct} onChange={(solvent1RatioPct) => setForm((s) => ({ ...s, solvent1RatioPct }))} />
+</div>                <NumberInput label="Solvent 1 Ratio" unit="%" value={form.solvent1RatioPct} onChange={(solvent1RatioPct) => setForm((s) => ({ ...s, solvent1RatioPct, solvent2RatioPct: s.useSolvent2 ? (s.useSolvent3 ? s.solvent2RatioPct : 100 - solvent1RatioPct) : 0, solvent3RatioPct: s.useSolvent3 ? Math.max(0, 100 - solvent1RatioPct - s.solvent2RatioPct) : 0 }))} />
               </div>
               {solvent1 && <MaterialSummary material={solvent1} />}
 
               <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-                <input type="checkbox" checked={form.useSolvent2} onChange={(e) => setForm((s) => ({ ...s, useSolvent2: e.target.checked }))} />
+                <input type="checkbox" checked={form.useSolvent2} onChange={(e) => setForm((s) => ({ ...s, useSolvent2: e.target.checked, solvent1RatioPct: e.target.checked ? 90 : 100, solvent2RatioPct: e.target.checked ? 10 : 0 }))} />
                 Use a second solvent
               </label>
+
+              <div className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm ${Math.abs(solventTotal - 100) < 0.001 ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+                <span className="font-semibold">Solvent total</span>
+                <span className="font-bold">{Number.isFinite(solventTotal) ? solventTotal.toFixed(2) : "—"}% / 100%</span>
+              </div>
 
               {form.useSolvent2 && (
                 <>
@@ -598,10 +647,21 @@ const createMaterial = async (
                         + Add new solvent
                       </button>
                     </div>
-                    <NumberInput label="Solvent 2 Ratio" unit="%" value={form.solvent2RatioPct} onChange={(solvent2RatioPct) => setForm((s) => ({ ...s, solvent2RatioPct }))} />
+                    <NumberInput label="Solvent 2 Ratio" unit="%" value={form.solvent2RatioPct} onChange={(solvent2RatioPct) => setForm((s) => ({ ...s, solvent2RatioPct, solvent1RatioPct: s.useSolvent3 ? Math.max(0, 100 - solvent2RatioPct - s.solvent3RatioPct) : 100 - solvent2RatioPct }))} />
                   </div>
                   {solvent2 && <MaterialSummary material={solvent2} />}
                 </>
+              )}
+
+              <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
+                <input type="checkbox" checked={form.useSolvent3} onChange={(e) => setForm((s) => ({ ...s, useSolvent3: e.target.checked, solvent1RatioPct: e.target.checked ? 80 : s.solvent1RatioPct, solvent2RatioPct: e.target.checked ? 10 : s.solvent2RatioPct, solvent3RatioPct: e.target.checked ? 10 : 0 }))} />
+                Use a third solvent
+              </label>
+              {form.useSolvent3 && (
+                <div className="grid gap-5 md:grid-cols-2">
+                  <MaterialSelect label="Solvent 3" value={form.solvent3Id} materials={solvents} onChange={(solvent3Id) => setForm((s) => ({ ...s, solvent3Id }))} />
+                  <NumberInput label="Solvent 3 Ratio" unit="%" value={form.solvent3RatioPct} onChange={(solvent3RatioPct) => setForm((s) => ({ ...s, solvent3RatioPct, solvent1RatioPct: 100 - s.solvent2RatioPct - solvent3RatioPct }))} />
+                </div>
               )}
 
               <label className="block">
@@ -667,6 +727,7 @@ const createMaterial = async (
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   </div>
+                  {selectedCharacterizationId && <CharacterizationComparison current={characterizations.find((item) => item.id === selectedCharacterizationId) ?? null} historical={selectedHistory.filter((item) => item.id !== selectedCharacterizationId)} />}
                 </div>
               ) : (
                 <p className="mt-5 text-sm text-slate-400">No characterization measurements are stored for this formulation.</p>
@@ -740,7 +801,7 @@ function MaterialSelect({
 }
 
 function TextInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="block"><span className="label">{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} className="input" /></label>; }
-function NumberInput({ label, unit, value, onChange }: { label: string; unit: string; value: number; onChange: (value: number) => void }) { return <label className="block"><span className="label">{label}</span><div className="relative"><input type="number" step="0.01" value={value} onChange={(e) => onChange(Number(e.target.value))} className="input pr-16" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">{unit}</span></div></label>; }
+function NumberInput({ label, unit, value, onChange }: { label: string; unit: string; value: number; onChange: (value: number) => void }) { return <label className="block"><span className="label">{label}</span><div className="relative"><input type="number" inputMode="decimal" step="0.01" min="0" max="100" value={value === 0 ? "" : value} placeholder="—" onChange={(e) => onChange(e.target.value.trim() === "" ? 0 : Number(e.target.value))} className="input appearance-none pr-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">{unit}</span></div></label>; }
 function MaterialSummary({ material }: { material: Material }) {
   const isPolymer = ["polymer", "biopolymer", "copolymer"].includes(
     material.category
@@ -798,3 +859,9 @@ function buildSolventLabel(s1: string, r1: number, s2?: string, r2?: number): st
 function parseDate(value?: string): number { if (!value) return 0; const t=Date.parse(value); return Number.isNaN(t)?0:t; }
 function formatDate(value?: string): string { if (!value) return "Measurement"; const d=new Date(value); return Number.isNaN(d.getTime()) ? "Measurement" : d.toLocaleDateString(); }
 function compactCharacterization(item: SolutionCharacterization): string { const bits: string[]=[]; if (positive(item.viscosityMpas)) bits.push(`visc. ${item.viscosityMpas}`); if (positive(item.conductivityUsCm)) bits.push(`cond. ${item.conductivityUsCm}`); return bits.length ? ` · ${bits.join(" · ")}` : ""; }
+
+function CharacterizationComparison({ current, historical }: { current: SolutionCharacterization | null; historical: SolutionCharacterization[] }) {
+  const fields: Array<[keyof SolutionCharacterization, string, string]> = [["viscosityMpas", "Viscosity", "mPa·s"], ["conductivityUsCm", "Conductivity", "µS/cm"], ["densityGcm3", "Density", "g/cm³"], ["surfaceTensionMnM", "Surface tension", "mN/m"], ["ph", "pH", ""], ["solidsContentPct", "Solid content", "%"]];
+  const display = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value.toString() : "No data";
+  return <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-bold text-slate-950">Historical characterization comparison</h3><span className="text-xs font-semibold text-slate-600">Evidence count: {historical.length}</span></div><p className="mt-1 text-xs text-slate-600">Historical measurements are evidence only; they are not automatic predictions.</p><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead><tr className="border-b border-slate-200 text-slate-500"><th className="px-2 py-2">Property</th><th className="px-2 py-2">Current characterization</th><th className="px-2 py-2">Historical characterization</th><th className="px-2 py-2">Difference</th></tr></thead><tbody>{fields.map(([key, label, unit]) => { const currentValue = current?.[key]; const historicalValues = historical.map((item) => item[key]).filter((value): value is number => typeof value === "number" && Number.isFinite(value)); const representative = historicalValues.length ? historicalValues[0] : undefined; const difference = typeof currentValue === "number" && representative !== undefined ? representative - currentValue : undefined; return <tr key={String(key)} className="border-b border-slate-100"><td className="px-2 py-2 font-semibold">{label} ({unit})</td><td className="px-2 py-2">{display(currentValue)}</td><td className="px-2 py-2">{representative === undefined ? "No data" : `${representative} (${historicalValues.length} record${historicalValues.length === 1 ? "" : "s"})`}</td><td className="px-2 py-2">{difference === undefined ? "No comparable value" : difference.toFixed(3)}</td></tr>; })}</tbody></table></div></div>;
+}

@@ -25,6 +25,7 @@ class FirestoreProjectService implements ProjectService {
 
   return projects
     .map(mapCanonicalProjectToUi)
+    .filter((project) => project.status === "active" && !isHiddenProjectName(project.name))
     .sort(compareProjectsByCreationDate);
 }
 
@@ -74,3 +75,31 @@ export const projectService: ProjectService =
   new FirestoreProjectService();
 
 export type { CanonicalProject };
+
+/** Presentation quarantine for confirmed demo/test projects. Documents stay in Firestore. */
+const HIDDEN_PROJECT_NAMES = new Set([
+  "lars",
+  "lars-001",
+  "antonio",
+  "gabriele",
+  "dilara",
+  "santiago",
+  "rus",
+  "suma",
+  "app-firestore-test",
+  "ffqegq",
+  "ftk-example",
+  "test recommendation engine descrizione dataset tecnico temporaneo per verifica applicativa",
+]);
+
+function normalizeProjectName(value: string): string {
+  return value.trim().toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ");
+}
+
+function isHiddenProjectName(value: string): boolean {
+  const normalized = normalizeProjectName(value);
+  return HIDDEN_PROJECT_NAMES.has(normalized) ||
+    normalized.includes("app firestore test") ||
+    normalized.includes("lars 001") ||
+    (normalized.startsWith("test recommendation engine") && normalized.includes("dataset tecnico temporaneo"));
+}

@@ -5,6 +5,8 @@ import type {
   TelemetryRecord,
 } from "../../types";
 import type { Material } from "../../core/types/material";
+import type { ExperimentalSetup } from "../../core/types/setup";
+import { calculateRecordQuality, type RecordQualitySummary } from "./dataQuality";
 
 import {
   normalizeDisplayText,
@@ -24,6 +26,8 @@ export interface HistoricalExperimentRecord {
 
   formulationId: string;
   formulationName: string;
+  concentrationPct: number | null;
+  setupName: string;
 
   polymer: string;
   polymerType: string;
@@ -45,6 +49,9 @@ export interface HistoricalExperimentRecord {
   operatorComments: string;
   sourceFile: string;
   ingestedAt: string;
+  importStatus: string;
+  validationStatus: string;
+  dataQuality: RecordQualitySummary;
 
   searchText: string;
 
@@ -58,6 +65,7 @@ export interface HistoricalExperimentAdapterInput {
   formulations: readonly Formulation[];
   projects: readonly Project[];
   materials?: readonly Material[];
+  setups?: readonly ExperimentalSetup[];
 }
 
 export function adaptHistoricalExperiments({
@@ -65,6 +73,7 @@ export function adaptHistoricalExperiments({
   formulations,
   projects,
   materials = [],
+  setups = [],
 }: HistoricalExperimentAdapterInput): HistoricalExperimentRecord[] {
   const formulationById = new Map(
     formulations.map((formulation) => [formulation.id, formulation])
@@ -74,6 +83,7 @@ export function adaptHistoricalExperiments({
     projects.map((project) => [project.id, project])
   );
   const materialById = new Map(materials.map((material) => [material.id, material]));
+  const setupById = new Map(setups.map((setup) => [setup.id, setup]));
 
   return experiments.map((experiment) => {
     const formulation =
@@ -88,6 +98,7 @@ export function adaptHistoricalExperiments({
       project,
       projectId,
       materialById,
+      setupById,
     });
   });
 }
@@ -98,6 +109,7 @@ interface AdaptHistoricalExperimentInput {
   project: Project | null;
   projectId: string;
   materialById: ReadonlyMap<string, Material>;
+  setupById: ReadonlyMap<string, ExperimentalSetup>;
 }
 
 function adaptHistoricalExperiment({
@@ -106,6 +118,7 @@ function adaptHistoricalExperiment({
   project,
   projectId,
   materialById,
+  setupById,
 }: AdaptHistoricalExperimentInput): HistoricalExperimentRecord {
   const telemetry = selectRepresentativeTelemetry(
     experiment.telemetryData
@@ -121,6 +134,8 @@ function adaptHistoricalExperiment({
     normalizeDisplayText(formulation?.name) ||
     normalizeDisplayText(formulation?.polymerName) ||
     normalizeDisplayText(experiment.formulationId);
+  const setupId = readMetadataValue(experiment, ["canonicalSetupId", "setupId"]);
+  const setupName = normalizeDisplayText(setupById.get(setupId)?.name) || normalizeDisplayText(setupId);
 
   const polymer = normalizePolymerName(formulation?.polymerName);
   const polymerMaterial = formulation?.polymerMaterialId ? materialById.get(formulation.polymerMaterialId) : undefined;
@@ -147,6 +162,7 @@ function adaptHistoricalExperiment({
 
   const sourceFile = normalizeDisplayText(experiment.sourceFile);
   const ingestedAt = normalizeDisplayText(experiment.ingestedAt);
+  const concentrationPct = finiteNumberOrNull(formulation?.polymerConcentrationPct);
 
   const searchText = createSearchText([
     experiment.id,
@@ -155,6 +171,8 @@ function adaptHistoricalExperiment({
     projectName,
     experiment.formulationId,
     formulationName,
+    formulation?.polymerConcentrationPct === undefined ? "" : String(formulation.polymerConcentrationPct),
+    setupName,
     formulation?.polymerName,
     polymer,
     polymerType,
@@ -169,6 +187,10 @@ function adaptHistoricalExperiment({
     sourceFile,
   ]);
 
+  const flowRateMlH = finiteNumberOrNull(telemetry?.flowRateMlH);
+  const positiveVoltageKv = finiteNumberOrNull(telemetry?.voltageKv);
+  const negativeVoltageKv = finiteNumberOrNull(telemetry?.collectorVoltageKv);
+  const dataQuality = calculateRecordQuality({ project: projectName, formulation: formulationName, setup: setupName, flowRate: flowRateMlH, hvPlus: positiveVoltageKv, hvMinus: negativeVoltageKv, grade, sourceFile, characterization: false });
   return {
     id: experiment.id,
     runIdentifier,
@@ -178,6 +200,8 @@ function adaptHistoricalExperiment({
 
     formulationId: experiment.formulationId,
     formulationName,
+    concentrationPct,
+    setupName,
 
     polymer,
     polymerType,
@@ -188,11 +212,9 @@ function adaptHistoricalExperiment({
     machine,
     grade,
 
-    flowRateMlH: finiteNumberOrNull(telemetry?.flowRateMlH),
-    positiveVoltageKv: finiteNumberOrNull(telemetry?.voltageKv),
-    negativeVoltageKv: finiteNumberOrNull(
-      telemetry?.collectorVoltageKv
-    ),
+    flowRateMlH,
+    positiveVoltageKv,
+    negativeVoltageKv,
     temperatureC: finiteNumberOrNull(telemetry?.temperatureC),
     humidityPct: finiteNumberOrNull(telemetry?.humidityPct),
     workingDistanceMm: finiteNumberOrNull(telemetry?.distanceMm),
@@ -203,6 +225,9 @@ function adaptHistoricalExperiment({
     operatorComments,
     sourceFile,
     ingestedAt,
+    importStatus: readMetadataValue(experiment, ["importStatus", "import_status"]) || (sourceFile ? "Imported" : "Manual"),
+    validationStatus: readMetadataValue(experiment, ["validationStatus", "validation_status"]) || "Unvalidated",
+    dataQuality,
 
     searchText,
 

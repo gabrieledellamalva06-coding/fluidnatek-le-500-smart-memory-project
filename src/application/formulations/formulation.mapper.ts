@@ -68,6 +68,14 @@ export function mapCanonicalFormulationToUi(
     conductivityUsCm: characterization?.conductivityUsCm,
     densityGcm3: characterization?.densityGcm3,
     materialBatchIds: [],
+    compositionComponents: formulation.components.map((component) => ({
+      materialId: component.materialId,
+      materialName: resolveMaterialName(component, context.materialsById) || component.materialId,
+      role: component.role === "polymer" ? "polymer" : "solvent",
+      quantity: component.quantity,
+      unit: component.unit,
+      basis: component.basis,
+    })),
   };
 }
 
@@ -98,7 +106,18 @@ export function createCanonicalFormulation(
     ? resolveOrCreateMaterial(solvent2Name, "solvent", existingMaterials, now)
     : undefined;
 
-  const components: FormulationComponent[] = [
+  const components: FormulationComponent[] = input.compositionComponents?.length
+    ? input.compositionComponents.map((component) => ({
+      id: `${formulationId}_${component.role}_${component.materialId}`,
+      formulationId,
+      materialId: component.materialId,
+      role: component.role,
+      quantity: component.quantity,
+      unit: component.unit,
+      basis: component.basis,
+      concentrationPct: component.role === "polymer" ? component.quantity : undefined,
+    }))
+    : [
     createPolymerComponent(
       formulationId,
       polymer.id,
@@ -109,7 +128,7 @@ export function createCanonicalFormulation(
       solvent1.id,
       input.solvent1RatioPct
     ),
-  ];
+      ];
 
   if (solvent2) {
     components.push(

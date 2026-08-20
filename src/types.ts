@@ -7,6 +7,7 @@ export interface Project {
   name: string;
   description: string;
   createdAt: string;
+  status?: "active" | "archived" | "demo" | "test";
 }
 
 export interface Supplier {
@@ -72,6 +73,16 @@ export interface Formulation {
   densityGcm3?: number;
 
   materialBatchIds: string[];
+  compositionComponents?: FormulationComponentSummary[];
+}
+
+export interface FormulationComponentSummary {
+  materialId: string;
+  materialName: string;
+  role: "polymer" | "solvent";
+  quantity?: number;
+  unit?: "wt_pct" | "vol_pct" | "w_v_pct" | "g" | "mg" | "ml" | "ul" | "ratio" | "unknown";
+  basis?: "wt/wt" | "vol/vol" | "wt/vol";
 }
 
 export interface TelemetryRecord {

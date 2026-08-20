@@ -42,6 +42,20 @@ export interface ExperimentService {
     id: string,
     input: UpdateExperimentInput
   ): Promise<UiExperiment>;
+
+  cloneExperiment(id: string, input: CloneExperimentInput): Promise<UiExperiment>;
+}
+
+export interface CloneExperimentInput {
+  operationIdentifier: string;
+  voltageKv?: number;
+  collectorVoltageKv?: number;
+  flowRateMlH?: number;
+  distanceMm?: number;
+  drumSpeedRpm?: number;
+  temperatureC?: number;
+  humidityPct?: number;
+  jetStabilityGrade?: 1 | 2 | 3 | 4;
 }
 
 class FirestoreExperimentService
@@ -233,6 +247,39 @@ class FirestoreExperimentService
     const updated = refreshed.find((item) => item.id === id);
     if (!updated) throw new Error("Experiment was updated but could not be reloaded.");
     return updated;
+  }
+
+  async cloneExperiment(id: string, input: CloneExperimentInput): Promise<UiExperiment> {
+    const source = await experimentRepository.getById(id);
+    if (!source) throw new Error(`Experiment "${id}" does not exist in Firestore.`);
+    const processRecord = source.processRecordIds[0] ? await processRecordRepository.getById(source.processRecordIds[0]) : null;
+    const setup = source.setupId ? await setupRepository.getById(source.setupId) : null;
+    if (!processRecord || !setup) throw new Error("The source experiment is incomplete and cannot be cloned safely.");
+    const evaluation = processRecord.evaluation;
+    const voltageKv = input.voltageKv ?? processRecord.parameters.voltageKv;
+    const flowRateMlH = input.flowRateMlH ?? processRecord.parameters.flowRateMlH;
+    const distanceMm = input.distanceMm ?? processRecord.parameters.distanceMm;
+    const jetStabilityGrade = input.jetStabilityGrade ?? evaluation?.jetStabilityGrade;
+    if (voltageKv === undefined || flowRateMlH === undefined || distanceMm === undefined || jetStabilityGrade === undefined) {
+      throw new Error("The source experiment is missing required process values or processability grade.");
+    }
+    return this.createExperiment({
+      formulationId: source.formulationId,
+      operationIdentifier: input.operationIdentifier.trim(),
+      machineModel: setup.machine.model,
+      injectorType: setup.injector.type,
+      collectorType: setup.collector.type,
+      voltageKv,
+      collectorVoltageKv: input.collectorVoltageKv ?? processRecord.parameters.collectorVoltageKv,
+      flowRateMlH,
+      distanceMm,
+      drumSpeedRpm: input.drumSpeedRpm ?? processRecord.parameters.collectorSpeedRpm,
+      jetStabilityGrade,
+      operatorComments: `Cloned from ${source.operationIdentifier || source.id}. Original record preserved.`,
+      sourceFile: `clone:${source.id}`,
+      temperatureC: input.temperatureC ?? processRecord.environment?.temperatureC,
+      humidityPct: input.humidityPct ?? processRecord.environment?.humidityPct,
+    });
   }
 }
 

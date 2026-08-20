@@ -11,7 +11,9 @@ import {
 
 import type { Experiment, Formulation, Project } from "../types";
 import type { Material } from "../core/types/material";
+import type { ExperimentalSetup } from "../core/types/setup";
 import type { UpdateExperimentInput } from "../application/experiments/experiment.mapper";
+import type { CloneExperimentInput } from "../application/experiments/experiment.service";
 
 import {
   adaptHistoricalExperiments,
@@ -37,9 +39,12 @@ interface HistoricalExperimentsProps {
   projects: Project[];
   formulations: Formulation[];
   materials?: Material[];
+  setups?: ExperimentalSetup[];
   loading?: boolean;
   error?: string | null;
   onUpdateExperiment: (id: string, input: UpdateExperimentInput) => Promise<Experiment>;
+  onCloneExperiment: (id: string, input: CloneExperimentInput) => Promise<Experiment>;
+  onVariationSaved?: (experiment: Experiment) => void;
 }
 
 export default function HistoricalExperiments({
@@ -47,9 +52,12 @@ export default function HistoricalExperiments({
   projects,
   formulations,
   materials = [],
+  setups = [],
   loading = false,
   error = null,
   onUpdateExperiment,
+  onCloneExperiment,
+  onVariationSaved,
 }: HistoricalExperimentsProps) {
   const [filters, setFilters] = useState<HistoricalExperimentFilters>(
     createEmptyHistoricalExperimentFilters
@@ -66,6 +74,8 @@ export default function HistoricalExperiments({
   const [editSaving, setEditSaving] = useState(false);
   const [editMessage, setEditMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [cloneRecord, setCloneRecord] = useState<HistoricalExperimentRecord | null>(null);
 
   const records = useMemo(
     () =>
@@ -74,8 +84,9 @@ export default function HistoricalExperiments({
         formulations,
         projects,
         materials,
+        setups,
       }),
-    [experiments, formulations, projects, materials]
+    [experiments, formulations, projects, materials, setups]
   );
 
   const options = useMemo(
@@ -460,10 +471,12 @@ export default function HistoricalExperiments({
           <ExperimentDetails
             record={selectedRecord}
             onClose={() => setSelectedExperimentId("")}
-            onEdit={() => { setEditingExperiment(selectedRecord); setEditValues(toEditValues(selectedRecord)); setEditMessage(null); setSuccessMessage(null); }}
+            onClone={async () => { setCloneRecord(selectedRecord); setFeedbackError(null); setSuccessMessage(null); }}
           />
         )}
+        {cloneRecord && <ExperimentVariationEditor record={cloneRecord} saving={false} onCancel={() => setCloneRecord(null)} onSave={async (input) => { try { const created = await onCloneExperiment(cloneRecord.id, input); setCloneRecord(null); setSuccessMessage("Variation saved. Original historical record preserved."); onVariationSaved?.(created); } catch (cloneError) { setFeedbackError(cloneError instanceof Error ? cloneError.message : "Unable to clone experiment."); } }} />}
         {successMessage && <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">{successMessage}</p>}
+        {feedbackError && <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800">Clone not created: {feedbackError} Select a complete historical run with process parameters and a processability grade.</p>}
         {editingExperiment && editValues && <ExperimentEdit record={editingExperiment} values={editValues} saving={editSaving} message={editMessage} onChange={(key, value) => setEditValues((current) => current ? { ...current, [key]: value } : current)} onCancel={() => { if (JSON.stringify(editValues) !== JSON.stringify(toEditValues(editingExperiment)) && !window.confirm("Discard unsaved changes?")) return; setEditingExperiment(null); setEditValues(null); }} onSave={async () => { if (!window.confirm("This updates a historical experiment and may affect Historical Analysis and recommendations. Continue?")) return; setEditSaving(true); setEditMessage(null); try { await onUpdateExperiment(editingExperiment.id, fromEditValues(editValues)); setEditingExperiment(null); setEditValues(null); setSuccessMessage("Experiment updated successfully."); setSelectedExperimentId(editingExperiment.id); } catch (saveError) { setEditMessage(saveError instanceof Error ? saveError.message : "Unable to update experiment."); } finally { setEditSaving(false); } }} />}
       </div>
     </main>
@@ -605,13 +618,13 @@ function SortableHeader({
 interface ExperimentDetailsProps {
   record: HistoricalExperimentRecord;
   onClose: () => void;
-  onEdit: () => void;
+  onClone: () => Promise<void>;
 }
 
 function ExperimentDetails({
   record,
   onClose,
-  onEdit,
+  onClone,
 }: ExperimentDetailsProps) {
   const values = [
     valueItem("Flow rate", record.flowRateMlH, "mL/h"),
@@ -638,7 +651,13 @@ function ExperimentDetails({
           </h2>
         </div>
 
-        <div className="flex items-center gap-2"><button type="button" onClick={onEdit} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">Edit Experiment</button><button
+        <div className="flex items-center gap-2"><span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">Historical record · Read-only</span><button
+          type="button"
+          onClick={() => void onClone()}
+          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700"
+        >
+          Clone as variation
+        </button><button
           type="button"
           onClick={onClose}
           className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100"
@@ -649,23 +668,18 @@ function ExperimentDetails({
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        {record.projectName && (
-          <Info label="Project" value={record.projectName} />
-        )}
-
-        {record.formulationName && (
-          <Info label="Formulation" value={record.formulationName} />
-        )}
-
-        {record.polymer && <Info label="Polymer" value={record.polymer} />}
-
-        {record.solvent && <Info label="Solvent" value={record.solvent} />}
-
-        {record.machine && <Info label="Machine" value={record.machine} />}
-
-        {record.grade !== null && (
-          <Info label="Processability" value={`${record.grade}/4`} />
-        )}
+        <Info label="Experiment ID" value={record.id || "No data"} />
+        <Info label="Project" value={record.projectName || "No data"} />
+        <Info label="Formulation" value={record.formulationName || "No data"} />
+        <Info label="Polymer" value={record.polymer || "No data"} />
+        <Info label="Solvent" value={record.solvent || "No data"} />
+        <Info label="Concentration" value={record.concentrationPct === null ? "No data" : `${record.concentrationPct}%`} />
+        <Info label="Setup" value={record.setupName || "No data"} />
+        <Info label="Machine" value={record.machine || "No data"} />
+        <Info label="Processability" value={record.grade === null ? "No data" : `${record.grade}/4`} />
+        <Info label="Import status" value={record.importStatus || "No data"} />
+        <Info label="Validation status" value={record.validationStatus || "No data"} />
+        <Info label="Source file" value={record.sourceFile || "No data"} />
       </div>
 
       {values.length > 0 && (
@@ -682,17 +696,15 @@ function ExperimentDetails({
         </div>
       )}
 
-      {record.operatorComments && (
-        <div className="mt-6 rounded-2xl bg-slate-50 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Comments
-          </p>
-
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            {record.operatorComments}
-          </p>
-        </div>
-      )}
+      <div className="mt-6 rounded-2xl bg-slate-50 p-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Comments</p>
+        <p className="mt-2 text-sm leading-6 text-slate-700">{record.operatorComments || "No data"}</p>
+      </div>
+      <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-4">
+        <div className="flex items-center justify-between"><h3 className="text-sm font-bold text-sky-950">Data quality</h3><span className="text-lg font-bold text-sky-950">{record.dataQuality.score}/100</span></div>
+        <p className="mt-1 text-xs text-slate-600">Record completeness only. This is not a scientific quality, processability, similarity, or recommendation score.</p>
+        <div className="mt-3 grid gap-3 md:grid-cols-2"><div><p className="text-xs font-bold text-emerald-800">Complete</p><p className="mt-1 text-xs text-slate-700">{record.dataQuality.complete.length ? record.dataQuality.complete.join(" · ") : "None"}</p></div><div><p className="text-xs font-bold text-amber-800">Missing</p><p className="mt-1 text-xs text-slate-700">{record.dataQuality.missing.length ? record.dataQuality.missing.join(" · ") : "None"}</p></div></div>
+      </div>
     </section>
   );
 }
@@ -719,19 +731,24 @@ function valueItem(
   value: number | null,
   unit: string,
   allowZero = false
-): { label: string; value: string } | null {
-  if (value === null || !Number.isFinite(value)) {
-    return null;
-  }
-
-  if (!allowZero && value === 0) {
-    return null;
-  }
-
+): { label: string; value: string } {
+  if (value === null || !Number.isFinite(value)) return { label, value: "No data" };
   return {
     label,
     value: `${value} ${unit}`,
   };
+}
+
+function ExperimentVariationEditor({ record, saving, onCancel, onSave }: { record: HistoricalExperimentRecord; saving: boolean; onCancel: () => void; onSave: (input: CloneExperimentInput) => Promise<void> }) {
+  const [values, setValues] = useState({ operationIdentifier: `${record.runIdentifier}-VARIANT`, flowRateMlH: record.flowRateMlH?.toString() ?? "", voltageKv: record.positiveVoltageKv?.toString() ?? "", collectorVoltageKv: record.negativeVoltageKv?.toString() ?? "", distanceMm: record.workingDistanceMm?.toString() ?? "", temperatureC: record.temperatureC?.toString() ?? "", humidityPct: record.humidityPct?.toString() ?? "", grade: record.grade?.toString() ?? "" });
+  const update = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
+  const save = async () => {
+    const numberValue = (value: string) => value.trim() === "" ? undefined : Number(value);
+    const input: CloneExperimentInput = { operationIdentifier: values.operationIdentifier, flowRateMlH: numberValue(values.flowRateMlH), voltageKv: numberValue(values.voltageKv), collectorVoltageKv: numberValue(values.collectorVoltageKv), distanceMm: numberValue(values.distanceMm), temperatureC: numberValue(values.temperatureC), humidityPct: numberValue(values.humidityPct), jetStabilityGrade: numberValue(values.grade) as 1 | 2 | 3 | 4 | undefined };
+    await onSave(input);
+  };
+  const fields: Array<[keyof typeof values, string, string]> = [["flowRateMlH", "Flow rate", "mL/h"], ["voltageKv", "HV+", "kV"], ["collectorVoltageKv", "HV−", "kV"], ["distanceMm", "Distance", "mm"], ["temperatureC", "Temperature", "°C"], ["humidityPct", "Humidity", "%"], ["grade", "Processability grade", "1–4"]];
+  return <section className="mt-5 rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-violet-700">Create variation</p><h2 className="mt-1 text-xl font-bold text-slate-950">Editable copy of {record.runIdentifier}</h2><p className="mt-1 text-sm text-slate-600">The historical source remains read-only. Change any value before saving.</p></div></div><div className="mt-5 grid gap-3 md:grid-cols-2"><label className="text-xs font-bold text-slate-700 md:col-span-2">New run code<input value={values.operationIdentifier} onChange={(event) => update("operationIdentifier", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" /></label>{fields.map(([key, label, unit]) => <label key={key} className="text-xs font-bold text-slate-700">{label} ({unit})<input type="number" value={values[key]} onChange={(event) => update(key, event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" /></label>)}</div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={onCancel} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700">Cancel</button><button type="button" disabled={saving} onClick={() => void save()} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save variation"}</button></div></section>;
 }
 
 function parseOptionalNumber(value: string): number | null {

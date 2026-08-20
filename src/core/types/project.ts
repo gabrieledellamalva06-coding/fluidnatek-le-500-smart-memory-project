@@ -13,7 +13,9 @@ export type ProjectStatus =
     | "draft"
     | "active"
     | "completed"
-    | "archived";
+    | "archived"
+    | "demo"
+    | "test";
 
 export interface ProjectMaterial {
     id: string;

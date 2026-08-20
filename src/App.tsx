@@ -88,12 +88,17 @@ export default function App() {
           experimentService.getExperiments(),
         ]);
         if (cancelled) return;
-        setProjects(loadedProjects.length === 0 ? SEED_PROJECTS : loadedProjects);
+        const visibleProjects = loadedProjects.length === 0 ? SEED_PROJECTS : loadedProjects;
+        const visibleProjectIds = new Set(visibleProjects.map((project) => project.id));
+        const visibleFormulations = loadedFormulations.filter((formulation) => visibleProjectIds.has(formulation.projectId));
+        const visibleFormulationIds = new Set(visibleFormulations.map((formulation) => formulation.id));
+        const visibleSetups = loadedSetups.filter((setup) => visibleProjectIds.has(setup.projectId));
+        setProjects(visibleProjects);
         setMaterials(loadedMaterials);
-        setFormulations(loadedFormulations.length === 0 ? SEED_FORMULATIONS : loadedFormulations);
-        setCharacterizations(loadedCharacterizations);
-        setSetups(loadedSetups);
-        setExperiments(loadedExperiments.length === 0 ? SEED_EXPERIMENTS : loadedExperiments);
+        setFormulations(visibleFormulations.length === 0 ? SEED_FORMULATIONS : visibleFormulations);
+        setCharacterizations(loadedCharacterizations.filter((item) => visibleFormulationIds.has(item.formulationId)));
+        setSetups(visibleSetups);
+        setExperiments((loadedExperiments.length === 0 ? SEED_EXPERIMENTS : loadedExperiments).filter((experiment) => visibleFormulationIds.has(experiment.formulationId)));
         setDataSource("firestore");
         setLastDataLoadAt(new Date().toLocaleTimeString());
       } catch (error) {
@@ -220,6 +225,11 @@ const handleAddMaterial = async (
     setExperiments((previous) => previous.map((experiment) => experiment.id === id ? updated : experiment));
     return updated;
   };
+  const handleCloneExperiment = async (id: string, input: import("./application/experiments/experiment.service").CloneExperimentInput): Promise<Experiment> => {
+    const cloned = await experimentService.cloneExperiment(id, input);
+    setExperiments((previous) => [cloned, ...previous]);
+    return cloned;
+  };
 
   const handleImportExperiments = async (parsedList: ParsedExcelResult[], targetProjectId: string): Promise<void> => {
     const imported: Experiment[] = [];
@@ -293,7 +303,7 @@ const handleAddMaterial = async (
         }
         return <RunConfig project={activeProject} formulation={selectedFormulation} characterization={selectedCharacterization} setup={selectedSetup} projects={projects} formulations={formulations} characterizations={characterizations} setups={setups} experiments={experiments} materials={materials} onAddExperiment={handleAddExperiment} lang={lang} />;
       case "HISTORICAL_EXPERIMENTS":
-        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} loading={isDataLoading} error={dataError} onUpdateExperiment={handleUpdateExperiment} />;
+        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} setups={setups} loading={isDataLoading} error={dataError} onUpdateExperiment={handleUpdateExperiment} onCloneExperiment={handleCloneExperiment} />;
       case "DATABASE_MANAGEMENT":
         return <ExcelImport projects={projects} formulations={formulations} onImportExperiment={handleImportExperiments} lang={lang} />;
     }

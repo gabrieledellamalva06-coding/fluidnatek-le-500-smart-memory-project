@@ -16,6 +16,7 @@ export function mapCanonicalProjectToUi(
     name: project.name,
     description: project.description ?? "",
     createdAt: project.createdAt,
+    status: project.status === "archived" || project.status === "demo" || project.status === "test" ? project.status : "active",
   };
 }
 

@@ -45,6 +45,8 @@ export interface FormulationComponent {
     concentrationPct?: number;
 
     notes?: string;
+
+    basis?: "wt/wt" | "vol/vol" | "wt/vol";
 }
 
 export interface Formulation {

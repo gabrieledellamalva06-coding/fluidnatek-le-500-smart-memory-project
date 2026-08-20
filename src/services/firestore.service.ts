@@ -18,6 +18,22 @@ import {
 
 type FirestoreObject = object;
 
+const FIRESTORE_WRITE_TIMEOUT_MS = 20_000;
+
+async function withFirestoreTimeout<T>(operation: Promise<T>, description: string): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`${description} timed out after ${FIRESTORE_WRITE_TIMEOUT_MS / 1000} seconds. Check Firebase connectivity and Authentication.`));
+    }, FIRESTORE_WRITE_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([operation, timeout]);
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
+}
+
 export interface FirestoreBatchSetOperation {
   type: "set";
   path: string;
@@ -208,7 +224,7 @@ export class FirestoreService {
       );
     }
 
-    await batch.commit();
+    await withFirestoreTimeout(batch.commit(), "Firestore save");
   }
 }
 

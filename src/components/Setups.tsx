@@ -77,6 +77,8 @@ export default function Setups({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return setups.filter((setup) => {
+      const belongsToProject = Boolean(activeProject && setup.projectId === activeProject.id);
+      if (!q && !belongsToProject) return false;
       const normalizedMachine = normalizeMachine(setup.machine.model);
       const machineMatches = machineFilter === "all" || normalizedMachine === machineFilter;
       const text = [
@@ -94,7 +96,12 @@ export default function Setups({
         .toLowerCase();
       return machineMatches && (!q || text.includes(q));
     });
-  }, [setups, machineFilter, search]);
+  }, [setups, machineFilter, search, activeProject]);
+
+  const projectSetupCount = useMemo(
+    () => activeProject ? setups.filter((setup) => setup.projectId === activeProject.id).length : 0,
+    [setups, activeProject]
+  );
 
   const selected = setups.find((item) => item.id === selectedSetupId) ?? null;
 
@@ -148,7 +155,9 @@ export default function Setups({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-slate-950">Choose Machine & Setup</h2>
-              <p className="mt-1 text-xs text-slate-500">{filtered.length} matching setups</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {search.trim() ? `${filtered.length} historical/project matches` : `${projectSetupCount} setups belonging to the current project`}
+              </p>
             </div>
             <button
               type="button"
@@ -188,6 +197,17 @@ export default function Setups({
             </label>
           </div>
 
+          {!search.trim() && activeProject && projectSetupCount === 0 && (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              No setup is linked to this project. Search historical setups above to use a compatible configuration.
+            </p>
+          )}
+          {!activeProject && (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Select a current project before choosing a setup.
+            </p>
+          )}
+
           <div className="relative mt-4">
             <select
               value={selectedSetupId}
@@ -195,7 +215,8 @@ export default function Setups({
               className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-sm font-semibold text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
             >
               <option value="">Choose a setup</option>
-              {filtered.map((setup) => <option key={setup.id} value={setup.id}>{setupLabel(setup)}</option>)}
+              {!search.trim() && activeProject && projectSetupCount > 0 && <optgroup label="Setups belonging to current project">{filtered.map((setup) => <option key={setup.id} value={setup.id}>{setupLabel(setup)}</option>)}</optgroup>}
+              {search.trim() && <optgroup label="Historical and project setups">{filtered.map((setup) => <option key={setup.id} value={setup.id}>{setupLabel(setup)}</option>)}</optgroup>}
             </select>
             <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </div>
