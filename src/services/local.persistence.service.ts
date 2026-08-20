@@ -85,6 +85,12 @@ export class LocalPersistenceService {
     persist(path, collection);
   }
 
+  async replaceDocument<T extends object>(path: string, id: string, data: T): Promise<void> {
+    const collection = loadCollection(path);
+    collection.set(id, { ...data, id });
+    persist(path, collection);
+  }
+
   async update<T extends object>(path: string, id: string, data: T): Promise<void> {
     const collection = loadCollection(path);
     const current = collection.get(id);

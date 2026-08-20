@@ -24,6 +24,12 @@ export const CollectionPaths = {
   ): string =>
     `companies/${companyId}/solutionCharacterizations`,
 
+  solutionCharacterizationRevisions: (
+    characterizationId: string,
+    companyId = DEFAULT_COMPANY_ID
+  ): string =>
+    `companies/${companyId}/solutionCharacterizations/${characterizationId}/revisions`,
+
   materialCharacterizations: (
     companyId = DEFAULT_COMPANY_ID
   ): string =>

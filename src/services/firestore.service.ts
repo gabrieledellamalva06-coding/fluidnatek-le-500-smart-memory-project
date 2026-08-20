@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -40,6 +41,8 @@ export interface FirestoreBatchSetOperation {
   id: string;
   data: FirestoreObject;
   merge?: boolean;
+  serverTimestampFields?: string[];
+  deleteFields?: string[];
 }
 
 export interface FirestoreBatchDeleteOperation {
@@ -213,11 +216,18 @@ export class FirestoreService {
         continue;
       }
 
+      const dataWithTimestamps: Record<string, unknown> = {
+        ...sanitizeFirestoreData(operation.data),
+      };
+      for (const field of operation.serverTimestampFields ?? []) {
+        dataWithTimestamps[field] = serverTimestamp();
+      }
+      for (const field of operation.deleteFields ?? []) {
+        dataWithTimestamps[field] = deleteField();
+      }
       batch.set(
         documentReference,
-        sanitizeFirestoreData(
-          operation.data
-        ),
+        dataWithTimestamps,
         {
           merge: operation.merge ?? true,
         }

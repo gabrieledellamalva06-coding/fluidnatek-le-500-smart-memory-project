@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   ArrowRight,
@@ -10,22 +10,33 @@ import {
   Search,
   X,
 } from "lucide-react";
-import type { Formulation, Project } from "../types";
+import type { Experiment, Formulation, Project } from "../types";
 import type { Material } from "../core/types/material";
 import type { SolutionCharacterization } from "../core/types/characterization";
 import type { CreateSolutionCharacterizationInput } from "../application/characterizations/characterization.service";
+import { solutionCharacterizationService, type UpdateSolutionCharacterizationInput } from "../application/characterizations/characterization.service";
+import type { SolutionCharacterizationRevision, SolutionCharacterizationValues } from "../core/types/characterization";
+import { hasCharacterizationUpdates, isSessionCharacterizationEditable, revisionTimestamp } from "../features/characterization-revisions/characterizationRevision";
 import type { Language } from "../lib/translations";
 import type { CreateMaterialInput } from "../application/materials/material.service";
 import {
   buildPolymerMaterialOptions,
   formatPolymerOptionLabel,
 } from "./polymerMaterialOptions";
+import {
+  buildCharacterizationComparisonRows,
+  buildHistoricalCharacterizationEvidenceResult,
+  buildPolymerCompositionDisplay,
+  type ExcludedHistoricalCharacterizationEvidence,
+  type HistoricalCharacterizationEvidence,
+} from "../features/historical-characterization/characterizationComparison";
 
 interface Props {
   projects: Project[];
   materials: Material[];
   formulations: Formulation[];
   characterizations: SolutionCharacterization[];
+  experiments: Experiment[];
   selectedFormulationId: string;
   selectedCharacterizationId: string;
   onSelectFormulation: (id: string) => void;
@@ -34,7 +45,9 @@ interface Props {
   input: CreateMaterialInput
 ) => Promise<Material>;
   onAddFormulation: (formulation: Omit<Formulation, "id">) => Promise<void>;
-  onAddCharacterization: (input: CreateSolutionCharacterizationInput) => Promise<void>;
+  onAddCharacterization: (input: CreateSolutionCharacterizationInput) => Promise<SolutionCharacterization>;
+  onUpdateCharacterization: (id: string, input: UpdateSolutionCharacterizationInput) => Promise<SolutionCharacterization>;
+  editableCharacterizationIds: ReadonlySet<string>;
   onContinue: () => void;
   lang: Language;
 }
@@ -84,12 +97,15 @@ export default function Formulations({
   materials,
   formulations,
   characterizations,
+  experiments,
   selectedFormulationId,
   selectedCharacterizationId,
   onSelectFormulation,
   onSelectCharacterization,
   onAddFormulation,
   onAddCharacterization,
+  onUpdateCharacterization,
+  editableCharacterizationIds,
   onAddMaterial,
   onContinue,
 }: Props) {
@@ -98,6 +114,11 @@ export default function Formulations({
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showCharacterization, setShowCharacterization] = useState(false);
+  const [historicalCharacterizationId, setHistoricalCharacterizationId] = useState("");
+  const [editingCurrentCharacterization, setEditingCurrentCharacterization] = useState(false);
+  const [revisions, setRevisions] = useState<SolutionCharacterizationRevision[]>([]);
+  const [revisionPopoverOpen, setRevisionPopoverOpen] = useState(false);
+  const [revisionHistoryOpen, setRevisionHistoryOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [charForm, setCharForm] = useState({
     solidsContentPct: "",
@@ -155,6 +176,34 @@ const [materialError, setMaterialError] =
   const selectedHistory = characterizations
     .filter((item) => item.formulationId === selectedFormulationId)
     .sort((a, b) => parseDate(b.measuredAt) - parseDate(a.measuredAt));
+  const currentCharacterization = characterizations.find((item) => item.id === selectedCharacterizationId) ?? null;
+  const historicalEvidenceResult = useMemo(
+    () => buildHistoricalCharacterizationEvidenceResult({
+      current: currentCharacterization,
+      formulation: selected,
+      formulations,
+      characterizations,
+      experiments,
+      materials,
+    }),
+    [currentCharacterization, selected, formulations, characterizations, experiments, materials]
+  );
+  const historicalEvidence = historicalEvidenceResult.eligible;
+  const selectedHistoricalEvidence = historicalEvidence.find(
+    (item) => item.characterization.id === historicalCharacterizationId
+  ) ?? null;
+  const currentCharacterizationEditable = Boolean(currentCharacterization && isSessionCharacterizationEditable(currentCharacterization.id, editableCharacterizationIds));
+  useEffect(() => {
+    let cancelled = false;
+    setRevisionPopoverOpen(false);
+    setRevisionHistoryOpen(false);
+    setEditingCurrentCharacterization(false);
+    if (!currentCharacterization) { setRevisions([]); return () => { cancelled = true; }; }
+    void solutionCharacterizationService.getRevisions(currentCharacterization.id)
+      .then((items) => { if (!cancelled) setRevisions(items); })
+      .catch(() => { if (!cancelled) setRevisions([]); });
+    return () => { cancelled = true; };
+  }, [currentCharacterization?.id]);
 
   const polymers = useMemo(
     () => buildPolymerMaterialOptions(materials),
@@ -413,7 +462,7 @@ const createMaterial = async (
           <div className="relative mt-3">
             <select
               value={selectedFormulationId}
-              onChange={(e) => { onSelectFormulation(e.target.value); onSelectCharacterization(""); }}
+              onChange={(e) => { onSelectFormulation(e.target.value); onSelectCharacterization(""); setHistoricalCharacterizationId(""); }}
               className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-sm font-semibold text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
             >
               <option value="">Choose a formulation</option>
@@ -717,7 +766,7 @@ const createMaterial = async (
                   <div className="relative">
                     <select
                       value={selectedCharacterizationId}
-                      onChange={(e) => onSelectCharacterization(e.target.value)}
+                      onChange={(e) => { onSelectCharacterization(e.target.value); setHistoricalCharacterizationId(""); }}
                       className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-sm text-slate-900"
                     >
                       <option value="">Choose characterization (optional)</option>
@@ -727,7 +776,23 @@ const createMaterial = async (
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   </div>
-                  {selectedCharacterizationId && <CharacterizationComparison current={characterizations.find((item) => item.id === selectedCharacterizationId) ?? null} historical={selectedHistory.filter((item) => item.id !== selectedCharacterizationId)} />}
+                  {selectedCharacterizationId && (
+                    <>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {currentCharacterizationEditable && <button type="button" onClick={() => setEditingCurrentCharacterization(true)} className="rounded-xl bg-violet-600 px-3 py-2 text-xs font-bold text-white">Edit Current Characterization</button>}
+                      {hasCharacterizationUpdates(revisions) && <div className="relative"><button type="button" aria-expanded={revisionPopoverOpen} aria-controls={`revision-summary-${currentCharacterization?.id}`} aria-label="Show characterization update summary" onClick={() => setRevisionPopoverOpen((open) => !open)} className="rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-bold text-violet-700">Updated</button>{revisionPopoverOpen && <div id={`revision-summary-${currentCharacterization?.id}`} className="absolute left-0 z-10 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-lg"><p className="text-slate-600">Last updated: <b className="text-slate-900">{formatRevisionDate(revisions[0]?.changedAt)}</b></p><button type="button" aria-expanded={revisionHistoryOpen} aria-controls={`revision-history-${currentCharacterization?.id}`} onClick={() => setRevisionHistoryOpen(true)} className="mt-2 font-bold text-violet-700">View change history</button></div>}</div>}
+                    </div>
+                    {editingCurrentCharacterization && currentCharacterization && <CharacterizationEditForm record={currentCharacterization} onCancel={() => setEditingCurrentCharacterization(false)} onSave={async (input) => { const updated = await onUpdateCharacterization(currentCharacterization.id, input); setEditingCurrentCharacterization(false); setRevisions(await solutionCharacterizationService.getRevisions(updated.id)); }} />}
+                    {revisionHistoryOpen && currentCharacterization && <RevisionHistory revisions={revisions} controlId={`revision-history-${currentCharacterization.id}`} onClose={() => setRevisionHistoryOpen(false)} />}
+                    <CharacterizationComparison
+                      current={currentCharacterization}
+                      evidence={historicalEvidence}
+                      selectedEvidence={selectedHistoricalEvidence}
+                      excludedEvidence={historicalEvidenceResult.excluded}
+                      onSelectEvidence={setHistoricalCharacterizationId}
+                    />
+                    </>
+                  )}
                 </div>
               ) : (
                 <p className="mt-5 text-sm text-slate-400">No characterization measurements are stored for this formulation.</p>
@@ -860,8 +925,38 @@ function parseDate(value?: string): number { if (!value) return 0; const t=Date.
 function formatDate(value?: string): string { if (!value) return "Measurement"; const d=new Date(value); return Number.isNaN(d.getTime()) ? "Measurement" : d.toLocaleDateString(); }
 function compactCharacterization(item: SolutionCharacterization): string { const bits: string[]=[]; if (positive(item.viscosityMpas)) bits.push(`visc. ${item.viscosityMpas}`); if (positive(item.conductivityUsCm)) bits.push(`cond. ${item.conductivityUsCm}`); return bits.length ? ` · ${bits.join(" · ")}` : ""; }
 
-function CharacterizationComparison({ current, historical }: { current: SolutionCharacterization | null; historical: SolutionCharacterization[] }) {
-  const fields: Array<[keyof SolutionCharacterization, string, string]> = [["viscosityMpas", "Viscosity", "mPa·s"], ["conductivityUsCm", "Conductivity", "µS/cm"], ["densityGcm3", "Density", "g/cm³"], ["surfaceTensionMnM", "Surface tension", "mN/m"], ["ph", "pH", ""], ["solidsContentPct", "Solid content", "%"]];
-  const display = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value.toString() : "No data";
-  return <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-bold text-slate-950">Historical characterization comparison</h3><span className="text-xs font-semibold text-slate-600">Evidence count: {historical.length}</span></div><p className="mt-1 text-xs text-slate-600">Historical measurements are evidence only; they are not automatic predictions.</p><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead><tr className="border-b border-slate-200 text-slate-500"><th className="px-2 py-2">Property</th><th className="px-2 py-2">Current characterization</th><th className="px-2 py-2">Historical characterization</th><th className="px-2 py-2">Difference</th></tr></thead><tbody>{fields.map(([key, label, unit]) => { const currentValue = current?.[key]; const historicalValues = historical.map((item) => item[key]).filter((value): value is number => typeof value === "number" && Number.isFinite(value)); const representative = historicalValues.length ? historicalValues[0] : undefined; const difference = typeof currentValue === "number" && representative !== undefined ? representative - currentValue : undefined; return <tr key={String(key)} className="border-b border-slate-100"><td className="px-2 py-2 font-semibold">{label} ({unit})</td><td className="px-2 py-2">{display(currentValue)}</td><td className="px-2 py-2">{representative === undefined ? "No data" : `${representative} (${historicalValues.length} record${historicalValues.length === 1 ? "" : "s"})`}</td><td className="px-2 py-2">{difference === undefined ? "No comparable value" : difference.toFixed(3)}</td></tr>; })}</tbody></table></div></div>;
+const REVISION_FIELD_LABELS: Record<keyof SolutionCharacterizationValues, string> = { solidsContentPct: "Solid content", viscosityMpas: "Viscosity", conductivityUsCm: "Conductivity", densityGcm3: "Density", surfaceTensionMnM: "Surface tension", ph: "pH", notes: "Measurement notes" };
+function CharacterizationEditForm({ record, onCancel, onSave }: { record: SolutionCharacterization; onCancel: () => void; onSave: (input: UpdateSolutionCharacterizationInput) => Promise<void> }) {
+  const [values, setValues] = useState({ solidsContentPct: inputNumber(record.solidsContentPct), viscosityMpas: inputNumber(record.viscosityMpas), conductivityUsCm: inputNumber(record.conductivityUsCm), densityGcm3: inputNumber(record.densityGcm3), surfaceTensionMnM: inputNumber(record.surfaceTensionMnM), ph: inputNumber(record.ph), notes: record.notes ?? "", changeReason: "", changedBy: "" });
+  const [saving, setSaving] = useState(false); const [message, setMessage] = useState("");
+  const fields: Array<[keyof typeof values, string, string]> = [["solidsContentPct", "Solid Content", "wt %"], ["viscosityMpas", "Viscosity", "mPa·s"], ["conductivityUsCm", "Conductivity", "µS/cm"], ["densityGcm3", "Density", "g/cm³"], ["surfaceTensionMnM", "Surface Tension", "mN/m"], ["ph", "pH", ""]];
+  const save = async (event: React.FormEvent) => { event.preventDefault(); if (!values.changeReason.trim() || !values.changedBy.trim()) { setMessage("Change reason and Changed by are required."); return; } setSaving(true); setMessage(""); try { await onSave({ solidsContentPct: optionalNumber(values.solidsContentPct), viscosityMpas: optionalNumber(values.viscosityMpas), conductivityUsCm: optionalNumber(values.conductivityUsCm), densityGcm3: optionalNumber(values.densityGcm3), surfaceTensionMnM: optionalNumber(values.surfaceTensionMnM), ph: optionalNumber(values.ph), notes: values.notes.trim() || undefined, changeReason: values.changeReason, changedBy: values.changedBy }); } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update characterization."); } finally { setSaving(false); } };
+  return <form onSubmit={save} className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4"><h3 className="font-bold text-slate-900">Edit Current Characterization</h3><p className="mt-1 text-xs text-slate-600">A read-only revision will preserve the previous values.</p><div className="mt-4 grid gap-3 md:grid-cols-3">{fields.map(([key, label, unit]) => <label key={key} className="block"><span className="label">{label}</span><input type="number" step="0.01" value={values[key]} onChange={(event) => setValues((current) => ({ ...current, [key]: event.target.value }))} placeholder={unit} className="input" /></label>)}</div><label className="mt-3 block"><span className="label">Measurement Notes</span><textarea value={values.notes} onChange={(event) => setValues((current) => ({ ...current, notes: event.target.value }))} className="input resize-none" rows={2} /></label><div className="mt-3 grid gap-3 md:grid-cols-2"><label><span className="label">Change Reason</span><textarea required value={values.changeReason} onChange={(event) => setValues((current) => ({ ...current, changeReason: event.target.value }))} className="input resize-none" rows={2} /></label><label><span className="label">Changed By</span><input required value={values.changedBy} onChange={(event) => setValues((current) => ({ ...current, changedBy: event.target.value }))} className="input" /></label></div>{message && <p className="mt-3 text-xs font-semibold text-red-700">{message}</p>}<div className="mt-4 flex justify-end gap-2"><button type="button" disabled={saving} onClick={onCancel} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold">Cancel</button><button disabled={saving} className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save Changes"}</button></div></form>;
 }
+
+function RevisionHistory({ revisions, controlId, onClose }: { revisions: SolutionCharacterizationRevision[]; controlId: string; onClose: () => void }) { return <section id={controlId} className="mt-4 rounded-2xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-bold text-slate-900">Change history</h3><button type="button" onClick={onClose} aria-label="Close change history" className="rounded-lg border border-slate-200 p-1"><X className="h-4 w-4" /></button></div><div className="mt-3 space-y-3">{revisions.map((revision) => <article key={revision.id} className="rounded-xl bg-slate-50 p-3 text-xs"><p className="font-semibold text-slate-900">{formatRevisionDate(revision.changedAt)} · {revision.changedBy}</p><p className="mt-1 text-slate-600">Reason: {revision.changeReason}</p><div className="mt-2 space-y-1">{revision.changedFields.map((field) => <p key={field}><b>{REVISION_FIELD_LABELS[field]}:</b> {revisionValue(revision.previousValues[field])} → {revisionValue(revision.newValues[field])}</p>)}</div></article>)}</div></section>; }
+function inputNumber(value: number | undefined): string { return value === undefined ? "" : String(value); }
+function revisionValue(value: unknown): string { return value === undefined ? "No data" : value === "" ? "No data" : String(value); }
+function formatRevisionDate(value: unknown): string { const timestamp = revisionTimestamp(value); return timestamp ? new Date(timestamp).toLocaleString() : "Pending server timestamp"; }
+
+function CharacterizationComparison({ current, evidence, excludedEvidence, selectedEvidence, onSelectEvidence }: { current: SolutionCharacterization | null; evidence: HistoricalCharacterizationEvidence[]; excludedEvidence: ExcludedHistoricalCharacterizationEvidence[]; selectedEvidence: HistoricalCharacterizationEvidence | null; onSelectEvidence: (id: string) => void }) {
+  const [comparisonExpanded, setComparisonExpanded] = useState(true);
+  const [similarityDetailsOpen, setSimilarityDetailsOpen] = useState(false);
+  const similarityDetailsId = selectedEvidence ? `similarity-details-${selectedEvidence.characterization.id}` : "similarity-details";
+  const comparisonContentId = current ? `historical-characterization-comparison-${current.id}` : "historical-characterization-comparison";
+  useEffect(() => { setComparisonExpanded(true); }, [current?.id]);
+  useEffect(() => { setSimilarityDetailsOpen(false); }, [selectedEvidence?.characterization.id]);
+  const rows = buildCharacterizationComparisonRows(current, selectedEvidence?.characterization ?? null);
+  const displayValue = (value: number | undefined) => value === undefined ? "No data" : formatNumber(value);
+  const sameEvidence = evidence.filter((item) => item.group === "same-formulation");
+  const similarEvidence = evidence.filter((item) => item.group === "similar-formulation");
+  return <section className="mt-4 min-w-0 rounded-2xl border border-violet-200 bg-violet-50/50 p-4"><button type="button" aria-expanded={comparisonExpanded} aria-controls={comparisonContentId} onClick={() => setComparisonExpanded((expanded) => !expanded)} className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"><h3 className="min-w-0 break-words text-sm font-bold text-slate-950">Historical characterization comparison</h3><span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-600"><span>{sameEvidence.length} same formulation · {similarEvidence.length} similar formulation</span><ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${comparisonExpanded ? "rotate-180" : ""}`} /></span></button>{comparisonExpanded && <div id={comparisonContentId}><p className="mt-2 text-xs font-semibold text-violet-800">Historical characterization evidence — not a guaranteed target.</p>{evidence.length === 0 ? <p className="mt-4 rounded-xl bg-white p-3 text-xs text-slate-600">No matching historical characterization is available for this formulation.</p> : <><label className="mt-4 block"><span className="label">Historical evidence record</span><select value={selectedEvidence?.characterization.id ?? ""} onChange={(event) => onSelectEvidence(event.target.value)} className="input"><option value="">Choose a historical characterization</option>{sameEvidence.length > 0 && <optgroup label="Same formulation">{sameEvidence.map((item) => <option key={item.characterization.id} value={item.characterization.id}>{historicalEvidenceLabel(item)}</option>)}</optgroup>}{similarEvidence.length > 0 && <optgroup label="Similar formulation">{similarEvidence.map((item) => <option key={item.characterization.id} value={item.characterization.id}>{historicalEvidenceLabel(item)}</option>)}</optgroup>}</select></label>{selectedEvidence ? <><div className="mt-3 grid min-w-0 gap-2 text-xs sm:grid-cols-2"><EvidenceIdentity label="Evidence group" value={selectedEvidence.group === "same-formulation" ? "Same formulation" : "Similar formulation"} /><EvidenceIdentity label="Formulation" value={`${formulationLabel(selectedEvidence.formulation)} · ${selectedEvidence.formulation.id}`} /><EvidenceIdentity label="Polymer(s) and concentration(s)" value={polymerCompositionLabel(selectedEvidence.formulation)} /><EvidenceIdentity label="Solvent(s) and ratios" value={solventCompositionLabel(selectedEvidence.formulation)} />{selectedEvidence.group === "similar-formulation" && <EvidenceIdentity label="Conditional Solution Similarity" value={`${formatNumber(selectedEvidence.solutionSimilarity!)}% · ${selectedEvidence.comparableCriteriaCount}/5 criteria comparable · ${formatNumber(selectedEvidence.earnedWeight!)} / ${formatNumber(selectedEvidence.availableWeight!)} weight`} />}<EvidenceIdentity label="Measurement date" value={formatEvidenceDate(selectedEvidence.characterization.measuredAt)} /><EvidenceIdentity label="Characterization ID" value={selectedEvidence.characterization.id} /><EvidenceIdentity label="Associated experiment(s)" value={selectedEvidence.experimentIdentities.join(" · ") || "No linked experiment identity available"} /></div>{selectedEvidence.group === "similar-formulation" && <div className="mt-3"><button type="button" aria-expanded={similarityDetailsOpen} aria-controls={similarityDetailsId} onClick={() => setSimilarityDetailsOpen((open) => !open)} className="rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-bold text-violet-700 hover:bg-violet-50">Why this similarity? {similarityDetailsOpen ? "▴" : "▾"}</button>{similarityDetailsOpen && <div id={similarityDetailsId} className="mt-2 rounded-xl bg-white p-3"><div className="grid gap-2 sm:grid-cols-2">{selectedEvidence.criteria?.map((criterion) => <div key={criterion.key} className="rounded-lg bg-slate-50 p-2 text-[11px]"><div className="flex justify-between gap-2"><b>{criterion.label}</b><span>{criterion.includedInDenominator ? `${formatNumber(criterion.earnedWeight)} / ${criterion.weight}` : "Excluded"}</span></div><p className="mt-1 text-slate-600">{criterion.detail}</p></div>)}</div></div>}</div>}{selectedEvidence.solventPartialMatch && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">The solvent system differs. Historical characterization values may not transfer directly.</p>}<div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{rows.map((row) => <article key={row.key} className="min-w-0 rounded-xl border border-violet-100 bg-white p-3 text-xs"><div className="flex min-w-0 items-start justify-between gap-2"><p className="min-w-0 break-words font-bold text-slate-800">{row.label}</p><span className="shrink-0 text-slate-500">{row.unit || "unitless"}</span></div><dl className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2"><dt className="text-slate-500">Current</dt><dd className="break-all text-right font-semibold text-slate-900">{displayValue(row.currentValue)}</dd><dt className="text-slate-500">Historical</dt><dd className="break-all text-right font-semibold text-slate-900">{displayValue(row.historicalValue)}</dd><dt className="text-slate-500">Difference (current − historical)</dt><dd className="break-all text-right font-semibold text-violet-800">{displayValue(row.difference)}</dd></dl></article>)}</div></> : <p className="mt-3 rounded-xl bg-white p-3 text-xs text-slate-600">Select one historical record to compare. No record is chosen silently.</p>}</>}{excludedEvidence.length > 0 && <details className="mt-4 rounded-xl border border-slate-200 bg-white p-3"><summary className="cursor-pointer text-xs font-bold text-slate-700">Excluded evidence ({excludedEvidence.length})</summary><div className="mt-2 space-y-2">{excludedEvidence.map((item) => <div key={item.characterization.id} className="rounded-lg bg-slate-50 p-2 text-xs"><p className="break-words font-semibold text-slate-800">{formulationLabel(item.formulation)} · {item.formulation.id}</p><p className="mt-1 text-slate-600">{item.reason}</p></div>)}</div></details>}</div>}</section>;
+}
+
+function EvidenceIdentity({ label, value }: { label: string; value: string }) { return <div className="min-w-0 rounded-xl bg-white p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 break-words text-slate-800">{value}</p></div>; }
+function historicalEvidenceLabel(item: HistoricalCharacterizationEvidence): string { return `${formatEvidenceDate(item.characterization.measuredAt)} · ${formulationLabel(item.formulation)} · ${item.characterization.id}`; }
+function formatEvidenceDate(value: string | undefined): string { if (!value) return "No measurement date"; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(); }
+function formatNumber(value: number): string { return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(6))); }
+function polymerCompositionLabel(formulation: Formulation): string { return buildPolymerCompositionDisplay(formulation).map((item) => `${item.name}${item.concentration === undefined ? "" : ` ${formatNumber(item.concentration)}${displayCompositionUnit(item.unit)}`}`).join(" · "); }
+function solventCompositionLabel(formulation: Formulation): string { const components = formulation.compositionComponents?.filter((item) => item.role === "solvent") ?? []; if (components.length) return components.map((item) => `${item.materialName}${item.quantity === undefined ? "" : ` ${formatNumber(item.quantity)}${displayCompositionUnit(item.unit ?? "")}`}`).join(" · "); return [formulation.solvent1Name && `${formulation.solvent1Name}${formulation.solvent1RatioPct === undefined ? "" : ` ${formatNumber(formulation.solvent1RatioPct)}%`}`, formulation.solvent2Name && `${formulation.solvent2Name}${formulation.solvent2RatioPct === undefined ? "" : ` ${formatNumber(formulation.solvent2RatioPct)}%`}`].filter(Boolean).join(" · ") || formulation.solvent || "No data"; }
+function displayCompositionUnit(unit: string): string { return unit === "wt_pct" || unit === "vol_pct" || unit === "w_v_pct" || unit === "%" ? "%" : unit ? ` ${unit}` : ""; }

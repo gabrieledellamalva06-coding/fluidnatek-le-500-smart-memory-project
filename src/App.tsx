@@ -20,6 +20,7 @@ import { formulationService } from "./application/formulations/formulation.servi
 import { experimentService } from "./application/experiments/experiment.service";
 import { setupService } from "./application/setups/setup.service";
 import { solutionCharacterizationService } from "./application/characterizations/characterization.service";
+import type { UpdateSolutionCharacterizationInput } from "./application/characterizations/characterization.service";
 import {materialService,type CreateMaterialInput,} from "./application/materials/material.service";
 import { SEED_PROJECTS, SEED_FORMULATIONS, SEED_EXPERIMENTS } from "./seedData";
 const ACTIVE_PROJECT_KEY = "fluidnatek_active_project_id";
@@ -62,6 +63,7 @@ export default function App() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [formulations, setFormulations] = useState<Formulation[]>([]);
   const [characterizations, setCharacterizations] = useState<SolutionCharacterization[]>([]);
+  const [sessionCharacterizationIds, setSessionCharacterizationIds] = useState<Set<string>>(() => new Set());
   const [setups, setSetups] = useState<ExperimentalSetup[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(() => localStorage.getItem(ACTIVE_PROJECT_KEY));
@@ -182,17 +184,26 @@ const handleAddMaterial = async (
     }
   };
 
-  const handleAddCharacterization = async (input: CreateSolutionCharacterizationInput) => {
+  const handleAddCharacterization = async (input: CreateSolutionCharacterizationInput): Promise<SolutionCharacterization> => {
     setDataError(null);
     try {
       const created = await solutionCharacterizationService.createCharacterization(input);
       setCharacterizations((previous) => [created, ...previous]);
+      setSessionCharacterizationIds((previous) => new Set(previous).add(created.id));
       setSelectedCharacterizationId(created.id);
+      return created;
     } catch (error) {
       const message = `Unable to create characterization: ${getErrorMessage(error)}`;
       setDataError(message);
       throw new Error(message);
     }
+  };
+  const handleUpdateCharacterization = async (id: string, input: UpdateSolutionCharacterizationInput): Promise<SolutionCharacterization> => {
+    if (!sessionCharacterizationIds.has(id)) throw new Error("Only characterizations created in this browser workflow session can be edited.");
+    const updated = await solutionCharacterizationService.updateCharacterizationWithRevision(id, input);
+    setCharacterizations((previous) => previous.map((item) => item.id === id ? updated : item));
+    setSelectedCharacterizationId(updated.id);
+    return updated;
   };
 
   const handleAddSetup = async (input: CreateSetupInput) => {
@@ -290,11 +301,11 @@ const handleAddMaterial = async (
         return <ProjectsWorkspace projects={projects} formulations={formulations} experiments={experiments} activeProject={activeProject} onSelectProject={selectProject} onAddProject={handleAddProject} onContinue={() => setCurrentView("FORMULATIONS_CHARACTERIZATION")} />;
       case "FORMULATIONS_CHARACTERIZATION":
         return <Formulations projects={activeProject ? [activeProject] : []
-        } materials={materials} formulations={formulations} characterizations={characterizations} 
+        } materials={materials} formulations={formulations} characterizations={characterizations} experiments={experiments}
         selectedFormulationId={selectedFormulationId} selectedCharacterizationId={selectedCharacterizationId} 
         onSelectFormulation={(id) => { setSelectedFormulationId(id); setSelectedCharacterizationId(""); 
           setSelectedSetupId(""); }} onSelectCharacterization={setSelectedCharacterizationId} onAddFormulation=
-          {handleAddFormulation} onAddCharacterization={handleAddCharacterization} onAddMaterial={handleAddMaterial} onContinue={() => setCurrentView("SETUPS")} lang={lang} />;
+          {handleAddFormulation} onAddCharacterization={handleAddCharacterization} onUpdateCharacterization={handleUpdateCharacterization} editableCharacterizationIds={sessionCharacterizationIds} onAddMaterial={handleAddMaterial} onContinue={() => setCurrentView("SETUPS")} lang={lang} />;
       case "SETUPS":
         return <Setups projects={activeProject ? [activeProject] : []} setups={setups} selectedSetupId={selectedSetupId} onSelectSetup={setSelectedSetupId} onAddSetup={handleAddSetup} onContinue={() => setCurrentView("LIVE_TELEMETRY")} />;
       case "LIVE_TELEMETRY":

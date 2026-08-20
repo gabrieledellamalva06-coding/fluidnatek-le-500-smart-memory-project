@@ -76,3 +76,17 @@ export interface MaterialCharacterization {
 
     source?: SourceTraceability;
 }
+
+export type SolutionCharacterizationValues = Pick<SolutionCharacterization,
+    "solidsContentPct" | "viscosityMpas" | "conductivityUsCm" | "densityGcm3" | "surfaceTensionMnM" | "ph" | "notes">;
+
+export interface SolutionCharacterizationRevision {
+    id: string;
+    characterizationId: string;
+    previousValues: SolutionCharacterizationValues;
+    newValues: SolutionCharacterizationValues;
+    changedFields: Array<keyof SolutionCharacterizationValues>;
+    changeReason: string;
+    changedBy: string;
+    changedAt?: unknown;
+}

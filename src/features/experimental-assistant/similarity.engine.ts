@@ -162,6 +162,24 @@ export function calculateSimilarityScore(
   return maxScore <= 0 ? 0 : round((score / maxScore) * 100, 2);
 }
 
+export interface SolutionSimilarityCriterionDiagnostic {
+  key: "polymer" | "polymerFamily" | "molecularWeight" | "concentration" | "solventSystem";
+  label: string;
+  weight: number;
+  earnedWeight: number;
+  includedInDenominator: boolean;
+  detail: string;
+  partialMatch: boolean;
+}
+
+export interface SolutionSimilarityDiagnostics {
+  earnedWeight: number;
+  availableWeight: number;
+  criteria: SolutionSimilarityCriterionDiagnostic[];
+  solventComparable: boolean;
+  solventDataKnownOnBothSides: boolean;
+}
+
 /**
  * Compares solution composition only. Process parameters are intentionally
  * excluded: this answers how a solution was historically processed, before a
@@ -268,6 +286,52 @@ export function calculateSolutionSimilarity(
 
   const dataCompleteness = comparableCriteriaCount / 5;
   return { tier, score: round((score / maxScore) * 100, 2), comparableCriteriaCount, comparableCriteriaTotal: 5, dataCompleteness, evidenceLevel: resolveEvidenceLevel(comparableCriteriaCount, context), rankingScore: 0, reasons };
+}
+
+/** Read-only explanation of the existing Solution Similarity calculation. */
+export function calculateSolutionSimilarityDiagnostics(
+  context: HistoricalExperimentContext,
+  query: SimilarityQuery
+): SolutionSimilarityDiagnostics {
+  const formulation = context.formulation;
+  if (!formulation) return { earnedWeight: 0, availableWeight: 0, criteria: [], solventComparable: false, solventDataKnownOnBothSides: false };
+  const criteria: SolutionSimilarityCriterionDiagnostic[] = [];
+  const polymer = formulation.polymerName ?? context.polymerMaterial?.canonicalName;
+  const polymerComparable = Boolean(normalizeText(polymer) && normalizeText(query.polymer));
+  const polymerMatched = polymerComparable && safeTextMatch(polymer, query.polymer);
+  criteria.push(diagnostic("polymer", "Polymer", 35, polymerComparable, polymerMatched ? 35 : 0, polymerComparable ? (polymerMatched ? "Match" : "No match") : "Excluded from denominator: missing comparison data"));
+
+  const family = context.polymerMaterial?.polymerFamily;
+  const familyComparable = Boolean(normalizeText(family) && normalizeText(query.polymerFamily));
+  const familyMatched = familyComparable && safeTextMatch(family, query.polymerFamily);
+  criteria.push(diagnostic("polymerFamily", "Polymer family", 15, familyComparable, familyMatched ? 15 : 0, familyComparable ? (familyMatched ? "Match" : "No match") : "Excluded from denominator: missing comparison data"));
+
+  const molecularScore = compareMolecularWeight(context.polymerMaterial?.molecularWeight, query.molecularWeight);
+  criteria.push(diagnostic("molecularWeight", "Molecular weight", 15, molecularScore !== null, molecularScore === null ? 0 : 15 * molecularScore, molecularScore === null ? "Excluded from denominator: missing or unparseable comparison data" : molecularScore === 1 ? "Match" : molecularScore > 0 ? "Partial match" : "No match"));
+
+  const concentration = finiteNumberOrUndefined(formulation.polymerConcentrationPct) ?? finiteNumberOrUndefined(formulation.solidsContentPct);
+  const concentrationScore = compareConcentration(concentration, query.polymerConcentrationPct);
+  criteria.push(diagnostic("concentration", "Concentration", 15, concentrationScore !== null, concentrationScore === null ? 0 : 15 * concentrationScore, concentrationScore === null ? "Excluded from denominator: missing comparison data" : concentrationScore === 1 ? "Match" : concentrationScore > 0 ? `Partial match · difference ${round(Math.abs(concentration! - query.polymerConcentrationPct!), 2)}%` : "No match"));
+
+  const historicalSolvents = [formulation.solvent1Name ?? formulation.solvent, formulation.solvent2Name].filter((value) => Boolean(normalizeText(value)));
+  const querySolvents = [query.solvent1 ?? query.solvent, query.solvent2].filter((value) => Boolean(normalizeText(value)));
+  const solventDataKnownOnBothSides = historicalSolvents.length > 0 && querySolvents.length > 0;
+  const solventScore = compareSolventSystem(
+    { first: formulation.solvent1Name ?? formulation.solvent, second: formulation.solvent2Name, family: context.solvent1Material?.solventFamily, firstRatio: formulation.solvent1RatioPct, secondRatio: formulation.solvent2RatioPct },
+    { first: query.solvent1 ?? query.solvent, second: query.solvent2, family: query.solventFamily, firstRatio: query.solvent1RatioPct, secondRatio: query.solvent2RatioPct },
+  );
+  criteria.push(diagnostic("solventSystem", "Solvent system", 20, solventScore !== null, solventScore === null ? 0 : 20 * solventScore.score, solventScore === null ? (solventDataKnownOnBothSides ? "Excluded from denominator: known solvent systems are not comparable" : "Excluded from denominator: missing solvent comparison data") : solventScore.score === 1 ? "Match" : `Partial match · ${solventScore.reasons.join(" · ")}`));
+  return {
+    earnedWeight: round(criteria.reduce((sum, item) => sum + item.earnedWeight, 0), 2),
+    availableWeight: criteria.filter((item) => item.includedInDenominator).reduce((sum, item) => sum + item.weight, 0),
+    criteria,
+    solventComparable: solventScore !== null,
+    solventDataKnownOnBothSides,
+  };
+}
+
+function diagnostic(key: SolutionSimilarityCriterionDiagnostic["key"], label: string, weight: number, includedInDenominator: boolean, earnedWeight: number, detail: string): SolutionSimilarityCriterionDiagnostic {
+  return { key, label, weight, earnedWeight: round(earnedWeight, 2), includedInDenominator, detail, partialMatch: includedInDenominator && earnedWeight > 0 && earnedWeight < weight };
 }
 
 function resolveEvidenceLevel(criteria: number, context: HistoricalExperimentContext): "strong" | "moderate" | "limited" {

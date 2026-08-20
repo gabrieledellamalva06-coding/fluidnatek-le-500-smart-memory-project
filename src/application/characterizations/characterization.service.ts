@@ -1,6 +1,12 @@
 import type {
   SolutionCharacterization,
+  SolutionCharacterizationRevision,
+  SolutionCharacterizationValues,
 } from "../../core/types/characterization";
+import { CollectionPaths } from "../../config/collectionPaths";
+import { firestoreService } from "../../services/firestore.service";
+import { localPersistenceService } from "../../services/local.persistence.service";
+import { createCharacterizationRevisionDraft, characterizationValues, sortRevisionsNewestFirst } from "../../features/characterization-revisions/characterizationRevision";
 
 import {
   solutionCharacterizationRepository,
@@ -42,7 +48,11 @@ export interface SolutionCharacterizationService {
   createCharacterization(
     input: CreateSolutionCharacterizationInput
   ): Promise<SolutionCharacterization>;
+  updateCharacterizationWithRevision(id: string, input: UpdateSolutionCharacterizationInput): Promise<SolutionCharacterization>;
+  getRevisions(id: string): Promise<SolutionCharacterizationRevision[]>;
 }
+
+export interface UpdateSolutionCharacterizationInput extends SolutionCharacterizationValues { changeReason: string; changedBy: string; }
 
 class FirestoreSolutionCharacterizationService
   implements SolutionCharacterizationService
@@ -176,7 +186,40 @@ class FirestoreSolutionCharacterizationService
 
     return characterization;
   }
+
+  async updateCharacterizationWithRevision(id: string, input: UpdateSolutionCharacterizationInput): Promise<SolutionCharacterization> {
+    const current = await solutionCharacterizationRepository.getById(id);
+    if (!current) throw new Error(`Characterization "${id}" does not exist.`);
+    const changeReason = input.changeReason.trim();
+    const changedBy = input.changedBy.trim();
+    if (!changeReason) throw new Error("Change reason is required.");
+    if (!changedBy) throw new Error("Changed by is required.");
+    validateCharacterizationValues(input);
+    const nextValues = normalizeCharacterizationValues(input);
+    const previousValues = characterizationValues(current);
+    const revisionId = `REV_${crypto.randomUUID()}`;
+    const revision = createCharacterizationRevisionDraft({ id: revisionId, characterizationId: id, previousValues, newValues: nextValues, changeReason, changedBy });
+    const changedFields = revision.changedFields;
+    if (changedFields.length === 0) throw new Error("Change at least one characterization value before saving.");
+    const updated: SolutionCharacterization = { ...current, ...nextValues };
+    for (const field of CHARACTERIZATION_OPTIONAL_FIELDS) if (nextValues[field] === undefined) delete updated[field];
+    await firestoreService.executeBatch([
+      { type: "set", path: CollectionPaths.solutionCharacterizations(), id, data: nextValues, merge: true, deleteFields: CHARACTERIZATION_OPTIONAL_FIELDS.filter((field) => nextValues[field] === undefined) },
+      { type: "set", path: CollectionPaths.solutionCharacterizationRevisions(id), id: revisionId, data: revision, merge: false, serverTimestampFields: ["changedAt"] },
+    ]);
+    await localPersistenceService.replaceDocument(CollectionPaths.solutionCharacterizations(), id, updated);
+    return updated;
+  }
+
+  async getRevisions(id: string): Promise<SolutionCharacterizationRevision[]> {
+    if (!id.trim()) return [];
+    return sortRevisionsNewestFirst(await firestoreService.getCollection<SolutionCharacterizationRevision>(CollectionPaths.solutionCharacterizationRevisions(id)));
+  }
 }
+
+const CHARACTERIZATION_OPTIONAL_FIELDS: Array<keyof SolutionCharacterizationValues> = ["solidsContentPct", "viscosityMpas", "conductivityUsCm", "densityGcm3", "surfaceTensionMnM", "ph", "notes"];
+function validateCharacterizationValues(input: SolutionCharacterizationValues): void { validateOptionalNonNegativeNumber(input.solidsContentPct, "Solids content"); validateOptionalNonNegativeNumber(input.viscosityMpas, "Viscosity"); validateOptionalNonNegativeNumber(input.conductivityUsCm, "Conductivity"); validateOptionalPositiveNumber(input.densityGcm3, "Density"); validateOptionalNonNegativeNumber(input.surfaceTensionMnM, "Surface tension"); validateOptionalRange(input.ph, "pH", 0, 14); }
+function normalizeCharacterizationValues(input: SolutionCharacterizationValues): SolutionCharacterizationValues { return { solidsContentPct: input.solidsContentPct, viscosityMpas: input.viscosityMpas, conductivityUsCm: input.conductivityUsCm, densityGcm3: input.densityGcm3, surfaceTensionMnM: input.surfaceTensionMnM, ph: input.ph, notes: normalizeOptionalText(input.notes) }; }
 
 function compareByMeasuredDateDescending(
   first: SolutionCharacterization,
