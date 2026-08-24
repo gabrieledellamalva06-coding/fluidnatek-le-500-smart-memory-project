@@ -298,7 +298,23 @@ export function mapCanonicalExperimentToUi(
 
       canonicalProjectId:
         experiment.projectId,
+
+      ...(experiment.clonedFromExperimentId ? { clonedFromExperimentId: experiment.clonedFromExperimentId } : {}),
+
+      ...(experiment.cloneRequestId ? { cloneRequestId: experiment.cloneRequestId } : {}),
+
+      ...(experiment.sourceProcessRecordId ? { sourceProcessRecordId: experiment.sourceProcessRecordId } : {}),
     },
+
+    ...(experiment.clonedFromExperimentId ? { variationProvenance: {
+      clonedFromExperimentId: experiment.clonedFromExperimentId,
+      sourceProcessRecordId: experiment.sourceProcessRecordId,
+      cloneRequestId: experiment.cloneRequestId,
+      changedParameters: experiment.changedParameters,
+      variationCreatedBy: experiment.variationCreatedBy,
+      variationReason: experiment.variationReason,
+      variationCreatedAt: experiment.variationCreatedAt,
+    } } : {}),
   };
 }
 
@@ -389,6 +405,7 @@ function mapCreationStatus(): ExperimentStatus {
 function resolveSourceFile(
   experiment: CanonicalExperiment
 ): string {
+  if (experiment.clonedFromExperimentId) return "";
   const sourceFile =
     experiment.source &&
     "fileName" in experiment.source &&
@@ -473,17 +490,4 @@ function createEntityId(
   prefix: string
 ): string {
   return `${prefix}_${crypto.randomUUID()}`;
-}
-
-export interface UpdateExperimentInput {
-  operationIdentifier?: string;
-  voltageKv?: number;
-  collectorVoltageKv?: number;
-  flowRateMlH?: number;
-  distanceMm?: number;
-  drumSpeedRpm?: number;
-  temperatureC?: number;
-  humidityPct?: number;
-  jetStabilityGrade?: ProcessabilityGrade;
-  operatorComments?: string;
 }

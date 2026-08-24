@@ -51,6 +51,9 @@ export interface HistoricalExperimentRecord {
   ingestedAt: string;
   importStatus: string;
   validationStatus: string;
+  status: string;
+  recordType: string;
+  createdIn: string;
   dataQuality: RecordQualitySummary;
 
   searchText: string;
@@ -161,6 +164,7 @@ function adaptHistoricalExperiment({
   );
 
   const sourceFile = normalizeDisplayText(experiment.sourceFile);
+  const isApplicationVariation = Boolean(experiment.variationProvenance?.clonedFromExperimentId);
   const ingestedAt = normalizeDisplayText(experiment.ingestedAt);
   const concentrationPct = finiteNumberOrNull(formulation?.polymerConcentrationPct);
 
@@ -225,8 +229,11 @@ function adaptHistoricalExperiment({
     operatorComments,
     sourceFile,
     ingestedAt,
-    importStatus: readMetadataValue(experiment, ["importStatus", "import_status"]) || (sourceFile ? "Imported" : "Manual"),
-    validationStatus: readMetadataValue(experiment, ["validationStatus", "validation_status"]) || "Unvalidated",
+    importStatus: isApplicationVariation ? "" : readMetadataValue(experiment, ["importStatus", "import_status"]) || (sourceFile ? "Imported" : "Manual"),
+    validationStatus: isApplicationVariation ? "" : readMetadataValue(experiment, ["validationStatus", "validation_status"]) || "Unvalidated",
+    status: readMetadataValue(experiment, ["canonicalStatus"]) || "Unknown",
+    recordType: isApplicationVariation ? "Experiment variation" : "Historical experiment",
+    createdIn: isApplicationVariation ? "Smart Memory application" : "",
     dataQuality,
 
     searchText,

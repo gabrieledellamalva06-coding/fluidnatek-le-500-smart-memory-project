@@ -7,7 +7,13 @@ export interface CreateMaterialInput {
   category: "polymer" | "solvent";
   family?: string;
   molecularWeight?: string;
+  molecularWeightValue?: number;
+  molecularWeightUnit?: "Da" | "kDa" | "MDa";
+  polymerIdentity?: string;
+  grade?: string;
   supplier?: string;
+  articleNumber?: string;
+  aliases?: string[];
 }
 
 export interface MaterialService {
@@ -34,16 +40,19 @@ class FirestoreMaterialService implements MaterialService {
 
       category: input.category,
 
-      aliases: input.shortName.trim()
-        ? [input.shortName.trim()]
-        : [],
+      aliases: [...new Set([input.shortName.trim(), ...(input.aliases ?? []).map((item) => item.trim())].filter(Boolean))],
 
       manufacturers: [],
       commercialNames: [],
-      productCodes: [],
+      productCodes: input.articleNumber?.trim() ? [input.articleNumber.trim()] : [],
 
       molecularWeight:
         input.molecularWeight?.trim() || undefined,
+
+      molecularWeightValue: input.molecularWeightValue,
+      molecularWeightUnit: input.molecularWeightUnit,
+      polymerIdentity: input.category === "polymer" ? input.polymerIdentity?.trim() || undefined : undefined,
+      grade: input.grade?.trim() || undefined,
 
       polymerFamily:
         input.category === "polymer"
@@ -57,6 +66,8 @@ class FirestoreMaterialService implements MaterialService {
 
       supplier:
         input.supplier?.trim() || undefined,
+
+      articleNumber: input.articleNumber?.trim() || undefined,
 
       aiTags: [],
 

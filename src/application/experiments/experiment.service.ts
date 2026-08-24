@@ -5,6 +5,7 @@
 import type {
   ExperimentalSetup,
 } from "../../core/types/setup";
+import type { Experiment as CanonicalExperiment } from "../../core/types/experiment";
 
 import { CollectionPaths } from "../../config/collectionPaths";
 import { experimentRepository } from "../../repositories/experiment.repository";
@@ -23,10 +24,17 @@ import {
   isEquivalentSetup,
   mapCanonicalExperimentToUi,
 } from "./experiment.mapper";
+import {
+  createPlannedVariation,
+  isDuplicateRunName,
+  variationChanges,
+  normalizeVariationAudit,
+  VARIATION_SERVER_TIMESTAMP_FIELDS,
+  type VariationValues,
+} from "../../features/clone-variation/cloneVariation";
 
 import type {
   CreateExperimentInput,
-  UpdateExperimentInput,
 } from "./experiment.mapper";
 
 export interface ExperimentService {
@@ -38,24 +46,15 @@ export interface ExperimentService {
     input: CreateExperimentInput
   ): Promise<UiExperiment>;
 
-  updateExperiment(
-    id: string,
-    input: UpdateExperimentInput
-  ): Promise<UiExperiment>;
-
   cloneExperiment(id: string, input: CloneExperimentInput): Promise<UiExperiment>;
 }
 
-export interface CloneExperimentInput {
+export interface CloneExperimentInput extends VariationValues {
+  cloneRequestId: string;
+  sourceProcessRecordId: string;
   operationIdentifier: string;
-  voltageKv?: number;
-  collectorVoltageKv?: number;
-  flowRateMlH?: number;
-  distanceMm?: number;
-  drumSpeedRpm?: number;
-  temperatureC?: number;
-  humidityPct?: number;
-  jetStabilityGrade?: 1 | 2 | 3 | 4;
+  variationCreatedBy: string;
+  variationReason: string;
 }
 
 class FirestoreExperimentService
@@ -212,75 +211,84 @@ class FirestoreExperimentService
     );
   }
 
-  async updateExperiment(id: string, input: UpdateExperimentInput): Promise<UiExperiment> {
-    const experiment = await experimentRepository.getById(id);
-    if (!experiment) throw new Error(`Experiment "${id}" does not exist in Firestore.`);
-    const processRecordId = experiment.processRecordIds[0];
-    const processRecord = processRecordId ? await processRecordRepository.getById(processRecordId) : null;
-    if (!processRecord) throw new Error(`Experiment "${id}" has no editable process record.`);
-    if (input.operationIdentifier !== undefined && input.operationIdentifier.trim() === "") throw new Error("Run name cannot be empty.");
-    const numericValues = [input.voltageKv, input.collectorVoltageKv, input.flowRateMlH, input.distanceMm, input.drumSpeedRpm, input.temperatureC, input.humidityPct].filter((value): value is number => value !== undefined);
-    if (numericValues.some((value) => !Number.isFinite(value))) throw new Error("All numeric parameters must be finite numbers.");
-    if (input.jetStabilityGrade !== undefined && ![1, 2, 3, 4].includes(input.jetStabilityGrade)) throw new Error("Processability grade must be between 1 and 4.");
-    const parameters = {
-      ...processRecord.parameters,
-      ...(input.voltageKv !== undefined ? { voltageKv: input.voltageKv } : {}),
-      ...(input.collectorVoltageKv !== undefined ? { collectorVoltageKv: input.collectorVoltageKv } : {}),
-      ...(input.flowRateMlH !== undefined ? { flowRateMlH: input.flowRateMlH } : {}),
-      ...(input.distanceMm !== undefined ? { distanceMm: input.distanceMm } : {}),
-      ...(input.drumSpeedRpm !== undefined ? { collectorSpeedRpm: input.drumSpeedRpm } : {}),
-    };
-    const environment = input.temperatureC !== undefined || input.humidityPct !== undefined
-      ? { ...processRecord.environment, ...(input.temperatureC !== undefined ? { temperatureC: input.temperatureC } : {}), ...(input.humidityPct !== undefined ? { humidityPct: input.humidityPct } : {}) }
-      : processRecord.environment;
-    const evaluation = input.jetStabilityGrade !== undefined || input.operatorComments !== undefined
-      ? { ...processRecord.evaluation, ...(input.jetStabilityGrade !== undefined ? { jetStabilityGrade: input.jetStabilityGrade, processabilityGrade: input.jetStabilityGrade, isStable: input.jetStabilityGrade >= 4 } : {}), ...(input.operatorComments !== undefined ? { operatorComments: input.operatorComments } : {}) }
-      : processRecord.evaluation;
-    const experimentPatch = {
-      ...(input.operationIdentifier !== undefined ? { operationIdentifier: input.operationIdentifier.trim() } : {}),
-      ...(input.operatorComments !== undefined ? { notes: input.operatorComments } : {}),
-      updatedAt: new Date().toISOString(),
-    };
-    await experimentRepository.update(id, experimentPatch);
-    await processRecordRepository.update(processRecord.id, { parameters, environment, evaluation });
-    const refreshed = await this.getExperiments();
-    const updated = refreshed.find((item) => item.id === id);
-    if (!updated) throw new Error("Experiment was updated but could not be reloaded.");
-    return updated;
-  }
-
   async cloneExperiment(id: string, input: CloneExperimentInput): Promise<UiExperiment> {
+    validateCloneInput(input);
+    const audit = normalizeVariationAudit(input.variationCreatedBy, input.variationReason);
     const source = await experimentRepository.getById(id);
     if (!source) throw new Error(`Experiment "${id}" does not exist in Firestore.`);
-    const processRecord = source.processRecordIds[0] ? await processRecordRepository.getById(source.processRecordIds[0]) : null;
-    const setup = source.setupId ? await setupRepository.getById(source.setupId) : null;
-    if (!processRecord || !setup) throw new Error("The source experiment is incomplete and cannot be cloned safely.");
-    const evaluation = processRecord.evaluation;
-    const voltageKv = input.voltageKv ?? processRecord.parameters.voltageKv;
-    const flowRateMlH = input.flowRateMlH ?? processRecord.parameters.flowRateMlH;
-    const distanceMm = input.distanceMm ?? processRecord.parameters.distanceMm;
-    const jetStabilityGrade = input.jetStabilityGrade ?? evaluation?.jetStabilityGrade;
-    if (voltageKv === undefined || flowRateMlH === undefined || distanceMm === undefined || jetStabilityGrade === undefined) {
-      throw new Error("The source experiment is missing required process values or processability grade.");
+    const deterministicId = `EXP_CLONE_${input.cloneRequestId}`;
+    const existingRetry = await experimentRepository.getById(deterministicId);
+    if (existingRetry) {
+      if (existingRetry.cloneRequestId !== input.cloneRequestId || existingRetry.clonedFromExperimentId !== source.id) {
+        throw new Error("The clone request identifier is already in use.");
+      }
+      const [retrySetup, ...retryRecords] = await Promise.all([
+        setupRepository.getById(existingRetry.setupId),
+        ...existingRetry.processRecordIds.map((recordId) => processRecordRepository.getById(recordId)),
+      ]);
+      return mapCanonicalExperimentToUi(existingRetry, {
+        setupsById: new Map(retrySetup ? [[retrySetup.id, retrySetup]] : []),
+        processRecordsById: new Map(retryRecords.filter((record): record is NonNullable<typeof record> => record !== null).map((record) => [record.id, record])),
+      });
     }
-    return this.createExperiment({
-      formulationId: source.formulationId,
-      operationIdentifier: input.operationIdentifier.trim(),
-      machineModel: setup.machine.model,
-      injectorType: setup.injector.type,
-      collectorType: setup.collector.type,
-      voltageKv,
-      collectorVoltageKv: input.collectorVoltageKv ?? processRecord.parameters.collectorVoltageKv,
-      flowRateMlH,
-      distanceMm,
-      drumSpeedRpm: input.drumSpeedRpm ?? processRecord.parameters.collectorSpeedRpm,
-      jetStabilityGrade,
-      operatorComments: `Cloned from ${source.operationIdentifier || source.id}. Original record preserved.`,
-      sourceFile: `clone:${source.id}`,
-      temperatureC: input.temperatureC ?? processRecord.environment?.temperatureC,
-      humidityPct: input.humidityPct ?? processRecord.environment?.humidityPct,
+    if (!source.processRecordIds.includes(input.sourceProcessRecordId)) {
+      throw new Error("The selected process record does not belong to the source experiment.");
+    }
+    const processRecord = await processRecordRepository.getById(input.sourceProcessRecordId);
+    const setup = source.setupId ? await setupRepository.getById(source.setupId) : null;
+    const formulation = await formulationRepository.getById(source.formulationId);
+    if (!processRecord || processRecord.experimentId !== source.id || !setup || !formulation) {
+      throw new Error("The source experiment is incomplete and cannot be cloned safely.");
+    }
+    if (formulation.projectId !== source.projectId || setup.projectId !== source.projectId) {
+      throw new Error("The source project, formulation, and setup relationships are inconsistent.");
+    }
+    const allExperiments = await experimentRepository.getAll();
+    if (isDuplicateRunName(input.operationIdentifier, allExperiments.map((experiment) => experiment.operationIdentifier))) {
+      throw new Error("This run name already exists. Please choose a unique name.");
+    }
+    const values: VariationValues = {
+      voltageKv: input.voltageKv, collectorVoltageKv: input.collectorVoltageKv,
+      flowRateMlH: input.flowRateMlH, distanceMm: input.distanceMm,
+      drumSpeedRpm: input.drumSpeedRpm, temperatureC: input.temperatureC,
+      humidityPct: input.humidityPct,
+    };
+    if (variationChanges({
+      voltageKv: processRecord.parameters.voltageKv,
+      collectorVoltageKv: processRecord.parameters.collectorVoltageKv,
+      flowRateMlH: processRecord.parameters.flowRateMlH,
+      distanceMm: processRecord.parameters.distanceMm,
+      drumSpeedRpm: processRecord.parameters.collectorSpeedRpm,
+      temperatureC: processRecord.environment?.temperatureC,
+      humidityPct: processRecord.environment?.humidityPct,
+    }, values).length === 0) {
+      throw new Error("Change at least one operating parameter before creating a variation.");
+    }
+    const creation = createPlannedVariation({ source, sourceProcessRecord: processRecord, operationIdentifier: input.operationIdentifier, cloneRequestId: input.cloneRequestId, values, ...audit, timestamp: new Date().toISOString() });
+    const operations: FirestoreBatchOperation[] = [
+      { type: "set", path: CollectionPaths.processRecords(), id: creation.processRecord.id, data: withoutId(creation.processRecord), merge: false },
+      { type: "set", path: CollectionPaths.experiments(), id: creation.experiment.id, data: withoutId(creation.experiment), merge: false, serverTimestampFields: [...VARIATION_SERVER_TIMESTAMP_FIELDS] },
+    ];
+    await firestoreService.executeBatch(operations, { useTimeout: false });
+    const persistedExperiment = await firestoreService.getDocument<CanonicalExperiment>(CollectionPaths.experiments(), creation.experiment.id);
+    const experimentForRead = persistedExperiment ?? creation.experiment;
+    await localPersistenceService.executeBatch([
+      { type: "set", path: CollectionPaths.processRecords(), id: creation.processRecord.id, data: withoutId(creation.processRecord), merge: false },
+      { type: "set", path: CollectionPaths.experiments(), id: experimentForRead.id, data: withoutId(experimentForRead), merge: false },
+    ]);
+    return mapCanonicalExperimentToUi(experimentForRead, {
+      setupsById: new Map([[setup.id, setup]]),
+      processRecordsById: new Map([[creation.processRecord.id, creation.processRecord]]),
     });
   }
+}
+
+function validateCloneInput(input: CloneExperimentInput): void {
+  if (!input.cloneRequestId.trim() || !/^[A-Za-z0-9_-]+$/.test(input.cloneRequestId)) throw new Error("A valid clone request identifier is required.");
+  if (!input.sourceProcessRecordId.trim()) throw new Error("Select a source process record.");
+  if (!input.operationIdentifier.trim()) throw new Error("A run name is required.");
+  const numbers = [input.voltageKv, input.collectorVoltageKv, input.flowRateMlH, input.distanceMm, input.drumSpeedRpm, input.temperatureC, input.humidityPct];
+  if (numbers.some((value) => value !== undefined && !Number.isFinite(value))) throw new Error("All entered operating parameters must be finite numbers.");
 }
 
 interface SetupResolution {

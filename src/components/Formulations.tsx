@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ArrowRight,
@@ -30,6 +30,32 @@ import {
   type ExcludedHistoricalCharacterizationEvidence,
   type HistoricalCharacterizationEvidence,
 } from "../features/historical-characterization/characterizationComparison";
+import {
+  addOptionalPolymerRow,
+  optionalPolymerRowIsComplete,
+  removeOptionalPolymerRow,
+  submittedOptionalPolymers,
+  visibleOptionalPolymerRows,
+  type OptionalPolymerRowCount,
+} from "../features/formulations/optionalPolymerRows";
+import {
+  addOptionalSolventRow,
+  clearNewOptionalSolventRow,
+  removeOptionalSolventRow,
+  submittedOptionalSolvents,
+  validateVisibleSolvents,
+  visibleOptionalSolventRows,
+  type OptionalSolventRowCount,
+} from "../features/formulations/optionalSolventRows";
+import { hydratePolymerSelection, type PolymerIdentityOption } from "../features/formulations/polymerIdentityOptions";
+import {
+  buildPolymerCatalogCreateInput,
+  EMPTY_POLYMER_CATALOG_DRAFT,
+  findDuplicatePolymerMaterial,
+  resolveCatalogIdentity,
+  validatePolymerCatalogDraft,
+  type PolymerCatalogDraft,
+} from "../features/formulations/polymerCatalogMaterial";
 
 interface Props {
   projects: Project[];
@@ -59,17 +85,15 @@ interface FormState {
   polymerId: string;
   polymerConcentrationPct: number;
   polymer2Id: string;
-  polymer2ConcentrationPct: number;
+  polymer2ConcentrationPct: number | undefined;
   polymer3Id: string;
-  polymer3ConcentrationPct: number;
+  polymer3ConcentrationPct: number | undefined;
   solvent1Id: string;
-  solvent1RatioPct: number;
-  useSolvent2: boolean;
+  solvent1RatioPct: number | undefined;
   solvent2Id: string;
-  solvent2RatioPct: number;
-  useSolvent3: boolean;
+  solvent2RatioPct: number | undefined;
   solvent3Id: string;
-  solvent3RatioPct: number;
+  solvent3RatioPct: number | undefined;
   notes: string;
 }
 
@@ -78,17 +102,15 @@ const EMPTY_FORM: FormState = {
   polymerId: "",
   polymerConcentrationPct: 10,
   polymer2Id: "",
-  polymer2ConcentrationPct: 0,
+  polymer2ConcentrationPct: undefined,
   polymer3Id: "",
-  polymer3ConcentrationPct: 0,
+  polymer3ConcentrationPct: undefined,
   solvent1Id: "",
   solvent1RatioPct: 100,
-  useSolvent2: false,
   solvent2Id: "",
-  solvent2RatioPct: 0,
-  useSolvent3: false,
+  solvent2RatioPct: undefined,
   solvent3Id: "",
-  solvent3RatioPct: 0,
+  solvent3RatioPct: undefined,
   notes: "",
 };
 
@@ -120,6 +142,23 @@ export default function Formulations({
   const [revisionPopoverOpen, setRevisionPopoverOpen] = useState(false);
   const [revisionHistoryOpen, setRevisionHistoryOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [optionalPolymerRowCount, setOptionalPolymerRowCount] = useState<OptionalPolymerRowCount>(
+    () => visibleOptionalPolymerRows(EMPTY_FORM)
+  );
+  const polymer2SelectRef = useRef<HTMLSelectElement>(null);
+  const polymer3SelectRef = useRef<HTMLSelectElement>(null);
+  const addPolymerButtonRef = useRef<HTMLButtonElement>(null);
+  const pendingPolymerFocus = useRef<2 | 3 | null>(null);
+  const [polymerIdentityKey, setPolymerIdentityKey] = useState("");
+  const [polymer2IdentityKey, setPolymer2IdentityKey] = useState("");
+  const [polymer3IdentityKey, setPolymer3IdentityKey] = useState("");
+  const [optionalSolventRowCount, setOptionalSolventRowCount] = useState<OptionalSolventRowCount>(
+    () => visibleOptionalSolventRows(EMPTY_FORM)
+  );
+  const solvent2SelectRef = useRef<HTMLSelectElement>(null);
+  const solvent3SelectRef = useRef<HTMLSelectElement>(null);
+  const addSolventButtonRef = useRef<HTMLButtonElement>(null);
+  const pendingSolventFocus = useRef<2 | 3 | null>(null);
   const [charForm, setCharForm] = useState({
     solidsContentPct: "",
     viscosityMpas: "",
@@ -152,6 +191,12 @@ const [materialSaving, setMaterialSaving] =
 
 const [materialError, setMaterialError] =
   useState("");
+  const [polymerCatalogDraft, setPolymerCatalogDraft] = useState<PolymerCatalogDraft>(EMPTY_POLYMER_CATALOG_DRAFT);
+  const [duplicatePolymerMaterial, setDuplicatePolymerMaterial] = useState<Material | null>(null);
+  const catalogIdentityRef = useRef<HTMLSelectElement>(null);
+  const catalogNewIdentityRef = useRef<HTMLInputElement>(null);
+  const catalogTriggerRef = useRef<HTMLButtonElement>(null);
+  const catalogSaveInFlight = useRef(false);
   const projectFormulations = useMemo(
     () => activeProject ? formulations.filter((item) => item.projectId === activeProject.id) : [],
     [formulations, activeProject]
@@ -209,25 +254,130 @@ const [materialError, setMaterialError] =
     () => buildPolymerMaterialOptions(materials),
     [materials]
   );
+  const polymer1Selection = useMemo(() => hydratePolymerSelection(polymers, form.polymerId), [polymers, form.polymerId]);
+  const polymer2Selection = useMemo(() => hydratePolymerSelection(polymers, form.polymer2Id), [polymers, form.polymer2Id]);
+  const polymer3Selection = useMemo(() => hydratePolymerSelection(polymers, form.polymer3Id), [polymers, form.polymer3Id]);
   const solvents = materials.filter((item) => item.category === "solvent");
   const polymer = materials.find((item) => item.id === form.polymerId);
   const solvent1 = materials.find((item) => item.id === form.solvent1Id);
   const solvent2 = materials.find((item) => item.id === form.solvent2Id);
-  const solvent3 = materials.find((item) => item.id === form.solvent3Id);
-  const solventTotal = form.useSolvent2
-    ? form.solvent1RatioPct + form.solvent2RatioPct + (form.useSolvent3 ? form.solvent3RatioPct : 0)
-    : form.solvent1RatioPct;
-  console.log("SELECTED POLYMER:", polymer);
-  console.log("SELECTED SOLVENT 1:", solvent1);
-  console.log("SELECTED SOLVENT 2:", solvent2);
+  const solventValidation = validateVisibleSolvents(form.solvent1Id, form.solvent1RatioPct, form, optionalSolventRowCount);
+  const solventTotal = solventValidation.total;
+  const duplicateSolventId = solventValidation.duplicateMaterialId;
+
+  useEffect(() => {
+    const requiredRows = visibleOptionalPolymerRows(form);
+    setOptionalPolymerRowCount((current) => Math.max(current, requiredRows) as OptionalPolymerRowCount);
+  }, [form.polymer2Id, form.polymer2ConcentrationPct, form.polymer3Id, form.polymer3ConcentrationPct]);
+
+  useEffect(() => { if (form.polymerId) setPolymerIdentityKey(polymer1Selection.identityKey); }, [form.polymerId, polymer1Selection.identityKey]);
+  useEffect(() => { if (form.polymer2Id) setPolymer2IdentityKey(polymer2Selection.identityKey); }, [form.polymer2Id, polymer2Selection.identityKey]);
+  useEffect(() => { if (form.polymer3Id) setPolymer3IdentityKey(polymer3Selection.identityKey); }, [form.polymer3Id, polymer3Selection.identityKey]);
+
+  useEffect(() => {
+    if (pendingPolymerFocus.current === 2) polymer2SelectRef.current?.focus();
+    if (pendingPolymerFocus.current === 3) polymer3SelectRef.current?.focus();
+    pendingPolymerFocus.current = null;
+  }, [optionalPolymerRowCount]);
+
+  const addPolymerRow = () => {
+    const next = addOptionalPolymerRow(optionalPolymerRowCount);
+    if (next === optionalPolymerRowCount) return;
+    pendingPolymerFocus.current = next === 1 ? 2 : 3;
+    if (next === 1) setPolymer2IdentityKey(""); else setPolymer3IdentityKey("");
+    setOptionalPolymerRowCount(next);
+  };
+
+  const removePolymerRow = (row: 2 | 3) => {
+    if (row === 2) {
+      setPolymer2IdentityKey(form.polymer3Id || form.polymer3ConcentrationPct !== undefined ? polymer3IdentityKey : "");
+      setPolymer3IdentityKey("");
+    } else setPolymer3IdentityKey("");
+    setForm((current) => ({ ...current, ...removeOptionalPolymerRow(current, row) }));
+    setOptionalPolymerRowCount((current) => Math.max(0, current - 1) as OptionalPolymerRowCount);
+    window.requestAnimationFrame(() => addPolymerButtonRef.current?.focus());
+  };
+
+  useEffect(() => {
+    const requiredRows = visibleOptionalSolventRows(form);
+    setOptionalSolventRowCount((current) => Math.max(current, requiredRows) as OptionalSolventRowCount);
+  }, [form.solvent2Id, form.solvent2RatioPct, form.solvent3Id, form.solvent3RatioPct]);
+
+  useEffect(() => {
+    if (pendingSolventFocus.current === 2) solvent2SelectRef.current?.focus();
+    if (pendingSolventFocus.current === 3) solvent3SelectRef.current?.focus();
+    pendingSolventFocus.current = null;
+  }, [optionalSolventRowCount]);
+
+  const addSolventRow = () => {
+    const next = addOptionalSolventRow(optionalSolventRowCount);
+    if (next === optionalSolventRowCount) return;
+    setForm((current) => ({ ...current, ...clearNewOptionalSolventRow(current, next === 1 ? 2 : 3) }));
+    pendingSolventFocus.current = next === 1 ? 2 : 3;
+    setOptionalSolventRowCount(next);
+  };
+
+  const removeSolventRow = (row: 2 | 3) => {
+    setForm((current) => ({ ...current, ...removeOptionalSolventRow(current, row) }));
+    setOptionalSolventRowCount((current) => Math.max(0, current - 1) as OptionalSolventRowCount);
+    window.requestAnimationFrame(() => addSolventButtonRef.current?.focus());
+  };
+  const closePolymerCatalog = () => {
+    setNewMaterialTarget(null);
+    setPolymerCatalogDraft(EMPTY_POLYMER_CATALOG_DRAFT);
+    setDuplicatePolymerMaterial(null);
+    setMaterialError("");
+    window.requestAnimationFrame(() => catalogTriggerRef.current?.focus());
+  };
+
+  const selectCatalogMaterial = (material: Material) => {
+    const hydrated = hydratePolymerSelection([...materials, material], material.id);
+    setPolymerIdentityKey(hydrated.identityKey);
+    setForm((current) => ({ ...current, polymerId: material.id }));
+    closePolymerCatalog();
+  };
+
+  const createPolymerCatalogMaterial = async () => {
+    if (catalogSaveInFlight.current) return;
+    const identities = polymer1Selection.identities;
+    const validationError = validatePolymerCatalogDraft(polymerCatalogDraft, identities);
+    if (validationError) { setMaterialError(validationError); return; }
+    const duplicate = findDuplicatePolymerMaterial(polymerCatalogDraft, identities);
+    if (duplicate) {
+      setDuplicatePolymerMaterial(duplicate);
+      setMaterialError("This exact material variant already exists. Select the existing variant instead.");
+      return;
+    }
+    catalogSaveInFlight.current = true;
+    setMaterialSaving(true);
+    setMaterialError("");
+    try {
+      const created = await onAddMaterial(buildPolymerCatalogCreateInput(polymerCatalogDraft, identities));
+      selectCatalogMaterial(created);
+    } catch (caught) {
+      setMaterialError(caught instanceof Error ? caught.message : "Unable to create material.");
+    } finally {
+      catalogSaveInFlight.current = false;
+      setMaterialSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (newMaterialTarget !== "polymer") return;
+    if (polymerCatalogDraft.mode === "new") catalogNewIdentityRef.current?.focus();
+    else catalogIdentityRef.current?.focus();
+  }, [newMaterialTarget, polymerCatalogDraft.mode]);
+
 const createMaterial = async (
-  event: React.FormEvent
+  event?: React.FormEvent
 ) => {
-  event.preventDefault();
+  event?.preventDefault();
 
   if (!newMaterialTarget) {
     return;
   }
+
+  if (newMaterialTarget === "polymer") return;
 
   if (!newMaterial.shortName.trim()) {
     setMaterialError("Enter a short name.");
@@ -239,11 +389,6 @@ const createMaterial = async (
     return;
   }
 
-  const category =
-    newMaterialTarget === "polymer"
-      ? "polymer"
-      : "solvent";
-
   setMaterialSaving(true);
   setMaterialError("");
 
@@ -252,7 +397,7 @@ const createMaterial = async (
       shortName: newMaterial.shortName.trim(),
       canonicalName:
         newMaterial.canonicalName.trim(),
-      category,
+      category: "solvent",
       family:
         newMaterial.family.trim() || undefined,
       molecularWeight:
@@ -261,13 +406,6 @@ const createMaterial = async (
       supplier:
         newMaterial.supplier.trim() || undefined,
     });
-
-    if (newMaterialTarget === "polymer") {
-      setForm((current) => ({
-        ...current,
-        polymerId: created.id,
-      }));
-    }
 
     if (newMaterialTarget === "solvent1") {
       setForm((current) => ({
@@ -312,22 +450,36 @@ const createMaterial = async (
       setError("Choose a polymer and at least one solvent.");
       return;
     }
-    if (form.useSolvent2 && !solvent2) {
-      setError("Choose Solvent 2 or disable the second solvent.");
+    if (
+      (optionalPolymerRowCount >= 1 && !optionalPolymerRowIsComplete(form.polymer2Id, form.polymer2ConcentrationPct)) ||
+      (optionalPolymerRowCount >= 2 && !optionalPolymerRowIsComplete(form.polymer3Id, form.polymer3ConcentrationPct))
+    ) {
+      setError("Complete each visible optional polymer and its concentration, or remove the row.");
       return;
     }
-    if (form.useSolvent3 && !solvent3) {
-      setError("Choose Solvent 3 or disable the third solvent.");
+    if (!solventValidation.rowsComplete) {
+      setError("Complete each visible optional solvent and its ratio, or remove the row.");
       return;
     }
-    if (!Number.isFinite(solventTotal) || Math.abs(solventTotal - 100) > 0.001) {
-      setError("Solvent ratios must total exactly 100%.");
+    if (!solventValidation.ratiosValid) {
+      setError("Each solvent ratio must be between 0 and 100%.");
+      return;
+    }
+    if (duplicateSolventId) {
+      setError("Each visible solvent must be a different material.");
+      return;
+    }
+    if (!solventValidation.totalValid) {
+      setError("Solvent ratios must total 100%.");
       return;
     }
 
     setSaving(true);
     setError("");
     try {
+      const optionalPolymers = submittedOptionalPolymers(form, optionalPolymerRowCount);
+      const optionalSolvents = submittedOptionalSolvents(form, optionalSolventRowCount);
+      const submittedSolvent2 = optionalSolvents[0];
       await onAddFormulation({
         projectId: activeProject.id,
         name: form.name.trim() || undefined,
@@ -336,16 +488,16 @@ const createMaterial = async (
         polymerConcentrationPct: form.polymerConcentrationPct,
         solvent: buildSolventLabel(
           solvent1.canonicalName,
-          form.solvent1RatioPct,
-          form.useSolvent2 ? solvent2?.canonicalName : undefined,
-          form.useSolvent2 ? form.solvent2RatioPct : undefined
+          form.solvent1RatioPct as number,
+          submittedSolvent2 ? solvent2?.canonicalName : undefined,
+          submittedSolvent2?.ratioPct
         ),
         solvent1Name: solvent1.canonicalName,
         solvent1MaterialId: solvent1.id,
-        solvent1RatioPct: form.solvent1RatioPct,
-        solvent2Name: form.useSolvent2 ? solvent2?.canonicalName : undefined,
-        solvent2MaterialId: form.useSolvent2 ? solvent2?.id : undefined,
-        solvent2RatioPct: form.useSolvent2 ? form.solvent2RatioPct : undefined,
+        solvent1RatioPct: form.solvent1RatioPct as number,
+        solvent2Name: submittedSolvent2 ? solvent2?.canonicalName : undefined,
+        solvent2MaterialId: submittedSolvent2 ? solvent2?.id : undefined,
+        solvent2RatioPct: submittedSolvent2?.ratioPct,
         notes: form.notes.trim() || undefined,
         solidsContentPct: form.polymerConcentrationPct,
         viscosityMpas: 0,
@@ -354,14 +506,17 @@ const createMaterial = async (
         materialBatchIds: [],
         compositionComponents: [
           { materialId: polymer.id, materialName: polymer.canonicalName, role: "polymer", quantity: form.polymerConcentrationPct, unit: "wt_pct", basis: "wt/wt" },
-          ...(form.polymer2Id ? [{ materialId: form.polymer2Id, materialName: materials.find((item) => item.id === form.polymer2Id)?.canonicalName || form.polymer2Id, role: "polymer" as const, quantity: form.polymer2ConcentrationPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
-          ...(form.polymer3Id ? [{ materialId: form.polymer3Id, materialName: materials.find((item) => item.id === form.polymer3Id)?.canonicalName || form.polymer3Id, role: "polymer" as const, quantity: form.polymer3ConcentrationPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
-          { materialId: solvent1.id, materialName: solvent1.canonicalName, role: "solvent", quantity: form.solvent1RatioPct, unit: "wt_pct", basis: "wt/wt" },
-          ...(form.useSolvent2 && solvent2 ? [{ materialId: solvent2.id, materialName: solvent2.canonicalName, role: "solvent" as const, quantity: form.solvent2RatioPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
-          ...(form.useSolvent3 && solvent3 ? [{ materialId: solvent3.id, materialName: solvent3.canonicalName, role: "solvent" as const, quantity: form.solvent3RatioPct, unit: "wt_pct" as const, basis: "wt/wt" as const }] : []),
+          ...optionalPolymers.map((item) => ({ materialId: item.materialId, materialName: materials.find((material) => material.id === item.materialId)?.canonicalName || item.materialId, role: "polymer" as const, quantity: item.concentrationPct, unit: "wt_pct" as const, basis: "wt/wt" as const })),
+          { materialId: solvent1.id, materialName: solvent1.canonicalName, role: "solvent", quantity: form.solvent1RatioPct as number, unit: "wt_pct", basis: "wt/wt" },
+          ...optionalSolvents.map((item) => { const material = materials.find((candidate) => candidate.id === item.materialId); return { materialId: item.materialId, materialName: material?.canonicalName || item.materialId, role: "solvent" as const, quantity: item.ratioPct, unit: "wt_pct" as const, basis: "wt/wt" as const }; }),
         ],
       });
       setForm(EMPTY_FORM);
+      setOptionalPolymerRowCount(0);
+      setPolymerIdentityKey("");
+      setPolymer2IdentityKey("");
+      setPolymer3IdentityKey("");
+      setOptionalSolventRowCount(0);
       setShowCreate(false);
       setScope("project");
     } catch (caught) {
@@ -485,154 +640,91 @@ const createMaterial = async (
             <form onSubmit={createFormulation} className="mt-6 space-y-5">
               <TextInput label="Formulation Name / ID" value={form.name} onChange={(name) => setForm((s) => ({ ...s, name }))} />
 
-              <div className="grid gap-5 md:grid-cols-2">
-<div>
-  <MaterialSelect
-    label="Polymer"
-    value={form.polymerId}
-    materials={polymers}
-    showPolymerDetails
-    onChange={(polymerId) =>
-      setForm((s) => ({
-        ...s,
-        polymerId,
-      }))
-    }
+              <div>
+  <PolymerIdentityVariantSelect
+    rowLabel="Polymer 1"
+    identityKey={polymerIdentityKey || polymer1Selection.identityKey}
+    materialId={form.polymerId}
+    identities={polymer1Selection.identities}
+    onIdentityChange={(identityKey) => { setPolymerIdentityKey(identityKey); setForm((s) => ({ ...s, polymerId: "" })); }}
+    onMaterialChange={(polymerId) => setForm((s) => ({ ...s, polymerId }))}
+    concentrationField={<NumberInput label="Polymer Concentration" unit="%" value={form.polymerConcentrationPct} onChange={(polymerConcentrationPct) => setForm((s) => ({ ...s, polymerConcentrationPct }))} />}
   />
 
   <button
+    ref={catalogTriggerRef}
     type="button"
-    onClick={() =>
-      setNewMaterialTarget(
-        newMaterialTarget === "polymer"
-          ? null
-          : "polymer"
-      )
-    }
-    className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700"
+    onClick={() => { setNewMaterialTarget("polymer"); setMaterialError(""); }}
+    className="mt-2 rounded-lg px-2 py-1 text-xs font-bold text-blue-600 outline-none hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
   >
-    + Add new polymer
+    + Add existing polymer variant OR new polymer
   </button>
-</div>                <NumberInput label="Polymer Concentration" unit="%" value={form.polymerConcentrationPct} onChange={(polymerConcentrationPct) => setForm((s) => ({ ...s, polymerConcentrationPct }))} />
               </div>
-              {newMaterialTarget && (
-  <form
-    onSubmit={createMaterial}
-    className="rounded-2xl border border-blue-200 bg-blue-50 p-5"
-  >
+              {newMaterialTarget === "polymer" && (
+  <section role="dialog" aria-modal="false" aria-labelledby="polymer-catalog-title" onKeyDown={(event) => { if (event.key === "Escape" && !materialSaving) closePolymerCatalog(); }} className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="font-bold text-slate-900">
-          {newMaterialTarget === "polymer"
-            ? "Add New Polymer"
-            : "Add New Solvent"}
-        </h3>
-
-        <p className="mt-1 text-xs text-slate-500">
-          Save this material to the shared material database.
-        </p>
+        <h3 id="polymer-catalog-title" className="font-bold text-slate-900">Add Existing Polymer Variant OR Add New Polymer</h3>
+        <p className="mt-1 text-xs text-slate-600">{polymerCatalogDraft.mode === "existing" ? "Add a new molecular weight, grade, or product variant to an existing polymer." : "Create a new polymer identity and its first material variant."}</p>
       </div>
-
-      <button
-        type="button"
-        onClick={() =>
-          setNewMaterialTarget(null)
-        }
-        className="text-slate-400 hover:text-slate-700"
-      >
+      <button type="button" aria-label="Close polymer material form" disabled={materialSaving} onClick={closePolymerCatalog} className="rounded-lg p-2 text-slate-500 outline-none hover:bg-white hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">
         <X className="h-4 w-4" />
       </button>
     </div>
-
-    <div className="mt-4 grid gap-4 md:grid-cols-2">
-      <TextInput
-        label="Short Name"
-        value={newMaterial.shortName}
-        onChange={(shortName) =>
-          setNewMaterial((current) => ({
-            ...current,
-            shortName,
-          }))
-        }
-      />
-
-      <TextInput
-        label="Full Material Name"
-        value={newMaterial.canonicalName}
-        onChange={(canonicalName) =>
-          setNewMaterial((current) => ({
-            ...current,
-            canonicalName,
-          }))
-        }
-      />
-
-      <TextInput
-        label={
-          newMaterialTarget === "polymer"
-            ? "Polymer Type"
-            : "Solvent Type"
-        }
-        value={newMaterial.family}
-        onChange={(family) =>
-          setNewMaterial((current) => ({
-            ...current,
-            family,
-          }))
-        }
-      />
-
-      {newMaterialTarget === "polymer" && (
-        <TextInput
-          label="Molecular Weight"
-          value={newMaterial.molecularWeight}
-          onChange={(molecularWeight) =>
-            setNewMaterial((current) => ({
-              ...current,
-              molecularWeight,
-            }))
-          }
-        />
-      )}
-
-      <TextInput
-        label="Supplier"
-        value={newMaterial.supplier}
-        onChange={(supplier) =>
-          setNewMaterial((current) => ({
-            ...current,
-            supplier,
-          }))
-        }
-      />
-    </div>
-
-    {materialError && (
-      <div className="mt-4">
-        <ErrorMessage message={materialError} />
+    <fieldset className="mt-4">
+      <legend className="label">Material type</legend>
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Polymer catalog creation mode">
+        {(["existing", "new"] as const).map((mode) => <label key={mode} className={`cursor-pointer rounded-xl border px-4 py-2 text-sm font-bold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2 ${polymerCatalogDraft.mode === mode ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-700"}`}><input type="radio" name="polymer-catalog-mode" value={mode} checked={polymerCatalogDraft.mode === mode} onChange={() => { setPolymerCatalogDraft((current) => ({ ...current, mode })); setMaterialError(""); setDuplicatePolymerMaterial(null); }} className="sr-only" />{mode === "existing" ? "Existing polymer" : "New polymer"}</label>)}
       </div>
-    )}
-
-    <button
-      type="submit"
-      disabled={materialSaving}
-      className="mt-4 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
-    >
-      {materialSaving
-        ? "Saving..."
-        : "Save Material"}
-    </button>
-  </form>
+    </fieldset>
+    <div className="mt-4 grid gap-4 md:grid-cols-2">
+      {polymerCatalogDraft.mode === "existing" ? <label className="block"><span className="label">Polymer identity</span><select ref={catalogIdentityRef} value={polymerCatalogDraft.identityKey} onChange={(event) => setPolymerCatalogDraft((current) => ({ ...current, identityKey: event.target.value }))} className="input"><option value="">Choose polymer</option>{polymer1Selection.identities.filter((identity) => !identity.legacyReviewRequired).map((identity) => <option key={identity.key} value={identity.key}>{identity.displayLabel}</option>)}</select></label> : <><label className="block"><span className="label">New polymer name</span><input ref={catalogNewIdentityRef} required value={polymerCatalogDraft.newIdentity} onChange={(event) => setPolymerCatalogDraft((current) => ({ ...current, newIdentity: event.target.value }))} className="input" placeholder="Full polymer identity" /></label><TextInput label="Short identity / code / alias" value={polymerCatalogDraft.newIdentityAlias} onChange={(newIdentityAlias) => setPolymerCatalogDraft((current) => ({ ...current, newIdentityAlias }))} /></>}
+      <TextInput label="Exact product / grade name" value={polymerCatalogDraft.productName} onChange={(productName) => setPolymerCatalogDraft((current) => ({ ...current, productName }))} />
+      <label className="block"><span className="label">Molecular weight (optional)</span><div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-2"><input type="number" min="0" step="any" inputMode="decimal" value={polymerCatalogDraft.molecularWeightValue} onChange={(event) => setPolymerCatalogDraft((current) => ({ ...current, molecularWeightValue: event.target.value }))} className="input min-w-0" placeholder="Numeric value" aria-label="Molecular-weight numeric value" /><select value={polymerCatalogDraft.molecularWeightUnit} onChange={(event) => setPolymerCatalogDraft((current) => ({ ...current, molecularWeightUnit: event.target.value as PolymerCatalogDraft["molecularWeightUnit"] }))} className="input min-w-0" aria-label="Molecular-weight unit"><option value="">Unit</option><option value="Da">Da</option><option value="kDa">kDa</option><option value="MDa">MDa</option></select></div></label>
+      <TextInput label="Supplier / manufacturer (optional)" value={polymerCatalogDraft.supplier} onChange={(supplier) => setPolymerCatalogDraft((current) => ({ ...current, supplier }))} />
+      <TextInput label="Article / product code (optional)" value={polymerCatalogDraft.articleNumber} onChange={(articleNumber) => setPolymerCatalogDraft((current) => ({ ...current, articleNumber }))} />
+      <label className="block md:col-span-2"><span className="label">Aliases (optional)</span><input value={polymerCatalogDraft.aliases} onChange={(event) => setPolymerCatalogDraft((current) => ({ ...current, aliases: event.target.value }))} className="input" placeholder="Separate aliases with commas" /></label>
+    </div>
+    {materialError && <div className="mt-4"><ErrorMessage message={materialError} /></div>}
+    {duplicatePolymerMaterial && <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"><p className="font-semibold">Existing variant: {duplicatePolymerMaterial.canonicalName}</p><button type="button" onClick={() => selectCatalogMaterial(duplicatePolymerMaterial)} className="mt-2 rounded-lg bg-amber-900 px-3 py-2 text-xs font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">Use existing variant</button></div>}
+    <div className="mt-5 flex flex-wrap justify-end gap-3"><button type="button" disabled={materialSaving} onClick={closePolymerCatalog} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 outline-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">Cancel</button><button type="button" disabled={materialSaving} onClick={() => void createPolymerCatalogMaterial()} className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-bold text-white outline-none hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50">{materialSaving ? "Saving…" : polymerCatalogDraft.mode === "existing" ? "Add material variant" : "Add new polymer"}</button></div>
+    <p className="mt-3 text-xs text-slate-600">Category: Polymer. No formulation is created by this action.</p>
+  </section>
 )}
+              {(newMaterialTarget === "solvent1" || newMaterialTarget === "solvent2") && (
+                <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5" aria-label="Add new solvent">
+                  <div className="flex items-center justify-between"><div><h3 className="font-bold text-slate-900">Add New Solvent</h3><p className="mt-1 text-xs text-slate-500">Save this material to the shared material database.</p></div><button type="button" aria-label="Close solvent material form" onClick={() => setNewMaterialTarget(null)} className="rounded-lg p-2 text-slate-400 outline-none hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500"><X className="h-4 w-4" /></button></div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2"><TextInput label="Short Name" value={newMaterial.shortName} onChange={(shortName) => setNewMaterial((current) => ({ ...current, shortName }))} /><TextInput label="Full Material Name" value={newMaterial.canonicalName} onChange={(canonicalName) => setNewMaterial((current) => ({ ...current, canonicalName }))} /><TextInput label="Solvent Type" value={newMaterial.family} onChange={(family) => setNewMaterial((current) => ({ ...current, family }))} /><TextInput label="Supplier" value={newMaterial.supplier} onChange={(supplier) => setNewMaterial((current) => ({ ...current, supplier }))} /></div>
+                  {materialError && <div className="mt-4"><ErrorMessage message={materialError} /></div>}
+                  <button type="button" disabled={materialSaving} onClick={() => void createMaterial()} className="mt-4 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{materialSaving ? "Saving..." : "Save Material"}</button>
+                </section>
+              )}
               {polymer && <MaterialSummary material={polymer} />}
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Additional polymers (optional, up to 3 total)</p>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <MaterialSelect label="Polymer 2" value={form.polymer2Id} materials={polymers} showPolymerDetails onChange={(polymer2Id) => setForm((s) => ({ ...s, polymer2Id }))} />
-                  <NumberInput label="Polymer 2 concentration" unit="wt%" value={form.polymer2ConcentrationPct} onChange={(polymer2ConcentrationPct) => setForm((s) => ({ ...s, polymer2ConcentrationPct }))} />
-                  <MaterialSelect label="Polymer 3" value={form.polymer3Id} materials={polymers} showPolymerDetails onChange={(polymer3Id) => setForm((s) => ({ ...s, polymer3Id }))} />
-                  <NumberInput label="Polymer 3 concentration" unit="wt%" value={form.polymer3ConcentrationPct} onChange={(polymer3ConcentrationPct) => setForm((s) => ({ ...s, polymer3ConcentrationPct }))} />
+              <div className="min-w-0 rounded-2xl border border-indigo-100 bg-gradient-to-br from-blue-50/80 to-violet-50/80 p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Additional polymers (optional, up to 3 total)</p>
+                <div className="mt-3 space-y-4">
+                  {optionalPolymerRowCount >= 1 && (
+                    <div className="relative min-w-0 rounded-xl border border-slate-200/80 bg-white p-4 pt-12 shadow-sm [&_.input]:bg-white">
+                      <button type="button" aria-label="Remove Polymer 2" onClick={() => removePolymerRow(2)} className="absolute right-3 top-3 rounded-lg border border-rose-200 bg-rose-50/70 px-2.5 py-1 text-xs font-bold text-rose-600 outline-none hover:border-rose-300 hover:bg-rose-100 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2">
+                        × Remove
+                      </button>
+                      <PolymerIdentityVariantSelect selectRef={polymer2SelectRef} rowLabel="Polymer 2" identityKey={polymer2IdentityKey || polymer2Selection.identityKey} materialId={form.polymer2Id} identities={polymer2Selection.identities} onIdentityChange={(identityKey) => { setPolymer2IdentityKey(identityKey); setForm((s) => ({ ...s, polymer2Id: "" })); }} onMaterialChange={(polymer2Id) => setForm((s) => ({ ...s, polymer2Id }))} concentrationField={<OptionalNumberInput label="Polymer 2 concentration" unit="wt%" value={form.polymer2ConcentrationPct} onChange={(polymer2ConcentrationPct) => setForm((s) => ({ ...s, polymer2ConcentrationPct }))} />} />
+                    </div>
+                  )}
+                  {optionalPolymerRowCount >= 2 && (
+                    <div className="relative min-w-0 rounded-xl border border-slate-200/80 bg-white p-4 pt-12 shadow-sm [&_.input]:bg-white">
+                      <button type="button" aria-label="Remove Polymer 3" onClick={() => removePolymerRow(3)} className="absolute right-3 top-3 rounded-lg border border-rose-200 bg-rose-50/70 px-2.5 py-1 text-xs font-bold text-rose-600 outline-none hover:border-rose-300 hover:bg-rose-100 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2">
+                        × Remove
+                      </button>
+                      <PolymerIdentityVariantSelect selectRef={polymer3SelectRef} rowLabel="Polymer 3" identityKey={polymer3IdentityKey || polymer3Selection.identityKey} materialId={form.polymer3Id} identities={polymer3Selection.identities} onIdentityChange={(identityKey) => { setPolymer3IdentityKey(identityKey); setForm((s) => ({ ...s, polymer3Id: "" })); }} onMaterialChange={(polymer3Id) => setForm((s) => ({ ...s, polymer3Id }))} concentrationField={<OptionalNumberInput label="Polymer 3 concentration" unit="wt%" value={form.polymer3ConcentrationPct} onChange={(polymer3ConcentrationPct) => setForm((s) => ({ ...s, polymer3ConcentrationPct }))} />} />
+                    </div>
+                  )}
+                  {optionalPolymerRowCount < 2 && (
+                    <button ref={addPolymerButtonRef} type="button" onClick={addPolymerRow} className="rounded-xl border border-indigo-200 bg-white px-4 py-2 text-xs font-bold text-indigo-700 shadow-sm outline-none hover:bg-indigo-50 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
+                      + Add another polymer
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -663,25 +755,21 @@ const createMaterial = async (
   >
     + Add new solvent
   </button>
-</div>                <NumberInput label="Solvent 1 Ratio" unit="%" value={form.solvent1RatioPct} onChange={(solvent1RatioPct) => setForm((s) => ({ ...s, solvent1RatioPct, solvent2RatioPct: s.useSolvent2 ? (s.useSolvent3 ? s.solvent2RatioPct : 100 - solvent1RatioPct) : 0, solvent3RatioPct: s.useSolvent3 ? Math.max(0, 100 - solvent1RatioPct - s.solvent2RatioPct) : 0 }))} />
+</div>                <OptionalNumberInput label="Solvent 1 Ratio" unit="%" value={form.solvent1RatioPct} onChange={(solvent1RatioPct) => setForm((s) => ({ ...s, solvent1RatioPct }))} />
               </div>
               {solvent1 && <MaterialSummary material={solvent1} />}
 
-              <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-                <input type="checkbox" checked={form.useSolvent2} onChange={(e) => setForm((s) => ({ ...s, useSolvent2: e.target.checked, solvent1RatioPct: e.target.checked ? 90 : 100, solvent2RatioPct: e.target.checked ? 10 : 0 }))} />
-                Use a second solvent
-              </label>
-
-              <div className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm ${Math.abs(solventTotal - 100) < 0.001 ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+              <div className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm ${solventValidation.totalValid ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-300 bg-rose-50 text-rose-800"}`}>
                 <span className="font-semibold">Solvent total</span>
                 <span className="font-bold">{Number.isFinite(solventTotal) ? solventTotal.toFixed(2) : "—"}% / 100%</span>
               </div>
+              {!solventValidation.totalValid && <p className="text-sm font-semibold text-rose-600">Solvent ratios must total 100%.</p>}
 
-              {form.useSolvent2 && (
+              {optionalSolventRowCount >= 1 && (
                 <>
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <div className="grid min-w-0 gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
                     <div>
-                      <MaterialSelect label="Solvent 2" value={form.solvent2Id} materials={solvents} onChange={(solvent2Id) => setForm((s) => ({ ...s, solvent2Id }))} />
+                      <MaterialSelect selectRef={solvent2SelectRef} constrainWidth label="Solvent 2" value={form.solvent2Id} materials={solvents} onChange={(solvent2Id) => setForm((s) => ({ ...s, solvent2Id }))} />
                       <button
                         type="button"
                         onClick={() =>
@@ -696,22 +784,32 @@ const createMaterial = async (
                         + Add new solvent
                       </button>
                     </div>
-                    <NumberInput label="Solvent 2 Ratio" unit="%" value={form.solvent2RatioPct} onChange={(solvent2RatioPct) => setForm((s) => ({ ...s, solvent2RatioPct, solvent1RatioPct: s.useSolvent3 ? Math.max(0, 100 - solvent2RatioPct - s.solvent3RatioPct) : 100 - solvent2RatioPct }))} />
+                    <OptionalNumberInput label="Solvent 2 Ratio" unit="%" value={form.solvent2RatioPct} onChange={(solvent2RatioPct) => setForm((s) => ({ ...s, solvent2RatioPct }))} />
+                    <button type="button" aria-label="Remove solvent 2" onClick={() => removeSolventRow(2)} className="rounded-lg px-2 py-1 text-left text-xs font-bold text-rose-600 outline-none hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2">
+                      Remove solvent
+                    </button>
                   </div>
                   {solvent2 && <MaterialSummary material={solvent2} />}
                 </>
               )}
 
-              <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-                <input type="checkbox" checked={form.useSolvent3} onChange={(e) => setForm((s) => ({ ...s, useSolvent3: e.target.checked, solvent1RatioPct: e.target.checked ? 80 : s.solvent1RatioPct, solvent2RatioPct: e.target.checked ? 10 : s.solvent2RatioPct, solvent3RatioPct: e.target.checked ? 10 : 0 }))} />
-                Use a third solvent
-              </label>
-              {form.useSolvent3 && (
-                <div className="grid gap-5 md:grid-cols-2">
-                  <MaterialSelect label="Solvent 3" value={form.solvent3Id} materials={solvents} onChange={(solvent3Id) => setForm((s) => ({ ...s, solvent3Id }))} />
-                  <NumberInput label="Solvent 3 Ratio" unit="%" value={form.solvent3RatioPct} onChange={(solvent3RatioPct) => setForm((s) => ({ ...s, solvent3RatioPct, solvent1RatioPct: 100 - s.solvent2RatioPct - solvent3RatioPct }))} />
+              {optionalSolventRowCount >= 2 && (
+                <div className="grid min-w-0 gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+                  <MaterialSelect selectRef={solvent3SelectRef} constrainWidth label="Solvent 3" value={form.solvent3Id} materials={solvents} onChange={(solvent3Id) => setForm((s) => ({ ...s, solvent3Id }))} />
+                  <OptionalNumberInput label="Solvent 3 Ratio" unit="%" value={form.solvent3RatioPct} onChange={(solvent3RatioPct) => setForm((s) => ({ ...s, solvent3RatioPct }))} />
+                  <button type="button" aria-label="Remove solvent 3" onClick={() => removeSolventRow(3)} className="rounded-lg px-2 py-1 text-left text-xs font-bold text-rose-600 outline-none hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2">
+                    Remove solvent
+                  </button>
                 </div>
               )}
+
+              {optionalSolventRowCount < 2 && (
+                <button ref={addSolventButtonRef} type="button" onClick={addSolventRow} className="w-fit rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 outline-none hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                  + Add another solvent
+                </button>
+              )}
+
+              {duplicateSolventId && <p className="text-sm font-semibold text-rose-600">Each visible solvent must be a different material.</p>}
 
               <label className="block">
                 <span className="label">Formulation Notes</span>
@@ -719,7 +817,7 @@ const createMaterial = async (
               </label>
 
               {error && <ErrorMessage message={error} />}
-              <button disabled={saving} className="w-full rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-50">
+              <button disabled={saving || !solventValidation.valid} className="w-full rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
                 {saving ? "Saving..." : "Create Formulation"}
               </button>
             </form>
@@ -837,23 +935,39 @@ const createMaterial = async (
   );
 }
 
+function PolymerIdentityVariantSelect({ rowLabel, identityKey, materialId, identities, onIdentityChange, onMaterialChange, concentrationField, selectRef }: { rowLabel: string; identityKey: string; materialId: string; identities: PolymerIdentityOption[]; onIdentityChange: (value: string) => void; onMaterialChange: (value: string) => void; concentrationField: React.ReactNode; selectRef?: React.Ref<HTMLSelectElement> }) {
+  const selectedIdentity = identities.find((identity) => identity.key === identityKey);
+  const variants = selectedIdentity?.variants ?? [];
+  const polymerLabel = rowLabel === "Polymer 1" ? "Polymer" : rowLabel;
+  return <div className="grid min-w-0 gap-4 lg:grid-cols-3">
+    <label className="block min-w-0"><span className="label">{polymerLabel}</span><select ref={selectRef} value={identityKey} onChange={(event) => onIdentityChange(event.target.value)} className="input min-w-0 truncate"><option value="">Choose polymer</option>{identities.map((identity) => <option key={identity.key} value={identity.key}>{identity.displayLabel}</option>)}</select></label>
+    <label className="block min-w-0"><span className="label">Molecular Weight / Grade</span><select value={materialId} disabled={!identityKey} onChange={(event) => onMaterialChange(event.target.value)} className="input min-w-0 truncate disabled:cursor-not-allowed disabled:opacity-50"><option value="">Choose molecular weight or grade</option>{variants.map((variant) => <option key={variant.materialId} value={variant.materialId}>{variant.displayLabel}</option>)}</select></label>
+    {concentrationField}
+    {selectedIdentity?.legacyReviewRequired && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 lg:col-span-3"><p className="font-bold">Legacy or unclassified material — review required</p><p className="mt-1 break-words">{selectedIdentity.displayLabel}</p><details className="mt-2"><summary className="cursor-pointer font-semibold">Technical details</summary><p className="mt-1 break-all font-mono text-[10px]">Material ID: {materialId}</p></details></div>}
+  </div>;
+}
+
 function MaterialSelect({
   label,
   value,
   materials,
   onChange,
   showPolymerDetails = false,
+  selectRef,
+  constrainWidth = false,
 }: {
   label: string;
   value: string;
   materials: Material[];
   onChange: (value: string) => void;
   showPolymerDetails?: boolean;
+  selectRef?: React.Ref<HTMLSelectElement>;
+  constrainWidth?: boolean;
 }) {
   return (
-    <label className="block">
+    <label className={constrainWidth ? "block min-w-0" : "block"}>
       <span className="label">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="input">
+      <select ref={selectRef} value={value} onChange={(e) => onChange(e.target.value)} className={constrainWidth ? "input min-w-0 truncate" : "input"}>
         <option value="">Choose material</option>
         {materials.map((material) => (
           <option key={material.id} value={material.id}>
@@ -867,6 +981,7 @@ function MaterialSelect({
 
 function TextInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="block"><span className="label">{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} className="input" /></label>; }
 function NumberInput({ label, unit, value, onChange }: { label: string; unit: string; value: number; onChange: (value: number) => void }) { return <label className="block"><span className="label">{label}</span><div className="relative"><input type="number" inputMode="decimal" step="0.01" min="0" max="100" value={value === 0 ? "" : value} placeholder="—" onChange={(e) => onChange(e.target.value.trim() === "" ? 0 : Number(e.target.value))} className="input appearance-none pr-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">{unit}</span></div></label>; }
+function OptionalNumberInput({ label, unit, value, onChange }: { label: string; unit: string; value: number | undefined; onChange: (value: number | undefined) => void }) { return <label className="block min-w-0"><span className="label">{label}</span><div className="relative"><input type="number" inputMode="decimal" step="0.01" min="0" max="100" value={value ?? ""} placeholder="No data" onChange={(e) => onChange(e.target.value.trim() === "" ? undefined : Number(e.target.value))} className="input appearance-none pr-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">{unit}</span></div></label>; }
 function MaterialSummary({ material }: { material: Material }) {
   const isPolymer = ["polymer", "biopolymer", "copolymer"].includes(
     material.category

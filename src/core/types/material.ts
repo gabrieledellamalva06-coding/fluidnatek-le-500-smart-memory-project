@@ -62,6 +62,15 @@ export interface Material {
 
     molecularWeight?: string;
 
+    molecularWeightValue?: number;
+
+    molecularWeightUnit?: "Da" | "kDa" | "MDa";
+
+    /** Explicit identity for newly catalogued polymers; legacy records use reviewed aliases. */
+    polymerIdentity?: string;
+
+    grade?: string;
+
     /** Optional family fields used by the UX and similarity context. */
     polymerFamily?: string;
 

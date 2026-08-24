@@ -127,6 +127,16 @@ export interface Experiment {
   telemetryData: TelemetryRecord[];
 
   metadata?: Record<string, string>;
+
+  variationProvenance?: {
+    clonedFromExperimentId: string;
+    sourceProcessRecordId?: string;
+    cloneRequestId?: string;
+    changedParameters?: import("./core/types/experiment").VariationParameterChange[];
+    variationCreatedBy?: string;
+    variationReason?: string;
+    variationCreatedAt?: unknown;
+  };
 }
 
 // ==========================================

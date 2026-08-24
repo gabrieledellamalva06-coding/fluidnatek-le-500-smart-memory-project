@@ -194,7 +194,8 @@ export class FirestoreService {
   }
 
   async executeBatch(
-    operations: readonly FirestoreBatchOperation[]
+    operations: readonly FirestoreBatchOperation[],
+    options: { useTimeout?: boolean } = {}
   ): Promise<void> {
     if (operations.length === 0) {
       return;
@@ -234,7 +235,12 @@ export class FirestoreService {
       );
     }
 
-    await withFirestoreTimeout(batch.commit(), "Firestore save");
+    const commit = batch.commit();
+    if (options.useTimeout === false) {
+      await commit;
+    } else {
+      await withFirestoreTimeout(commit, "Firestore save");
+    }
   }
 }
 

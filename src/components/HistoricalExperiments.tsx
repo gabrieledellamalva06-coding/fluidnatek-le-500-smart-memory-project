@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownAZ,
   ArrowUpAZ,
@@ -12,8 +12,16 @@ import {
 import type { Experiment, Formulation, Project } from "../types";
 import type { Material } from "../core/types/material";
 import type { ExperimentalSetup } from "../core/types/setup";
-import type { UpdateExperimentInput } from "../application/experiments/experiment.mapper";
 import type { CloneExperimentInput } from "../application/experiments/experiment.service";
+import {
+  initialProcessRecordSelection,
+  isDuplicateRunName,
+  suggestVariationRunName,
+  variationChanges,
+  resolveVariationEvidence,
+  canConfirmVariation,
+  type VariationValues,
+} from "../features/clone-variation/cloneVariation";
 
 import {
   adaptHistoricalExperiments,
@@ -42,7 +50,6 @@ interface HistoricalExperimentsProps {
   setups?: ExperimentalSetup[];
   loading?: boolean;
   error?: string | null;
-  onUpdateExperiment: (id: string, input: UpdateExperimentInput) => Promise<Experiment>;
   onCloneExperiment: (id: string, input: CloneExperimentInput) => Promise<Experiment>;
   onVariationSaved?: (experiment: Experiment) => void;
 }
@@ -55,7 +62,6 @@ export default function HistoricalExperiments({
   setups = [],
   loading = false,
   error = null,
-  onUpdateExperiment,
   onCloneExperiment,
   onVariationSaved,
 }: HistoricalExperimentsProps) {
@@ -69,13 +75,9 @@ export default function HistoricalExperiments({
 
   const [selectedExperimentId, setSelectedExperimentId] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [editingExperiment, setEditingExperiment] = useState<HistoricalExperimentRecord | null>(null);
-  const [editValues, setEditValues] = useState<EditExperimentValues | null>(null);
-  const [editSaving, setEditSaving] = useState(false);
-  const [editMessage, setEditMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [cloneRecord, setCloneRecord] = useState<HistoricalExperimentRecord | null>(null);
+  const [cloneDraftDirty, setCloneDraftDirty] = useState(false);
 
   const records = useMemo(
     () =>
@@ -104,8 +106,14 @@ export default function HistoricalExperiments({
     [records, filters, sort]
   );
 
-  const selectedRecord =
-    records.find((record) => record.id === selectedExperimentId) ?? null;
+  useEffect(() => {
+    if (selectedExperimentId && !filteredRecords.some((record) => record.id === selectedExperimentId)) {
+      setSelectedExperimentId("");
+      setCloneRecord(null);
+      setCloneDraftDirty(false);
+      setSuccessMessage(null);
+    }
+  }, [filteredRecords, selectedExperimentId]);
 
 
   const hasActiveFilters = useMemo(
@@ -117,6 +125,8 @@ export default function HistoricalExperiments({
     key: Key,
     value: HistoricalExperimentFilters[Key]
   ) {
+    if (!confirmDraftDiscard()) return;
+    closeInlineSelection();
     setFilters((currentFilters) => ({
       ...currentFilters,
       [key]: value,
@@ -133,6 +143,8 @@ export default function HistoricalExperiments({
       | "workingDistance",
     range: NumericRangeFilter
   ) {
+    if (!confirmDraftDiscard()) return;
+    closeInlineSelection();
     setFilters((currentFilters) => ({
       ...currentFilters,
       [key]: range,
@@ -140,7 +152,33 @@ export default function HistoricalExperiments({
   }
 
   function resetFilters() {
+    if (!confirmDraftDiscard()) return;
+    closeInlineSelection();
     setFilters(createEmptyHistoricalExperimentFilters());
+  }
+
+  function confirmDraftDiscard(): boolean {
+    return !cloneDraftDirty || window.confirm("Discard unsaved variation changes?");
+  }
+
+  function closeInlineSelection(): void {
+    setSelectedExperimentId("");
+    setCloneRecord(null);
+    setCloneDraftDirty(false);
+    setSuccessMessage(null);
+  }
+
+  function toggleExperiment(record: HistoricalExperimentRecord): void {
+    if (record.id === selectedExperimentId) {
+      if (!confirmDraftDiscard()) return;
+      closeInlineSelection();
+      return;
+    }
+    if (!confirmDraftDiscard()) return;
+    setSelectedExperimentId(record.id);
+    setCloneRecord(null);
+    setCloneDraftDirty(false);
+    setSuccessMessage(null);
   }
 
   function handleColumnSort(field: HistoricalExperimentSortField) {
@@ -402,40 +440,36 @@ export default function HistoricalExperiments({
               </div>
 
               <div className="max-h-[520px] overflow-y-auto bg-white">
-                {filteredRecords.map((record) => (
-                  <button
-                    key={record.id}
-                    type="button"
-                    onClick={() => setSelectedExperimentId(record.id)}
-                    className={`grid w-full grid-cols-[minmax(170px,1.2fr)_minmax(120px,.8fr)_90px_minmax(180px,1.3fr)_110px_80px] gap-3 border-t border-slate-100 px-4 py-3 text-left text-xs transition first:border-t-0 hover:bg-blue-50 ${
-                      selectedExperimentId === record.id ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <span className="truncate font-semibold text-slate-800">
-                      {record.runIdentifier || "—"}
-                    </span>
+                {filteredRecords.map((record) => {
+                  const selected = selectedExperimentId === record.id;
+                  const panelId = `historical-experiment-panel-${record.id}`;
+                  const editingClone = cloneRecord?.id === record.id;
+                  const sourceId = record.experiment.variationProvenance?.clonedFromExperimentId;
+                  const variationSource = sourceId ? records.find((candidate) => candidate.id === sourceId) ?? null : null;
+                  const sourceIsVisible = Boolean(variationSource && filteredRecords.some((candidate) => candidate.id === variationSource.id));
+                  return <div key={record.id} className="border-t border-slate-100 first:border-t-0">
+                    <button
+                      type="button"
+                      aria-expanded={selected}
+                      aria-controls={panelId}
+                      onClick={() => toggleExperiment(record)}
+                      className={`grid w-full grid-cols-[minmax(170px,1.2fr)_minmax(120px,.8fr)_90px_minmax(180px,1.3fr)_110px_80px] gap-3 px-4 py-3 text-left text-xs outline-none transition hover:bg-blue-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${selected ? "bg-blue-50 ring-1 ring-inset ring-blue-200" : "bg-white"}`}
+                    >
+                      <span className="truncate font-semibold text-slate-800">{record.runIdentifier || "—"}</span>
+                      <span className="truncate text-slate-500">{record.projectName || "—"}</span>
+                      <span className="truncate font-bold text-blue-700">{record.polymer || "—"}</span>
+                      <span className="truncate text-slate-600">{record.formulationName || "—"}</span>
+                      <span className="truncate text-slate-500">{record.machine || "—"}</span>
+                      <span className="font-bold text-slate-700">{record.grade === null ? "—" : `${record.grade}/4`}</span>
+                    </button>
 
-                    <span className="truncate text-slate-500">
-                      {record.projectName || "—"}
-                    </span>
-
-                    <span className="truncate font-bold text-blue-700">
-                      {record.polymer || "—"}
-                    </span>
-
-                    <span className="truncate text-slate-600">
-                      {record.formulationName || "—"}
-                    </span>
-
-                    <span className="truncate text-slate-500">
-                      {record.machine || "—"}
-                    </span>
-
-                    <span className="font-bold text-slate-700">
-                      {record.grade === null ? "—" : `${record.grade}/4`}
-                    </span>
-                  </button>
-                ))}
+                    {selected && <div id={panelId} className="sticky left-0 min-w-0 overflow-hidden border-t border-blue-100 bg-slate-50 p-3 sm:p-4">
+                      {!editingClone && <ExperimentDetails record={record} variationSource={variationSource} onViewSource={sourceIsVisible && variationSource ? () => toggleExperiment(variationSource) : undefined} onClose={() => toggleExperiment(record)} onClone={async () => { setCloneRecord(record); setCloneDraftDirty(false); setSuccessMessage(null); }} />}
+                      {editingClone && <ExperimentVariationEditor record={record} existingRunNames={experiments.map((experiment) => experiment.operationIdentifier)} onDirtyChange={setCloneDraftDirty} onCancel={() => { setCloneRecord(null); setCloneDraftDirty(false); }} onSave={async (input) => { const created = await onCloneExperiment(record.id, input); setCloneRecord(null); setCloneDraftDirty(false); setSuccessMessage("Variation created as a new planned experiment. Original historical record preserved."); onVariationSaved?.(created); }} />}
+                      {successMessage && <p className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">{successMessage}</p>}
+                    </div>}
+                  </div>;
+                })}
 
                 {loading && (
                   <div className="px-5 py-16 text-center text-sm font-semibold text-blue-700">Loading local historical experiments…</div>
@@ -467,17 +501,6 @@ export default function HistoricalExperiments({
           </div>
         </section>
 
-        {selectedRecord && (
-          <ExperimentDetails
-            record={selectedRecord}
-            onClose={() => setSelectedExperimentId("")}
-            onClone={async () => { setCloneRecord(selectedRecord); setFeedbackError(null); setSuccessMessage(null); }}
-          />
-        )}
-        {cloneRecord && <ExperimentVariationEditor record={cloneRecord} saving={false} onCancel={() => setCloneRecord(null)} onSave={async (input) => { try { const created = await onCloneExperiment(cloneRecord.id, input); setCloneRecord(null); setSuccessMessage("Variation saved. Original historical record preserved."); onVariationSaved?.(created); } catch (cloneError) { setFeedbackError(cloneError instanceof Error ? cloneError.message : "Unable to clone experiment."); } }} />}
-        {successMessage && <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">{successMessage}</p>}
-        {feedbackError && <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800">Clone not created: {feedbackError} Select a complete historical run with process parameters and a processability grade.</p>}
-        {editingExperiment && editValues && <ExperimentEdit record={editingExperiment} values={editValues} saving={editSaving} message={editMessage} onChange={(key, value) => setEditValues((current) => current ? { ...current, [key]: value } : current)} onCancel={() => { if (JSON.stringify(editValues) !== JSON.stringify(toEditValues(editingExperiment)) && !window.confirm("Discard unsaved changes?")) return; setEditingExperiment(null); setEditValues(null); }} onSave={async () => { if (!window.confirm("This updates a historical experiment and may affect Historical Analysis and recommendations. Continue?")) return; setEditSaving(true); setEditMessage(null); try { await onUpdateExperiment(editingExperiment.id, fromEditValues(editValues)); setEditingExperiment(null); setEditValues(null); setSuccessMessage("Experiment updated successfully."); setSelectedExperimentId(editingExperiment.id); } catch (saveError) { setEditMessage(saveError instanceof Error ? saveError.message : "Unable to update experiment."); } finally { setEditSaving(false); } }} />}
       </div>
     </main>
   );
@@ -617,15 +640,26 @@ function SortableHeader({
 
 interface ExperimentDetailsProps {
   record: HistoricalExperimentRecord;
+  variationSource: HistoricalExperimentRecord | null;
+  onViewSource?: () => void;
   onClose: () => void;
   onClone: () => Promise<void>;
 }
 
 function ExperimentDetails({
   record,
+  variationSource,
+  onViewSource,
   onClose,
   onClone,
 }: ExperimentDetailsProps) {
+  const provenance = record.experiment.variationProvenance;
+  const variationEvidence = provenance ? resolveVariationEvidence({
+    structuredChanges: provenance.changedParameters,
+    sourceProcessRecordId: provenance.sourceProcessRecordId,
+    sourceRecords: variationSource?.experiment.telemetryData.map(telemetryVariationValues) ?? [],
+    variationRecords: record.experiment.telemetryData.map(telemetryVariationValues),
+  }) : null;
   const values = [
     valueItem("Flow rate", record.flowRateMlH, "mL/h"),
     valueItem("HV+", record.positiveVoltageKv, "kV"),
@@ -667,6 +701,14 @@ function ExperimentDetails({
         </button></div>
       </div>
 
+      {provenance && <div className="mt-5 min-w-0 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="text-sm font-bold text-violet-950">Variation Summary</h3><div className="mt-1 space-y-1 break-words text-xs text-slate-700"><p><strong>Based on:</strong> {variationSource?.runIdentifier || "Source experiment unavailable"}</p><p><strong>Created by:</strong> {provenance.variationCreatedBy || "No data"}</p><p><strong>Created at:</strong> {formatVariationCreatedAt(provenance.variationCreatedAt, record.ingestedAt)}</p><p><strong>Reason:</strong> {provenance.variationReason || "No data"}</p></div></div>{onViewSource && <button type="button" onClick={onViewSource} className="rounded-xl border border-violet-300 bg-white px-3 py-2 text-xs font-bold text-violet-800 outline-none hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-violet-500">View source experiment</button>}</div>
+        <p className="mt-3 text-xs font-bold text-slate-800">Changed parameters:</p>
+        {variationEvidence?.changes === null && <p className="mt-1 text-xs text-amber-800">Variation source available, but the exact parameter changes cannot be reconstructed.</p>}
+        {variationEvidence?.changes && variationEvidence.changes.length > 0 && <ul className="mt-1 space-y-1 text-xs text-slate-700">{variationEvidence.changes.map((change) => <li key={change.key}><strong>{variationDetailLabel(change.key)}:</strong> {displayBareVariationValue(change.previous)} → {displayBareVariationValue(change.next)} {change.unit}</li>)}</ul>}
+        {variationEvidence?.changes && variationEvidence.changes.length === 0 && <p className="mt-1 text-xs text-slate-600">No changed operating parameters recorded.</p>}
+      </div>}
+
       <div className="mt-5 flex flex-wrap gap-3">
         <Info label="Experiment ID" value={record.id || "No data"} />
         <Info label="Project" value={record.projectName || "No data"} />
@@ -677,9 +719,7 @@ function ExperimentDetails({
         <Info label="Setup" value={record.setupName || "No data"} />
         <Info label="Machine" value={record.machine || "No data"} />
         <Info label="Processability" value={record.grade === null ? "No data" : `${record.grade}/4`} />
-        <Info label="Import status" value={record.importStatus || "No data"} />
-        <Info label="Validation status" value={record.validationStatus || "No data"} />
-        <Info label="Source file" value={record.sourceFile || "No data"} />
+        {provenance ? <><Info label="Status" value={capitalize(record.status)} /><Info label="Record type" value={record.recordType} /><Info label="Created in" value={record.createdIn} /></> : <><Info label="Import status" value={record.importStatus || "No data"} /><Info label="Validation status" value={record.validationStatus || "No data"} /><Info label="Source file" value={record.sourceFile || "No data"} /></>}
       </div>
 
       {values.length > 0 && (
@@ -709,11 +749,6 @@ function ExperimentDetails({
   );
 }
 
-interface EditExperimentValues { operationIdentifier: string; flowRateMlH: string; voltageKv: string; collectorVoltageKv: string; temperatureC: string; humidityPct: string; distanceMm: string; drumSpeedRpm: string; grade: string; comments: string; }
-function toEditValues(record: HistoricalExperimentRecord): EditExperimentValues { return { operationIdentifier: record.runIdentifier, flowRateMlH: String(record.flowRateMlH ?? ""), voltageKv: String(record.positiveVoltageKv ?? ""), collectorVoltageKv: String(record.negativeVoltageKv ?? ""), temperatureC: String(record.temperatureC ?? ""), humidityPct: String(record.humidityPct ?? ""), distanceMm: String(record.workingDistanceMm ?? ""), drumSpeedRpm: String(record.collectorSpeedRpm ?? ""), grade: String(record.grade ?? ""), comments: record.operatorComments }; }
-function fromEditValues(values: EditExperimentValues): UpdateExperimentInput { const number = (value: string) => value.trim() === "" ? undefined : Number(value); const grade = number(values.grade); return { operationIdentifier: values.operationIdentifier, flowRateMlH: number(values.flowRateMlH), voltageKv: number(values.voltageKv), collectorVoltageKv: number(values.collectorVoltageKv), temperatureC: number(values.temperatureC), humidityPct: number(values.humidityPct), distanceMm: number(values.distanceMm), drumSpeedRpm: number(values.drumSpeedRpm), jetStabilityGrade: grade as 1 | 2 | 3 | 4 | undefined, operatorComments: values.comments }; }
-function ExperimentEdit({ record, values, saving, message, onChange, onCancel, onSave }: { record: HistoricalExperimentRecord; values: EditExperimentValues; saving: boolean; message: string | null; onChange: (key: keyof EditExperimentValues, value: string) => void; onCancel: () => void; onSave: () => Promise<void> }) { const fields: Array<[keyof EditExperimentValues, string, string]> = [["flowRateMlH", "Flow Rate", "mL/h"], ["voltageKv", "HV+", "kV"], ["collectorVoltageKv", "HV−", "kV"], ["temperatureC", "Temperature", "°C"], ["humidityPct", "Relative Humidity", "%"], ["distanceMm", "Working Distance", "mm"], ["drumSpeedRpm", "Drum/Collector Speed", "rpm"], ["grade", "Processability Grade", "1–4"]]; return <section className="mt-5 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">Edit Experiment</p><h2 className="mt-1 text-xl font-bold">{record.runIdentifier}</h2></div><p className="text-xs text-slate-500">Changes affect historical analysis and recommendations.</p></div><div className="mt-5 grid gap-3 md:grid-cols-2"><label className="text-xs font-bold text-slate-600 md:col-span-2">Run name<input value={values.operationIdentifier} onChange={(event) => onChange("operationIdentifier", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /></label>{fields.map(([key, label, unit]) => <label key={key} className="text-xs font-bold text-slate-600">{label} ({unit})<input type="number" value={values[key]} onChange={(event) => onChange(key, event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /></label>)}<label className="text-xs font-bold text-slate-600 md:col-span-2">Comments<textarea value={values.comments} onChange={(event) => onChange("comments", event.target.value)} className="mt-1 min-h-20 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /></label></div>{message && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{message}</p>}<div className="mt-5 flex justify-end gap-2"><button type="button" onClick={onCancel} disabled={saving} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold">Cancel</button><button type="button" onClick={() => void onSave()} disabled={saving} className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save Changes"}</button></div></section>; }
-
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-slate-50 px-4 py-3">
@@ -739,17 +774,142 @@ function valueItem(
   };
 }
 
-function ExperimentVariationEditor({ record, saving, onCancel, onSave }: { record: HistoricalExperimentRecord; saving: boolean; onCancel: () => void; onSave: (input: CloneExperimentInput) => Promise<void> }) {
-  const [values, setValues] = useState({ operationIdentifier: `${record.runIdentifier}-VARIANT`, flowRateMlH: record.flowRateMlH?.toString() ?? "", voltageKv: record.positiveVoltageKv?.toString() ?? "", collectorVoltageKv: record.negativeVoltageKv?.toString() ?? "", distanceMm: record.workingDistanceMm?.toString() ?? "", temperatureC: record.temperatureC?.toString() ?? "", humidityPct: record.humidityPct?.toString() ?? "", grade: record.grade?.toString() ?? "" });
-  const update = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
-  const save = async () => {
-    const numberValue = (value: string) => value.trim() === "" ? undefined : Number(value);
-    const input: CloneExperimentInput = { operationIdentifier: values.operationIdentifier, flowRateMlH: numberValue(values.flowRateMlH), voltageKv: numberValue(values.voltageKv), collectorVoltageKv: numberValue(values.collectorVoltageKv), distanceMm: numberValue(values.distanceMm), temperatureC: numberValue(values.temperatureC), humidityPct: numberValue(values.humidityPct), jetStabilityGrade: numberValue(values.grade) as 1 | 2 | 3 | 4 | undefined };
-    await onSave(input);
+type VariationFormValues = Record<keyof VariationValues, string> & { operationIdentifier: string };
+
+function ExperimentVariationEditor({ record, existingRunNames, onDirtyChange, onCancel, onSave }: { record: HistoricalExperimentRecord; existingRunNames: string[]; onDirtyChange: (dirty: boolean) => void; onCancel: () => void; onSave: (input: CloneExperimentInput) => Promise<void> }) {
+  const records = record.experiment.telemetryData;
+  const recordIds = records.map((item) => item.id).filter((id): id is string => Boolean(id));
+  const [sourceProcessRecordId, setSourceProcessRecordId] = useState(initialProcessRecordSelection(recordIds));
+  const selected = records.find((item) => item.id === sourceProcessRecordId);
+  const sourceValues: VariationValues = { flowRateMlH: selected?.flowRateMlH, voltageKv: selected?.voltageKv, collectorVoltageKv: selected?.collectorVoltageKv, temperatureC: selected?.temperatureC, humidityPct: selected?.humidityPct, distanceMm: selected?.distanceMm, drumSpeedRpm: selected?.drumSpeedRpm };
+  const suggestedRunName = suggestVariationRunName(record.runIdentifier === record.id ? "VARIATION" : record.runIdentifier, existingRunNames);
+  const makeValues = (telemetry = selected): VariationFormValues => ({ operationIdentifier: suggestedRunName, flowRateMlH: String(telemetry?.flowRateMlH ?? ""), voltageKv: String(telemetry?.voltageKv ?? ""), collectorVoltageKv: String(telemetry?.collectorVoltageKv ?? ""), temperatureC: String(telemetry?.temperatureC ?? ""), humidityPct: String(telemetry?.humidityPct ?? ""), distanceMm: String(telemetry?.distanceMm ?? ""), drumSpeedRpm: String(telemetry?.drumSpeedRpm ?? "") });
+  const [values, setValues] = useState<VariationFormValues>(() => makeValues());
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [changedBy, setChangedBy] = useState("");
+  const [variationReason, setVariationReason] = useState("");
+  const [changedByTouched, setChangedByTouched] = useState(false);
+  const [reasonTouched, setReasonTouched] = useState(false);
+  const requestId = useRef(crypto.randomUUID());
+  const technicalDetailsId = useRef(`clone-technical-${crypto.randomUUID()}`);
+  const submitGuard = useRef(false);
+  const savingRef = useRef(false);
+  const createButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const changedByRef = useRef<HTMLInputElement>(null);
+  const numericValues: VariationValues = { flowRateMlH: optionalNumber(values.flowRateMlH), voltageKv: optionalNumber(values.voltageKv), collectorVoltageKv: optionalNumber(values.collectorVoltageKv), temperatureC: optionalNumber(values.temperatureC), humidityPct: optionalNumber(values.humidityPct), distanceMm: optionalNumber(values.distanceMm), drumSpeedRpm: optionalNumber(values.drumSpeedRpm) };
+  const changes = variationChanges(sourceValues, numericValues);
+  useEffect(() => {
+    onDirtyChange(changes.length > 0 || values.operationIdentifier !== suggestedRunName);
+  }, [changes.length, onDirtyChange, suggestedRunName, values.operationIdentifier]);
+  const fields: Array<[keyof VariationValues, string, string]> = [["flowRateMlH", "Flow rate", "mL/h"], ["voltageKv", "HV+", "kV"], ["collectorVoltageKv", "HV−", "kV"], ["temperatureC", "Temperature", "°C"], ["humidityPct", "Relative humidity", "%"], ["distanceMm", "Working distance", "mm"], ["drumSpeedRpm", "Drum / collector speed", "rpm"]];
+  const duplicateName = isDuplicateRunName(values.operationIdentifier, existingRunNames);
+  const validNumbers = Object.values(numericValues).every((value) => value === undefined || Number.isFinite(value));
+  const canCreate = Boolean(sourceProcessRecordId && values.operationIdentifier.trim() && !duplicateName && validNumbers && changes.length > 0 && !saving);
+  const canConfirm = canConfirmVariation({ draftValid: canCreate, changeCount: changes.length, changedBy, reason: variationReason, saving });
+  const sourceName = record.runIdentifier === record.id ? "Unnamed experiment" : record.runIdentifier;
+  const formulationName = record.formulationName === record.formulationId ? "No data" : record.formulationName || "No data";
+  const setupId = record.experiment.metadata?.canonicalSetupId || "";
+  const setupName = record.setupName === setupId ? "No data" : record.setupName || "No data";
+  const chooseRecord = (id: string) => { setSourceProcessRecordId(id); const telemetry = records.find((item) => item.id === id); setValues(makeValues(telemetry)); setMessage(null); };
+  const closeConfirmation = () => {
+    if (saving) return;
+    setConfirmationOpen(false);
+    setMessage(null);
+    queueMicrotask(() => createButtonRef.current?.focus());
   };
-  const fields: Array<[keyof typeof values, string, string]> = [["flowRateMlH", "Flow rate", "mL/h"], ["voltageKv", "HV+", "kV"], ["collectorVoltageKv", "HV−", "kV"], ["distanceMm", "Distance", "mm"], ["temperatureC", "Temperature", "°C"], ["humidityPct", "Humidity", "%"], ["grade", "Processability grade", "1–4"]];
-  return <section className="mt-5 rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-violet-700">Create variation</p><h2 className="mt-1 text-xl font-bold text-slate-950">Editable copy of {record.runIdentifier}</h2><p className="mt-1 text-sm text-slate-600">The historical source remains read-only. Change any value before saving.</p></div></div><div className="mt-5 grid gap-3 md:grid-cols-2"><label className="text-xs font-bold text-slate-700 md:col-span-2">New run code<input value={values.operationIdentifier} onChange={(event) => update("operationIdentifier", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" /></label>{fields.map(([key, label, unit]) => <label key={key} className="text-xs font-bold text-slate-700">{label} ({unit})<input type="number" value={values[key]} onChange={(event) => update(key, event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" /></label>)}</div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={onCancel} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700">Cancel</button><button type="button" disabled={saving} onClick={() => void save()} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save variation"}</button></div></section>;
+  useEffect(() => {
+    if (!confirmationOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    changedByRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { if (!savingRef.current) { event.preventDefault(); setConfirmationOpen(false); setMessage(null); queueMicrotask(() => createButtonRef.current?.focus()); } return; }
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (!focusable?.length) return;
+      const first = focusable[0]; const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => { document.removeEventListener("keydown", handleKeyDown); document.body.style.overflow = previousOverflow; };
+  }, [confirmationOpen]);
+  const confirmAndSave = async () => {
+    if (submitGuard.current) return;
+    setChangedByTouched(true); setReasonTouched(true);
+    if (!canConfirm) return;
+    submitGuard.current = true; savingRef.current = true; setSaving(true); setMessage(null);
+    try { await onSave({ cloneRequestId: requestId.current, sourceProcessRecordId, operationIdentifier: values.operationIdentifier, variationCreatedBy: changedBy, variationReason, ...numericValues }); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Unable to create variation."); }
+    finally { submitGuard.current = false; savingRef.current = false; setSaving(false); }
+  };
+  return <section className="mt-5 overflow-hidden rounded-3xl border border-violet-200 bg-white p-4 shadow-sm sm:p-6">
+    <h2 className="break-words text-xl font-bold text-slate-950">Create Experiment Variation</h2>
+    <p className="mt-1 text-sm text-slate-600">Start from an existing experiment and change only the parameters required for the new run.</p>
+
+    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+      <p className="break-words font-bold text-slate-950">Based on: {sourceName}</p>
+      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs"><span><strong>Project:</strong> {record.projectName || "No data"}</span><span><strong>Formulation:</strong> {formulationName}</span><span><strong>Setup:</strong> {setupName}</span></div>
+    </div>
+
+    {records.length > 1 && <label className="mt-4 block text-xs font-bold text-slate-700">Process record <span className="text-red-600">*</span><select required value={sourceProcessRecordId} onChange={(event) => chooseRecord(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"><option value="">Select a process record</option>{records.map((item, index) => <option key={item.id ?? index} value={item.id ?? ""} disabled={!item.id}>{`Process record ${index + 1}${formatSourceDate(record.ingestedAt)}`}</option>)}</select></label>}
+
+    <div className="mt-4 border-t border-slate-200 pt-3">
+      <button type="button" aria-expanded={technicalDetailsOpen} aria-controls={technicalDetailsId.current} onClick={() => setTechnicalDetailsOpen((open) => !open)} className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-bold text-slate-600 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-violet-500"><ChevronDown className={`h-4 w-4 transition-transform ${technicalDetailsOpen ? "rotate-180" : ""}`} />Technical details</button>
+      {technicalDetailsOpen && <div id={technicalDetailsId.current} className="mt-2 min-w-0 rounded-xl bg-slate-50 p-3 text-xs text-slate-600"><dl className="grid min-w-0 gap-2 sm:grid-cols-2"><TechnicalId label="Experiment ID" value={record.id} /><TechnicalId label="Project ID" value={record.projectId} /><TechnicalId label="Formulation ID" value={record.formulationId} /><TechnicalId label="Setup ID" value={setupId || "No data"} /><TechnicalId label="Selected process-record ID" value={sourceProcessRecordId || "No selection"} /><TechnicalId label="Available process-record IDs" value={recordIds.length ? recordIds.join(", ") : "No data"} /></dl></div>}
+    </div>
+
+    <label className="mt-5 block text-xs font-bold text-slate-700">New run / sample name<input value={values.operationIdentifier} onChange={(event) => { setValues((current) => ({ ...current, operationIdentifier: event.target.value })); setMessage(null); }} className={`mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm outline-none focus:ring-4 ${duplicateName ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-slate-300 focus:border-violet-500 focus:ring-violet-100"}`} />{duplicateName && <span className="mt-1 block text-[11px] font-semibold text-red-700">This run name already exists. Please choose a unique name.</span>}</label>
+
+    <div className="mt-6"><h3 className="text-base font-bold text-slate-950">Operating parameters</h3><p className="mt-1 text-xs text-slate-600">Change at least one parameter to create a new variation.</p></div>
+    <div className="mt-3 grid min-w-0 gap-3 md:grid-cols-2">{fields.map(([key, label, unit]) => {
+      const change = changes.find((item) => item.key === key);
+      return <label key={key} className={`min-w-0 rounded-xl border p-3 text-xs font-bold transition-colors ${change ? "border-violet-400 bg-violet-50 text-violet-950" : "border-slate-200 bg-white text-slate-700"}`}>{label} ({unit})<input type="number" value={values[key]} onChange={(event) => { setValues((current) => ({ ...current, [key]: event.target.value })); setMessage(null); }} className={`mt-1 w-full min-w-0 rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-4 ${change ? "border-violet-400 focus:border-violet-500 focus:ring-violet-100" : "border-slate-300 focus:border-violet-500 focus:ring-violet-100"}`} />{change ? <span className="mt-1.5 block break-words text-[11px] font-semibold text-violet-700">Changed from {displayBareVariationValue(change.previous)} to {displayBareVariationValue(change.next)} {unit}</span> : <span className="mt-1.5 block text-[11px] font-medium text-slate-500">Original: {displayVariationValue(sourceValues[key], unit)}</span>}</label>;
+    })}</div>
+
+    <div className={`mt-5 rounded-xl border p-3 ${changes.length ? "border-violet-200 bg-violet-50" : "border-slate-200 bg-slate-50"}`}><h3 className="text-sm font-bold text-slate-900">Changes from source</h3>{changes.length ? <ul className="mt-1.5 space-y-1 text-xs text-slate-700">{changes.map((change) => <li key={change.key}><strong>{change.label}:</strong> {displayBareVariationValue(change.previous)} → {displayBareVariationValue(change.next)} {change.unit}</li>)}</ul> : <p className="mt-1 text-xs text-slate-500">No parameter changes yet.</p>}</div>
+    <p className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs font-semibold text-blue-900">Historical results are not copied. The new variation starts as a planned experiment.</p>
+    <div className="mt-5 flex flex-wrap justify-end gap-2"><button type="button" onClick={onCancel} disabled={saving} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 outline-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50">Cancel</button><button ref={createButtonRef} type="button" disabled={!canCreate} onClick={() => { setMessage(null); setConfirmationOpen(true); }} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-bold text-white outline-none hover:bg-violet-800 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40">Create New Variation</button></div>
+
+    {confirmationOpen && <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) closeConfirmation(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="confirm-variation-title" className="my-auto w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex items-start justify-between gap-3"><div><h2 id="confirm-variation-title" className="text-xl font-bold text-slate-950">Confirm New Variation</h2><p className="mt-1 text-xs text-slate-600">Review the new experiment and provide its audit information.</p></div><button type="button" onClick={closeConfirmation} disabled={saving} aria-label="Close confirmation" className="rounded-lg border border-slate-200 p-2 text-slate-600 outline-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40"><X className="h-4 w-4" /></button></div>
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700"><dl className="grid gap-2 sm:grid-cols-2"><div><dt className="font-bold text-slate-500">Source experiment</dt><dd className="break-words font-semibold text-slate-900">{sourceName}</dd></div><div><dt className="font-bold text-slate-500">New variation</dt><dd className="break-words font-semibold text-slate-900">{values.operationIdentifier.trim()}</dd></div><div><dt className="font-bold text-slate-500">Project</dt><dd>{record.projectName || "No data"}</dd></div><div><dt className="font-bold text-slate-500">Formulation</dt><dd>{formulationName}</dd></div><div><dt className="font-bold text-slate-500">Setup</dt><dd>{setupName}</dd></div></dl><h3 className="mt-4 font-bold text-slate-900">Changes</h3><ul className="mt-1 space-y-1">{changes.map((change) => <li key={change.key}><strong>{variationDetailLabel(change.key)}:</strong> {displayBareVariationValue(change.previous)} → {displayBareVariationValue(change.next)} {change.unit}</li>)}</ul></div>
+        <div className="mt-4 grid gap-4"><div><label htmlFor="variation-changed-by" className="text-xs font-bold text-slate-700">Changed by</label><input ref={changedByRef} id="variation-changed-by" value={changedBy} onChange={(event) => { setChangedBy(event.target.value); setMessage(null); }} onBlur={() => setChangedByTouched(true)} aria-invalid={changedByTouched && !changedBy.trim()} aria-describedby={changedByTouched && !changedBy.trim() ? "variation-changed-by-error" : undefined} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100" />{changedByTouched && !changedBy.trim() && <p id="variation-changed-by-error" className="mt-1 text-xs font-semibold text-red-700">Changed by is required.</p>}</div><div><label htmlFor="variation-reason" className="text-xs font-bold text-slate-700">Reason for variation</label><textarea id="variation-reason" value={variationReason} onChange={(event) => { setVariationReason(event.target.value); setMessage(null); }} onBlur={() => setReasonTouched(true)} aria-invalid={reasonTouched && !variationReason.trim()} aria-describedby={reasonTouched && !variationReason.trim() ? "variation-reason-error" : undefined} className="mt-1 min-h-24 w-full resize-y rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100" />{reasonTouched && !variationReason.trim() && <p id="variation-reason-error" className="mt-1 text-xs font-semibold text-red-700">Reason for variation is required.</p>}</div></div>
+        {message && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800">{message}</p>}
+        <div className="mt-5 flex flex-wrap justify-end gap-2"><button type="button" onClick={closeConfirmation} disabled={saving} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 outline-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40">Cancel</button><button type="button" onClick={() => void confirmAndSave()} disabled={!canConfirm} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-bold text-white outline-none hover:bg-violet-800 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40">{saving ? "Creating variation…" : "Confirm and Create Variation"}</button></div>
+      </div>
+    </div>}
+  </section>;
 }
+
+function telemetryVariationValues(record: Experiment["telemetryData"][number]) {
+  return { id: record.id, flowRateMlH: record.flowRateMlH, voltageKv: record.voltageKv, collectorVoltageKv: record.collectorVoltageKv, temperatureC: record.temperatureC, humidityPct: record.humidityPct, distanceMm: record.distanceMm, drumSpeedRpm: record.drumSpeedRpm };
+}
+
+function variationDetailLabel(key: import("../core/types/experiment").VariationParameterKey): string {
+  return ({ flowRateMlH: "Flow Rate", voltageKv: "HV+", collectorVoltageKv: "HV−", temperatureC: "Temperature", humidityPct: "Relative Humidity", distanceMm: "Working Distance", drumSpeedRpm: "Drum / Collector Speed" })[key];
+}
+
+function capitalize(value: string): string { return value ? `${value[0].toUpperCase()}${value.slice(1)}` : "Unknown"; }
+function formatVariationCreatedAt(authoritative: unknown, legacyCreatedAt: string): string {
+  let date: Date | null = null;
+  if (authoritative && typeof authoritative === "object" && "toDate" in authoritative && typeof authoritative.toDate === "function") date = authoritative.toDate();
+  else if (authoritative && typeof authoritative === "object" && "seconds" in authoritative && typeof authoritative.seconds === "number") date = new Date(authoritative.seconds * 1000);
+  else if (typeof authoritative === "string" || typeof authoritative === "number") { const parsed = new Date(authoritative); if (!Number.isNaN(parsed.getTime())) date = parsed; }
+  if (!date && legacyCreatedAt) { const parsed = new Date(legacyCreatedAt); if (!Number.isNaN(parsed.getTime())) date = parsed; }
+  return date ? date.toLocaleString() : "No data";
+}
+
+function optionalNumber(value: string): number | undefined { return value.trim() === "" ? undefined : Number(value); }
+function displayVariationValue(value: number | undefined, unit: string): string { return value === undefined ? "No data" : `${value} ${unit}`; }
+function displayBareVariationValue(value: number | undefined): string { return value === undefined ? "No data" : String(value); }
+function formatSourceDate(value: string): string { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : ` · ${date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}`; }
+function TechnicalId({ label, value }: { label: string; value: string }) { return <div className="min-w-0"><dt className="font-bold text-slate-700">{label}</dt><dd className="break-all font-mono text-[11px]">{value}</dd></div>; }
 
 function parseOptionalNumber(value: string): number | null {
   if (value.trim() === "") {

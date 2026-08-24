@@ -1,7 +1,10 @@
-import type { Experiment, Formulation } from "../../types";
+import type { Experiment, Formulation, TelemetryRecord } from "../../types";
 import { RECOMMENDATION_CONFIG } from "./recommendation.config";
 
+export type SmartStartingPointKey = "voltageKv" | "collectorVoltageKv" | "flowRateMlH" | "temperatureC" | "humidityPct" | "distanceMm";
+
 export interface SmartStartingPointValue {
+  key: SmartStartingPointKey;
   label: string;
   value: number;
   unit: string;
@@ -11,46 +14,81 @@ export interface SmartStartingPointValue {
 
 export interface SmartStartingPoint {
   status: "available" | "limited_evidence" | "insufficient_data";
-  confidence: number;
-  rationale: string;
+  successfulExperimentCount: number;
+  supportedParameterCount: number;
   values: SmartStartingPointValue[];
 }
 
-export function buildSmartStartingPoint(
-  formulation: Formulation,
-  experiments: readonly Experiment[],
-  minimumEvidence = 2
-): SmartStartingPoint {
-  const matching = experiments.filter((experiment) => {
-    const related = experiment.formulationId === formulation.id;
-    return related && experiment.telemetryData.length > 0 && validGrade(experiment.jetStabilityGrade);
+export type SmartStartingPointFormValues = Partial<Record<SmartStartingPointKey, number | undefined>>;
+
+interface ParameterDefinition {
+  key: SmartStartingPointKey;
+  label: string;
+  unit: string;
+  read: (record: TelemetryRecord) => number | undefined;
+  limit: { minimum: number; maximum: number };
+}
+
+const PARAMETERS: readonly ParameterDefinition[] = [
+  { key: "voltageKv", label: "HV+", unit: "kV", read: (record) => record.voltageKv, limit: RECOMMENDATION_CONFIG.limits.voltageKv },
+  { key: "collectorVoltageKv", label: "HV−", unit: "kV", read: (record) => record.collectorVoltageKv, limit: RECOMMENDATION_CONFIG.limits.hvNegativeKv },
+  { key: "flowRateMlH", label: "Flow", unit: "mL/h", read: (record) => record.flowRateMlH, limit: RECOMMENDATION_CONFIG.limits.flowRateMlH },
+  { key: "temperatureC", label: "Temperature", unit: "°C", read: (record) => record.temperatureC, limit: RECOMMENDATION_CONFIG.limits.temperatureC },
+  { key: "humidityPct", label: "RH", unit: "%", read: (record) => record.humidityPct, limit: RECOMMENDATION_CONFIG.limits.humidityPct },
+  { key: "distanceMm", label: "Distance", unit: "mm", read: (record) => record.distanceMm, limit: RECOMMENDATION_CONFIG.limits.distanceMm },
+];
+
+export function buildSmartStartingPoint(formulation: Formulation, experiments: readonly Experiment[], minimumParameterEvidence = 2): SmartStartingPoint {
+  const eligible = experiments.filter((experiment) =>
+    experiment.formulationId === formulation.id
+    && successfulGrade(experiment.jetStabilityGrade)
+    && PARAMETERS.some((parameter) => validValues(experiment, parameter).length > 0)
+  );
+  const values = PARAMETERS.flatMap((parameter): SmartStartingPointValue[] => {
+    const contributions = eligible.flatMap((experiment) => {
+      const experimentValues = validValues(experiment, parameter);
+      return experimentValues.length > 0 ? [{ experimentId: experiment.id, value: median(experimentValues) }] : [];
+    });
+    if (contributions.length < minimumParameterEvidence) return [];
+    return [{
+      key: parameter.key,
+      label: parameter.label,
+      unit: parameter.unit,
+      value: median(contributions.map((item) => item.value)),
+      evidenceCount: contributions.length,
+      sourceExperimentIds: contributions.map((item) => item.experimentId),
+    }];
   });
-  const sourceIds = matching.map((item) => item.id);
-  const values = [
-    summarize("HV+", "kV", matching.flatMap((item) => item.telemetryData.map((record) => record.voltageKv)), sourceIds, RECOMMENDATION_CONFIG.limits.voltageKv),
-    summarize("HV−", "kV", matching.flatMap((item) => item.telemetryData.map((record) => record.collectorVoltageKv)), sourceIds, RECOMMENDATION_CONFIG.limits.hvNegativeKv),
-    summarize("Flow", "mL/h", matching.flatMap((item) => item.telemetryData.map((record) => record.flowRateMlH)), sourceIds, RECOMMENDATION_CONFIG.limits.flowRateMlH),
-    summarize("Temperature", "°C", matching.flatMap((item) => item.telemetryData.map((record) => record.temperatureC)), sourceIds, RECOMMENDATION_CONFIG.limits.temperatureC),
-    summarize("RH", "%", matching.flatMap((item) => item.telemetryData.map((record) => record.humidityPct)), sourceIds, RECOMMENDATION_CONFIG.limits.humidityPct),
-    summarize("Distance", "mm", matching.flatMap((item) => item.telemetryData.map((record) => record.distanceMm)), sourceIds, RECOMMENDATION_CONFIG.limits.distanceMm),
-  ].filter((value): value is SmartStartingPointValue => value !== null);
-  if (matching.length === 0) return { status: "insufficient_data", confidence: 0, rationale: "No validated historical experiment exists for this formulation.", values: [] };
-  const confidence = Math.min(1, matching.length / minimumEvidence) * 0.7 + (values.length / 6) * 0.3;
   return {
-    status: matching.length >= minimumEvidence && values.length > 0 ? "available" : "limited_evidence",
-    confidence: Math.round(confidence * 100) / 100,
-    rationale: `${matching.length} validated historical experiment${matching.length === 1 ? "" : "s"} for the selected formulation. Values are medians, not invented setpoints.`,
+    status: eligible.length === 0 ? "insufficient_data" : values.length > 0 ? "available" : "limited_evidence",
+    successfulExperimentCount: eligible.length,
+    supportedParameterCount: values.length,
     values,
   };
 }
 
-function summarize(label: string, unit: string, values: readonly number[], sourceIds: string[], limit: { minimum: number; maximum: number }): SmartStartingPointValue | null {
-  const clean = values.filter((value) => Number.isFinite(value) && value >= limit.minimum && value <= limit.maximum).sort((a, b) => a - b);
-  if (clean.length === 0) return null;
-  const middle = (clean.length - 1) * 0.5;
-  const lower = clean[Math.floor(middle)] ?? clean[0];
-  const upper = clean[Math.ceil(middle)] ?? lower;
-  return { label, unit, value: lower + (upper - lower) * (middle - Math.floor(middle)), evidenceCount: clean.length, sourceExperimentIds: sourceIds };
+export function changedSmartStartingPointValues(current: SmartStartingPointFormValues, point: SmartStartingPoint): SmartStartingPointValue[] {
+  return point.values.filter((item) => current[item.key] !== item.value);
 }
 
-function validGrade(value: number): boolean { return Number.isInteger(value) && value >= 1 && value <= 4; }
+export function applySmartStartingPointValues(current: SmartStartingPointFormValues, point: SmartStartingPoint): SmartStartingPointFormValues {
+  return point.values.reduce<SmartStartingPointFormValues>((next, item) => ({ ...next, [item.key]: item.value }), { ...current });
+}
+
+function validValues(experiment: Experiment, parameter: ParameterDefinition): number[] {
+  return experiment.telemetryData.map(parameter.read).filter((value): value is number =>
+    typeof value === "number" && Number.isFinite(value) && value >= parameter.limit.minimum && value <= parameter.limit.maximum
+  );
+}
+
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = (sorted.length - 1) / 2;
+  const lower = sorted[Math.floor(middle)];
+  const upper = sorted[Math.ceil(middle)];
+  return lower + (upper - lower) * (middle - Math.floor(middle));
+}
+
+function successfulGrade(value: number | undefined): value is 3 | 4 {
+  return value === 3 || value === 4;
+}

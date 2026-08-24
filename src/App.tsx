@@ -12,7 +12,7 @@ import type { Language } from "./lib/translations";
 import type { Material } from "./core/types/material";
 import type { SolutionCharacterization } from "./core/types/characterization";
 import type { ExperimentalSetup } from "./core/types/setup";
-import type { CreateExperimentInput, UpdateExperimentInput } from "./application/experiments/experiment.mapper";
+import type { CreateExperimentInput } from "./application/experiments/experiment.mapper";
 import type { CreateSetupInput } from "./application/setups/setup.service";
 import type { CreateSolutionCharacterizationInput } from "./application/characterizations/characterization.service";
 import { projectService } from "./application/projects/project.service";
@@ -230,15 +230,11 @@ const handleAddMaterial = async (
       throw new Error(message);
     }
   };
-  const handleUpdateExperiment = async (id: string, input: UpdateExperimentInput): Promise<Experiment> => {
-    setDataError(null);
-    const updated = await experimentService.updateExperiment(id, input);
-    setExperiments((previous) => previous.map((experiment) => experiment.id === id ? updated : experiment));
-    return updated;
-  };
   const handleCloneExperiment = async (id: string, input: import("./application/experiments/experiment.service").CloneExperimentInput): Promise<Experiment> => {
     const cloned = await experimentService.cloneExperiment(id, input);
-    setExperiments((previous) => [cloned, ...previous]);
+    setExperiments((previous) => previous.some((experiment) => experiment.id === cloned.id)
+      ? previous.map((experiment) => experiment.id === cloned.id ? cloned : experiment)
+      : [cloned, ...previous]);
     return cloned;
   };
 
@@ -314,7 +310,7 @@ const handleAddMaterial = async (
         }
         return <RunConfig project={activeProject} formulation={selectedFormulation} characterization={selectedCharacterization} setup={selectedSetup} projects={projects} formulations={formulations} characterizations={characterizations} setups={setups} experiments={experiments} materials={materials} onAddExperiment={handleAddExperiment} lang={lang} />;
       case "HISTORICAL_EXPERIMENTS":
-        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} setups={setups} loading={isDataLoading} error={dataError} onUpdateExperiment={handleUpdateExperiment} onCloneExperiment={handleCloneExperiment} />;
+        return <HistoricalExperiments experiments={experiments} projects={projects} formulations={formulations} materials={materials} setups={setups} loading={isDataLoading} error={dataError} onCloneExperiment={handleCloneExperiment} />;
       case "DATABASE_MANAGEMENT":
         return <ExcelImport projects={projects} formulations={formulations} onImportExperiment={handleImportExperiments} lang={lang} />;
     }

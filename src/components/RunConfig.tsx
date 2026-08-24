@@ -20,7 +20,7 @@ import { searchSimilarExperiments } from "../features/experimental-assistant/sim
 import { searchSimilarSolutionExperiments } from "../features/experimental-assistant/similarity.engine";
 import type { SolutionSimilarityMatch } from "../features/experimental-assistant/similarity.types";
 import { analyzeSimilarExperiments } from "../features/experimental-assistant/historicalAnalysis";
-import { buildSmartStartingPoint } from "../features/experimental-assistant/smartStartingPoint";
+import { buildSmartStartingPoint, changedSmartStartingPointValues, type SmartStartingPointFormValues } from "../features/experimental-assistant/smartStartingPoint";
 import { RECOMMENDATION_CONFIG } from "../features/experimental-assistant/recommendation.config";
 import { processParameterTolerances } from "../features/experimental-assistant/processParameterTolerances";
 import { searchSimilarProcessExperiments } from "../features/experimental-assistant/processConditionSimilarity.engine";
@@ -82,6 +82,7 @@ export default function RunConfig({
   const [selectedRecommendationKeys, setSelectedRecommendationKeys] = useState<RecommendedParameterKey[]>([]);
   const [recommendationPreviewOpen, setRecommendationPreviewOpen] = useState(false);
   const [recommendationApplyMessage, setRecommendationApplyMessage] = useState("");
+  const [smartStartingPointPreviewOpen, setSmartStartingPointPreviewOpen] = useState(false);
 
   const contexts = useMemo(
     () => buildHistoricalContexts(projects, formulations, characterizations, setups, experiments).map((context) => {
@@ -148,7 +149,7 @@ export default function RunConfig({
   const [analysisTab, setAnalysisTab] = useState<"solutions" | "process">("solutions");
   const [processSearchExecuted, setProcessSearchExecuted] = useState(false);
   const [includedProcessKeys, setIncludedProcessKeys] = useState<ProcessConditionKey[]>([]);
-  useEffect(() => { setIncludedProcessKeys([]); setProcessSearchExecuted(false); setSelectedHistoricalId(""); setSelectedRecommendationKeys([]); setRecommendationPreviewOpen(false); setRecommendationApplyMessage(""); }, [formulation.id]);
+  useEffect(() => { setIncludedProcessKeys([]); setProcessSearchExecuted(false); setSelectedHistoricalId(""); setSelectedRecommendationKeys([]); setRecommendationPreviewOpen(false); setRecommendationApplyMessage(""); setSmartStartingPointPreviewOpen(false); }, [formulation.id]);
   const selectedSolutionMatch = solutionMatches.find((match) => match.context.experiment.id === selectedHistoricalId);
   const topSolutionMatch = solutionMatches[0];
   const toggleAnalysisPanel = () => {
@@ -194,16 +195,19 @@ export default function RunConfig({
     () => buildSmartStartingPoint(formulation, experiments),
     [formulation, experiments]
   );
+  const smartCurrentValues: SmartStartingPointFormValues = { flowRateMlH, voltageKv, collectorVoltageKv, temperatureC, humidityPct, distanceMm };
+  const smartStartingPointChanges = changedSmartStartingPointValues(smartCurrentValues, smartStartingPoint);
 
   function applySmartStartingPoint() {
-    for (const item of smartStartingPoint.values) {
-      if (item.label === "HV+") setVoltageKv(item.value);
-      if (item.label === "HV−") setCollectorVoltageKv(item.value);
-      if (item.label === "Flow") setFlowRateMlH(item.value);
-      if (item.label === "Temperature") setTemperatureC(item.value);
-      if (item.label === "RH") setHumidityPct(item.value);
-      if (item.label === "Distance") setDistanceMm(item.value);
+    for (const item of smartStartingPointChanges) {
+      if (item.key === "voltageKv") setVoltageKv(item.value);
+      if (item.key === "collectorVoltageKv") setCollectorVoltageKv(item.value);
+      if (item.key === "flowRateMlH") setFlowRateMlH(item.value);
+      if (item.key === "temperatureC") setTemperatureC(item.value);
+      if (item.key === "humidityPct") setHumidityPct(item.value);
+      if (item.key === "distanceMm") setDistanceMm(item.value);
     }
+    setSmartStartingPointPreviewOpen(false);
   }
 
   const analyze = () => {
@@ -314,12 +318,15 @@ export default function RunConfig({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-violet-800">Smart Starting Point</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{smartStartingPoint.status === "insufficient_data" ? "No validated starting point available" : smartStartingPoint.rationale}</p>
-                  <p className="mt-1 text-xs text-slate-700">Confidence: {Math.round(smartStartingPoint.confidence * 100)}% · source values come from historical experiments for this formulation.</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">Historical median starting points from successful experiments with this exact formulation. These are not guaranteed machine setpoints.</p>
+                  <p className="mt-1 text-xs text-slate-700">{smartStartingPoint.successfulExperimentCount} successful historical experiment{smartStartingPoint.successfulExperimentCount === 1 ? "" : "s"} found</p>
+                  <p className="mt-1 text-xs text-slate-700">Historical evidence coverage: {smartStartingPoint.supportedParameterCount}/6 parameters supported</p>
+                  {smartStartingPoint.supportedParameterCount < 6 && <p className="mt-1 text-xs text-amber-700">Unsupported parameters have fewer than two contributing successful experiments.</p>}
                 </div>
-                <button type="button" disabled={smartStartingPoint.values.length === 0} onClick={applySmartStartingPoint} className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-bold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">Apply smart point</button>
+                <button type="button" disabled={smartStartingPointChanges.length === 0} onClick={() => setSmartStartingPointPreviewOpen(true)} className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-bold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">Apply smart point</button>
               </div>
-              {smartStartingPoint.values.length > 0 && <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">{smartStartingPoint.values.map((item) => <div key={item.label} className="rounded-xl border border-violet-200 bg-white p-3"><p className="text-[10px] font-bold uppercase text-slate-600">{item.label}</p><p className="mt-1 text-sm font-bold text-slate-950">{item.value.toFixed(2)} {item.unit}</p><p className="mt-1 text-[10px] text-slate-600">n={item.evidenceCount}</p></div>)}</div>}
+              {smartStartingPoint.values.length > 0 && <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">{smartStartingPoint.values.map((item) => <div key={item.key} className="rounded-xl border border-violet-200 bg-white p-3"><p className="text-[10px] font-bold uppercase text-slate-600">{item.label}</p><p className="mt-1 text-sm font-bold text-slate-950">{item.value.toFixed(2)} {item.unit}</p><p className="mt-1 text-[10px] text-slate-600">Based on {item.evidenceCount} experiments</p></div>)}</div>}
+              {smartStartingPointPreviewOpen && <div role="dialog" aria-modal="true" aria-labelledby="smart-point-preview-title" className="mt-4 rounded-2xl border border-violet-300 bg-white p-4 shadow-sm"><h3 id="smart-point-preview-title" className="font-bold text-slate-950">Apply Smart Starting Point</h3><p className="mt-1 text-xs text-slate-600">Applying these historical medians will replace the corresponding values in the current run form. You can still review and adjust them before saving the experiment.</p><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[420px] text-left text-xs"><thead><tr className="border-b border-slate-200 text-slate-500"><th className="px-2 py-2">Parameter</th><th className="px-2 py-2">Current value</th><th className="px-2 py-2">Historical median</th></tr></thead><tbody>{smartStartingPointChanges.map((item) => <tr key={item.key} className="border-b border-slate-100"><td className="px-2 py-2 font-semibold">{item.label}</td><td className="px-2 py-2">{smartCurrentValues[item.key] === undefined ? "No data" : smartCurrentValues[item.key]?.toFixed(2)} {item.unit}</td><td className="px-2 py-2 font-bold text-violet-800">{item.value.toFixed(2)} {item.unit}</td></tr>)}</tbody></table></div><div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setSmartStartingPointPreviewOpen(false)} className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel</button><button type="button" onClick={applySmartStartingPoint} className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-bold text-white">Confirm and apply</button></div></div>}
             </section>
 
             <div className="mt-6 flex justify-end">
