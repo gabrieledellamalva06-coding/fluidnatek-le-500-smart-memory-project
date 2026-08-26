@@ -7,6 +7,7 @@ import { CollectionPaths } from "../../config/collectionPaths";
 import { firestoreService } from "../../services/firestore.service";
 import { localPersistenceService } from "../../services/local.persistence.service";
 import { createCharacterizationRevisionDraft, characterizationValues, sortRevisionsNewestFirst } from "../../features/characterization-revisions/characterizationRevision";
+import { requireFiniteCharacterizationMeasurement } from "../../features/characterizations/characterizationMeasurements";
 
 import {
   solutionCharacterizationRepository,
@@ -100,6 +101,8 @@ class FirestoreSolutionCharacterizationService
       );
     }
 
+    requireCharacterizationMeasurement(input);
+
     const formulation =
       await formulationRepository.getById(
         formulationId
@@ -126,7 +129,7 @@ class FirestoreSolutionCharacterizationService
       "Conductivity"
     );
 
-    validateOptionalPositiveNumber(
+    validateOptionalNonNegativeNumber(
       input.densityGcm3,
       "Density"
     );
@@ -218,8 +221,12 @@ class FirestoreSolutionCharacterizationService
 }
 
 const CHARACTERIZATION_OPTIONAL_FIELDS: Array<keyof SolutionCharacterizationValues> = ["solidsContentPct", "viscosityMpas", "conductivityUsCm", "densityGcm3", "surfaceTensionMnM", "ph", "notes"];
-function validateCharacterizationValues(input: SolutionCharacterizationValues): void { validateOptionalNonNegativeNumber(input.solidsContentPct, "Solids content"); validateOptionalNonNegativeNumber(input.viscosityMpas, "Viscosity"); validateOptionalNonNegativeNumber(input.conductivityUsCm, "Conductivity"); validateOptionalPositiveNumber(input.densityGcm3, "Density"); validateOptionalNonNegativeNumber(input.surfaceTensionMnM, "Surface tension"); validateOptionalRange(input.ph, "pH", 0, 14); }
+function validateCharacterizationValues(input: SolutionCharacterizationValues): void { validateOptionalNonNegativeNumber(input.solidsContentPct, "Solids content"); validateOptionalNonNegativeNumber(input.viscosityMpas, "Viscosity"); validateOptionalNonNegativeNumber(input.conductivityUsCm, "Conductivity"); validateOptionalNonNegativeNumber(input.densityGcm3, "Density"); validateOptionalNonNegativeNumber(input.surfaceTensionMnM, "Surface tension"); validateOptionalRange(input.ph, "pH", 0, 14); }
 function normalizeCharacterizationValues(input: SolutionCharacterizationValues): SolutionCharacterizationValues { return { solidsContentPct: input.solidsContentPct, viscosityMpas: input.viscosityMpas, conductivityUsCm: input.conductivityUsCm, densityGcm3: input.densityGcm3, surfaceTensionMnM: input.surfaceTensionMnM, ph: input.ph, notes: normalizeOptionalText(input.notes) }; }
+
+export function requireCharacterizationMeasurement(input: CreateSolutionCharacterizationInput): void {
+  requireFiniteCharacterizationMeasurement(input);
+}
 
 function compareByMeasuredDateDescending(
   first: SolutionCharacterization,
@@ -290,24 +297,6 @@ function validateOptionalNonNegativeNumber(
   ) {
     throw new Error(
       `${label} must be a finite non-negative number.`
-    );
-  }
-}
-
-function validateOptionalPositiveNumber(
-  value: number | undefined,
-  label: string
-): void {
-  if (value === undefined) {
-    return;
-  }
-
-  if (
-    !Number.isFinite(value) ||
-    value <= 0
-  ) {
-    throw new Error(
-      `${label} must be a finite positive number.`
     );
   }
 }

@@ -4,6 +4,7 @@ import type { Material } from "../../core/types/material";
 import { calculateSolutionSimilarity, calculateSolutionSimilarityDiagnostics, type SolutionSimilarityCriterionDiagnostic } from "../experimental-assistant/similarity.engine";
 import { RECOMMENDATION_CONFIG } from "../experimental-assistant/recommendation.config";
 import type { HistoricalExperimentContext, SimilarityQuery } from "../experimental-assistant/similarity.types";
+import { hasFiniteCharacterizationMeasurement } from "../characterizations/characterizationMeasurements";
 
 export type CharacterizationParameterKey =
   | "solidsContentPct"
@@ -63,6 +64,19 @@ export const CHARACTERIZATION_PARAMETERS: ReadonlyArray<{
   { key: "ph", label: "pH", unit: "" },
 ];
 
+const SELECTOR_MEASUREMENT_PRIORITY: ReadonlyArray<{
+  key: CharacterizationParameterKey;
+  label: string;
+  unit: string;
+}> = [
+  { key: "viscosityMpas", label: "Viscosity", unit: "mPa·s" },
+  { key: "conductivityUsCm", label: "Conductivity", unit: "µS/cm" },
+  { key: "solidsContentPct", label: "Solid content", unit: "wt%" },
+  { key: "surfaceTensionMnM", label: "Surface tension", unit: "mN/m" },
+  { key: "densityGcm3", label: "Density", unit: "g/cm³" },
+  { key: "ph", label: "pH", unit: "" },
+];
+
 /**
  * Same-formulation records always qualify. Cross-formulation records qualify
  * through the existing Solution Similarity engine and configured similarity
@@ -89,7 +103,7 @@ export function buildHistoricalCharacterizationEvidenceResult(input: {
   experiments: readonly Experiment[];
   materials: readonly Material[];
 }): HistoricalCharacterizationEvidenceResult {
-  if (!input.current || !input.formulation) return { eligible: [], excluded: [] };
+  if (!input.current || !input.formulation || !hasFiniteCharacterizationMeasurement(input.current)) return { eligible: [], excluded: [] };
   const formulationById = new Map(input.formulations.map((item) => [item.id, item]));
   formulationById.set(input.formulation.id, input.formulation);
   const materialById = new Map(input.materials.map((item) => [item.id, item]));
@@ -101,6 +115,10 @@ export function buildHistoricalCharacterizationEvidenceResult(input: {
     if (characterization.id === input.current!.id) continue;
     const candidate = formulationById.get(characterization.formulationId);
     if (!candidate) continue;
+    if (!hasFiniteCharacterizationMeasurement(characterization)) {
+      excluded.push({ characterization, formulation: candidate, reason: "No usable characterization measurements." });
+      continue;
+    }
     const experimentIdentities = identitiesForFormulation(input.experiments, candidate.id);
     if (candidate.id === input.formulation!.id) {
       eligible.push({ characterization, formulation: candidate, experimentIdentities, group: "same-formulation" });
@@ -135,6 +153,20 @@ export function buildHistoricalCharacterizationEvidenceResult(input: {
     });
   }
   return { eligible: eligible.sort(compareEvidence), excluded: excluded.sort((left, right) => left.formulation.id.localeCompare(right.formulation.id) || left.characterization.id.localeCompare(right.characterization.id)) };
+}
+
+export function buildHistoricalEvidenceSelectorLabel(
+  item: HistoricalCharacterizationEvidence,
+  formatDate: (value: string | undefined) => string = formatSelectorDate
+): string {
+  const date = formatDate(item.characterization.measuredAt);
+  const summary = SELECTOR_MEASUREMENT_PRIORITY.flatMap(({ key, label, unit }) => {
+    const value = finiteNumber(item.characterization[key]);
+    return value === undefined ? [] : [`${label} ${formatSelectorNumber(value)}${unit ? ` ${unit}` : ""}`];
+  }).slice(0, 3).join(" · ");
+  if (item.group === "same-formulation") return `${date} · ${summary}`;
+  const formulationName = item.formulation.name?.trim() || item.formulation.polymerName?.trim() || "Formulation";
+  return `${formulationName} · ${date} · Similarity ${formatSelectorNumber(item.solutionSimilarity ?? 0)}% · ${summary}`;
 }
 
 export function buildCharacterizationComparisonRows(
@@ -172,6 +204,16 @@ export function buildPolymerCompositionDisplay(formulation: Formulation): Polyme
 
 function finiteNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function formatSelectorDate(value: string | undefined): string {
+  if (!value) return "No measurement date";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+}
+
+function formatSelectorNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(6)));
 }
 
 function compareEvidenceNewestFirst(

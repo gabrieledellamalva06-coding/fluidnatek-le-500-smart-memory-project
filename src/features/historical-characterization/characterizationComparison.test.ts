@@ -7,7 +7,9 @@ import {
   buildCharacterizationComparisonRows,
   buildHistoricalCharacterizationEvidence,
   buildHistoricalCharacterizationEvidenceResult,
+  buildHistoricalEvidenceSelectorLabel,
   buildPolymerCompositionDisplay,
+  type HistoricalCharacterizationEvidence,
 } from "./characterizationComparison";
 
 const formulation = {
@@ -33,7 +35,7 @@ function experiment(id: string): Experiment {
 }
 
 function evidenceInput(overrides: Partial<Parameters<typeof buildHistoricalCharacterizationEvidence>[0]> = {}) {
-  const current = characterization("current");
+  const current = characterization("current", { viscosityMpas: 1 });
   return {
     current,
     formulation,
@@ -44,6 +46,68 @@ function evidenceInput(overrides: Partial<Parameters<typeof buildHistoricalChara
     ...overrides,
   };
 }
+
+function selectorEvidence(
+  values: Partial<SolutionCharacterization>,
+  group: "same-formulation" | "similar-formulation" = "same-formulation"
+): HistoricalCharacterizationEvidence {
+  return {
+    characterization: characterization("SOL_CHAR_technical-id", values),
+    formulation,
+    experimentIdentities: [],
+    group,
+    ...(group === "similar-formulation" ? { solutionSimilarity: 87.5 } : {}),
+  };
+}
+
+test("builds a normal same-formulation label without technical IDs", () => {
+  const label = buildHistoricalEvidenceSelectorLabel(
+    selectorEvidence({ measuredAt: "2026-08-24", viscosityMpas: 2, conductivityUsCm: 2 }),
+    () => "24/08/2026"
+  );
+  assert.equal(label, "24/08/2026 · Viscosity 2 mPa·s · Conductivity 2 µS/cm");
+  assert.doesNotMatch(label, /SOL_CHAR|form-1/);
+});
+
+test("selector labels preserve zero values", () => {
+  assert.equal(
+    buildHistoricalEvidenceSelectorLabel(selectorEvidence({ ph: 0 }), () => "No measurement date"),
+    "No measurement date · pH 0"
+  );
+});
+
+test("selector labels show the missing-date fallback", () => {
+  assert.match(buildHistoricalEvidenceSelectorLabel(selectorEvidence({ densityGcm3: 1.1 })), /^No measurement date ·/);
+});
+
+test("selector labels use measurement priority and stop after three items", () => {
+  const label = buildHistoricalEvidenceSelectorLabel(selectorEvidence({
+    ph: 7, densityGcm3: 1.1, surfaceTensionMnM: 49,
+    solidsContentPct: 12, conductivityUsCm: 3, viscosityMpas: 2,
+  }), () => "Date");
+  assert.equal(label, "Date · Viscosity 2 mPa·s · Conductivity 3 µS/cm · Solid content 12 wt%");
+});
+
+test("empty historical records are excluded with a usable-measurement reason", () => {
+  const current = characterization("current", { viscosityMpas: 1 });
+  const emptyHistorical = characterization("empty-historical", { notes: "Preserve me" });
+  const result = buildHistoricalCharacterizationEvidenceResult(evidenceInput({
+    current,
+    characterizations: [current, emptyHistorical],
+  }));
+  assert.deepEqual(result.eligible, []);
+  assert.equal(result.excluded[0].characterization, emptyHistorical);
+  assert.equal(result.excluded[0].reason, "No usable characterization measurements.");
+});
+
+test("builds a similar-formulation label with name and similarity but no IDs", () => {
+  const label = buildHistoricalEvidenceSelectorLabel(
+    selectorEvidence({ measuredAt: "2026-08-20", surfaceTensionMnM: 49 }, "similar-formulation"),
+    () => "20/08/2026"
+  );
+  assert.equal(label, "Formulation one · 20/08/2026 · Similarity 87.5% · Surface tension 49 mN/m");
+  assert.doesNotMatch(label, /SOL_CHAR|form-1/);
+});
 
 test("compares both available values and calculates current minus historical", () => {
   const rows = buildCharacterizationComparisonRows(
@@ -86,13 +150,34 @@ test("preserves a legitimate numeric zero", () => {
   assert.equal(row.difference, 0);
 });
 
+test("preserves an existing empty record but suppresses historical comparison evidence", () => {
+  const current = characterization("current", { notes: "Existing record remains unchanged" });
+  const historical = characterization("historical", { viscosityMpas: 10 });
+  const result = buildHistoricalCharacterizationEvidenceResult(evidenceInput({
+    current,
+    characterizations: [current, historical],
+  }));
+  assert.equal(current.notes, "Existing record remains unchanged");
+  assert.deepEqual(result, { eligible: [], excluded: [] });
+});
+
+test("restores historical comparison evidence after a valid current measurement exists", () => {
+  const current = characterization("current", { viscosityMpas: 0 });
+  const historical = characterization("historical", { viscosityMpas: 10 });
+  const evidence = buildHistoricalCharacterizationEvidence(evidenceInput({
+    current,
+    characterizations: [current, historical],
+  }));
+  assert.deepEqual(evidence.map((item) => item.characterization.id), ["historical"]);
+});
+
 test("returns multiple records newest first with formulation-level experiment identity", () => {
   const current = characterization("current");
   const evidence = buildHistoricalCharacterizationEvidence(evidenceInput({
     characterizations: [
       current,
-      characterization("older", { measuredAt: "2025-01-01T00:00:00Z" }),
-      characterization("newer", { measuredAt: "2026-01-01T00:00:00Z" }),
+      characterization("older", { measuredAt: "2025-01-01T00:00:00Z", viscosityMpas: 2 }),
+      characterization("newer", { measuredAt: "2026-01-01T00:00:00Z", viscosityMpas: 3 }),
     ],
     experiments: [experiment("B"), experiment("A")],
   }));
@@ -103,7 +188,7 @@ test("returns multiple records newest first with formulation-level experiment id
 
 test("includes a different formulation ID with equivalent composition", () => {
   const equivalent = { ...formulation, id: "equivalent", name: "Equivalent" };
-  const historical = { ...characterization("equivalent-char"), formulationId: equivalent.id };
+  const historical = { ...characterization("equivalent-char", { viscosityMpas: 2 }), formulationId: equivalent.id };
   const evidence = buildHistoricalCharacterizationEvidence(evidenceInput({
     formulations: [formulation, equivalent], characterizations: [characterization("current"), historical],
   }));
@@ -118,7 +203,7 @@ test("includes a different formulation ID with equivalent composition", () => {
 
 test("includes similar composition using the existing solution similarity score", () => {
   const similar = { ...formulation, id: "similar", polymerConcentrationPct: 12, solvent1RatioPct: 90 };
-  const historical = { ...characterization("similar-char"), formulationId: similar.id };
+  const historical = { ...characterization("similar-char", { viscosityMpas: 2 }), formulationId: similar.id };
   const evidence = buildHistoricalCharacterizationEvidence(evidenceInput({
     formulations: [formulation, similar], characterizations: [characterization("current"), historical],
   }));
@@ -140,7 +225,7 @@ test("excludes known incompatible solvent systems and produces a transparent rea
   const incompatible = { ...formulation, id: "incompatible", solvent: "Ethanol + Water", solvent1Name: "Ethanol", solvent1RatioPct: 30, solvent2Name: "Water", solvent2RatioPct: 70 };
   const result = buildHistoricalCharacterizationEvidenceResult(evidenceInput({
     formulations: [formulation, incompatible],
-    characterizations: [characterization("current"), { ...characterization("incompatible-char"), formulationId: incompatible.id }],
+    characterizations: [characterization("current"), { ...characterization("incompatible-char", { viscosityMpas: 2 }), formulationId: incompatible.id }],
   }));
   assert.equal(result.eligible.length, 0);
   assert.equal(result.excluded.length, 1);
@@ -151,7 +236,7 @@ test("missing solvent data is excluded and never converted to zero", () => {
   const missingSolvent = { ...formulation, id: "missing-solvent", solvent: "", solvent1Name: undefined, solvent1RatioPct: undefined };
   const result = buildHistoricalCharacterizationEvidenceResult(evidenceInput({
     formulations: [formulation, missingSolvent],
-    characterizations: [characterization("current"), { ...characterization("missing-char"), formulationId: missingSolvent.id }],
+    characterizations: [characterization("current"), { ...characterization("missing-char", { viscosityMpas: 2 }), formulationId: missingSolvent.id }],
   }));
   assert.equal(result.eligible.length, 0);
   assert.equal(result.excluded[0].reason, "Excluded from characterization evidence: insufficient solvent data for comparison.");
@@ -166,16 +251,16 @@ test("excludes cross-formulation evidence with fewer than two comparable composi
 });
 
 test("orders same formulation first, then similarity, date, formulation and characterization IDs", () => {
-  const exact = characterization("exact", { measuredAt: "2020-01-01" });
+  const exact = characterization("exact", { measuredAt: "2020-01-01", viscosityMpas: 2 });
   const equivalentA = { ...formulation, id: "equivalent-a" };
   const equivalentB = { ...formulation, id: "equivalent-b" };
   const similar = { ...formulation, id: "similar", polymerConcentrationPct: 12 };
   const evidence = buildHistoricalCharacterizationEvidence(evidenceInput({
     formulations: [formulation, equivalentA, equivalentB, similar],
     characterizations: [characterization("current"), exact,
-      { ...characterization("b-char"), formulationId: equivalentB.id, measuredAt: "2025-01-01" },
-      { ...characterization("a-char"), formulationId: equivalentA.id, measuredAt: "2025-01-01" },
-      { ...characterization("similar-char"), formulationId: similar.id, measuredAt: "2026-01-01" }],
+      { ...characterization("b-char", { viscosityMpas: 2 }), formulationId: equivalentB.id, measuredAt: "2025-01-01" },
+      { ...characterization("a-char", { viscosityMpas: 2 }), formulationId: equivalentA.id, measuredAt: "2025-01-01" },
+      { ...characterization("similar-char", { viscosityMpas: 2 }), formulationId: similar.id, measuredAt: "2026-01-01" }],
   }));
   assert.deepEqual(evidence.map((item) => item.characterization.id), ["exact", "a-char", "b-char", "similar-char"]);
 });

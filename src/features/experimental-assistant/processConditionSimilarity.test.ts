@@ -34,4 +34,68 @@ test("real zero is comparable while missing criteria do not add evidence", () =>
   assert.equal(result[0].comparableCriteriaCount, 1);
   assert.equal(result[0].comparableCriteriaTotal, 2);
   assert.equal(result[0].processScore, 100);
+  assert.equal(result[0].matchingCriteriaCount, 1);
+});
+
+test("three comparable and matching constraints report matches 3/3 and comparable data 3/3", () => {
+  const [match] = searchSimilarProcessExperiments(
+    [context("all-match", { temperatureC: 20, voltageKv: 15, flowRateMlH: 1 })],
+    { included: ["temperatureC", "voltageKv", "flowRateMlH"], values: { temperatureC: 20, voltageKv: 15, flowRateMlH: 1 } }
+  );
+  assert.equal(match.matchingCriteriaCount, 3);
+  assert.equal(match.comparableCriteriaCount, 3);
+  assert.equal(match.comparableCriteriaTotal, 3);
+});
+
+test("three comparable with two tolerance matches report matches 2/3 and comparable data 3/3", () => {
+  const [match] = searchSimilarProcessExperiments(
+    [context("two-match", { temperatureC: 30, voltageKv: 15, flowRateMlH: 1 })],
+    { included: ["temperatureC", "voltageKv", "flowRateMlH"], values: { temperatureC: 20, voltageKv: 15, flowRateMlH: 1 } }
+  );
+  assert.equal(match.processScore, 67);
+  assert.equal(match.matchingCriteriaCount, 2);
+  assert.equal(match.comparableCriteriaCount, 3);
+  assert.equal(match.comparableCriteriaTotal, 3);
+});
+
+test("two comparable matching constraints out of three report matches 2/3 and comparable data 2/3", () => {
+  const [match] = searchSimilarProcessExperiments(
+    [context("partial-match", { temperatureC: 20, voltageKv: 15 })],
+    { included: ["temperatureC", "voltageKv", "flowRateMlH"], values: { temperatureC: 20, voltageKv: 15, flowRateMlH: 1 } }
+  );
+  assert.equal(match.matchingCriteriaCount, 2);
+  assert.equal(match.comparableCriteriaCount, 2);
+  assert.equal(match.comparableCriteriaTotal, 3);
+});
+
+test("valid zero is comparable and matching", () => {
+  const [match] = searchSimilarProcessExperiments(
+    [context("zero-match", { collectorVoltageKv: 0, drumSpeedRpm: 0 })],
+    { included: ["collectorVoltageKv", "drumSpeedRpm"], values: { collectorVoltageKv: 0, drumSpeedRpm: 0 } }
+  );
+  assert.equal(match.matchingCriteriaCount, 2);
+  assert.equal(match.comparableCriteriaCount, 2);
+});
+
+test("missing selected values are neither comparable nor matches", () => {
+  const [match] = searchSimilarProcessExperiments(
+    [context("missing-one", { temperatureC: 20 })],
+    { included: ["temperatureC", "voltageKv"], values: { temperatureC: 20, voltageKv: 15 } }
+  );
+  assert.equal(match.matchingCriteriaCount, 1);
+  assert.equal(match.comparableCriteriaCount, 1);
+  assert.equal(match.comparableCriteriaTotal, 2);
+});
+
+test("non-selected parameters are excluded from all counts and the executed constraint snapshot", () => {
+  const query = { included: ["temperatureC"] as const, values: { temperatureC: 20, voltageKv: 15 } };
+  const [match] = searchSimilarProcessExperiments(
+    [context("selected-only", { temperatureC: 20, voltageKv: 100 })],
+    { included: [...query.included], values: query.values }
+  );
+  assert.equal(match.matchingCriteriaCount, 1);
+  assert.equal(match.comparableCriteriaCount, 1);
+  assert.equal(match.comparableCriteriaTotal, 1);
+  assert.deepEqual(match.selectedCriteria, ["temperatureC"]);
+  assert.deepEqual(match.queryValues, { temperatureC: 20 });
 });
