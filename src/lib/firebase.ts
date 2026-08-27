@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
-  signInAnonymously,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -24,26 +23,14 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-let authenticationPromise: Promise<void> | null =
-  null;
-
 export function ensureFirebaseAuth(): Promise<void> {
   if (auth.currentUser) {
     return Promise.resolve();
   }
 
-  if (!authenticationPromise) {
-    authenticationPromise = signInAnonymously(
-      auth
-    )
-      .then(() => undefined)
-      .catch((error: unknown) => {
-        authenticationPromise = null;
-        throw error;
-      });
-  }
-
-  return authenticationPromise;
+  return Promise.reject(
+    new Error("An approved Google account is required.")
+  );
 }
 
 export default app;
